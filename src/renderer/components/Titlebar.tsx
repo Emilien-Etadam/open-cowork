@@ -1,5 +1,5 @@
 import { Sparkles, Minus, Square, X, Copy } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 export function Titlebar() {
   const [isMaximized, setIsMaximized] = useState(false);
