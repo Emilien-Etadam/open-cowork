@@ -372,7 +372,7 @@ Then follow the workflow described in that file.
         timestamp: Date.now(),
       });
 
-      const workingDir = session.cwd || undefined;
+      const workingDir = session.cwd ||  undefined;
       console.log('[ClaudeAgentRunner] Working directory:', workingDir || '(none)');
 
       // Build conversation context by prepending history to prompt

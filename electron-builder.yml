@@ -29,10 +29,9 @@ mac:
   target:
     - target: dmg
       arch:
-        - x64
         - arm64
   artifactName: ${productName}-${version}-mac-${arch}.${ext}
-  hardenedRuntime: true
+  hardenedRuntime: false
   gatekeeperAssess: false
   entitlements: resources/entitlements.mac.plist
   entitlementsInherit: resources/entitlements.mac.plist
