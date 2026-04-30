@@ -4,7 +4,7 @@ import { isOfficialOpenAIBaseUrl } from '../config/auth-utils';
 const COMMON_FALLBACK_PROVIDERS = ['openai', 'anthropic', 'google'] as const;
 const INVALID_REGISTRY_PROVIDERS = new Set(['', 'custom']);
 const REASONING_MODEL_PATTERN =
-  /\bthinking\b|\breasoner\b|deepseek-r1|kimi-k2|qwen3(?:\.5)?(?=[:/-]|$)/i;
+  /\bthinking\b|\breasoner\b|deepseek-r1|deepseek-v4|kimi-k2|qwen3(?:\.5)?(?=[:/-]|$)/i;
 type PiRegistryProvider = Parameters<typeof getModel>[0];
 
 export interface PiModelStringInput {
@@ -96,6 +96,7 @@ const KNOWN_MODEL_SPECS: Record<string, { contextWindow: number; maxTokens: numb
   'llama3.3': { contextWindow: 131072, maxTokens: 4096 },
   'deepseek-r1': { contextWindow: 65536, maxTokens: 8192 },
   'deepseek-v3': { contextWindow: 65536, maxTokens: 8192 },
+  'deepseek-v4': { contextWindow: 128000, maxTokens: 16384 },
   gemma2: { contextWindow: 8192, maxTokens: 4096 },
   gemma3: { contextWindow: 131072, maxTokens: 8192 },
   phi3: { contextWindow: 131072, maxTokens: 4096 },
