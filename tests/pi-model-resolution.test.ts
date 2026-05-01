@@ -38,9 +38,23 @@ describe('pi model resolution helpers', () => {
   });
 
   it('builds provider-prefixed model ids from config-like input', () => {
-    expect(resolvePiModelString({ provider: 'openai', customProtocol: 'openai', model: 'gpt-5.4' })).toBe('openai/gpt-5.4');
-    expect(resolvePiModelString({ provider: 'custom', customProtocol: 'gemini', model: 'gemini-3-flash-preview' })).toBe('gemini/gemini-3-flash-preview');
-    expect(resolvePiModelString({ provider: 'anthropic', customProtocol: 'anthropic', model: 'anthropic/claude-sonnet-4-6' })).toBe('anthropic/claude-sonnet-4-6');
+    expect(
+      resolvePiModelString({ provider: 'openai', customProtocol: 'openai', model: 'gpt-5.4' })
+    ).toBe('openai/gpt-5.4');
+    expect(
+      resolvePiModelString({
+        provider: 'custom',
+        customProtocol: 'gemini',
+        model: 'gemini-3-flash-preview',
+      })
+    ).toBe('gemini/gemini-3-flash-preview');
+    expect(
+      resolvePiModelString({
+        provider: 'anthropic',
+        customProtocol: 'anthropic',
+        model: 'anthropic/claude-sonnet-4-6',
+      })
+    ).toBe('anthropic/claude-sonnet-4-6');
   });
 
   it('routes openrouter through the openai-compatible protocol', () => {
@@ -206,19 +220,60 @@ describe('pi model resolution helpers', () => {
   });
 
   it('auto-detects reasoning models by model id pattern', () => {
-    const thinking = buildSyntheticPiModel('kimi-k2-thinking', 'moonshot', 'openai', 'https://api.moonshot.cn/v1');
+    const thinking = buildSyntheticPiModel(
+      'kimi-k2-thinking',
+      'moonshot',
+      'openai',
+      'https://api.moonshot.cn/v1'
+    );
     expect(thinking.reasoning).toBe(true);
 
-    const kimiK2 = buildSyntheticPiModel('kimi-k2.5', 'moonshot', 'openai', 'https://api.moonshot.cn/v1');
+    const kimiK2 = buildSyntheticPiModel(
+      'kimi-k2.5',
+      'moonshot',
+      'openai',
+      'https://api.moonshot.cn/v1'
+    );
     expect(kimiK2.reasoning).toBe(true);
 
-    const deepseekR1 = buildSyntheticPiModel('deepseek-r1-distill', 'deepseek', 'openai', 'https://api.deepseek.com/v1');
+    const deepseekR1 = buildSyntheticPiModel(
+      'deepseek-r1-distill',
+      'deepseek',
+      'openai',
+      'https://api.deepseek.com/v1'
+    );
     expect(deepseekR1.reasoning).toBe(true);
 
-    const qwen35 = buildSyntheticPiModel('qwen3.5:0.8b', 'openai', 'openai', 'http://localhost:11434/v1');
+    const deepseekV4 = buildSyntheticPiModel(
+      'deepseek-v4-pro',
+      'deepseek',
+      'openai',
+      'https://api.deepseek.com/v1'
+    );
+    expect(deepseekV4.reasoning).toBe(true);
+
+    const qwen35 = buildSyntheticPiModel(
+      'qwen3.5:0.8b',
+      'openai',
+      'openai',
+      'http://localhost:11434/v1'
+    );
     expect(qwen35.reasoning).toBe(true);
 
-    const qwen3 = buildSyntheticPiModel('qwen3:8b', 'openai', 'openai', 'http://localhost:11434/v1');
+    const deepseekV4Pro = buildSyntheticPiModel(
+      'deepseek-v4-pro',
+      'deepseek',
+      'openai',
+      'https://api.deepseek.com/v1'
+    );
+    expect(deepseekV4Pro.reasoning).toBe(true);
+
+    const qwen3 = buildSyntheticPiModel(
+      'qwen3:8b',
+      'openai',
+      'openai',
+      'http://localhost:11434/v1'
+    );
     expect(qwen3.reasoning).toBe(true);
 
     const reasoner = buildSyntheticPiModel('o3-reasoner', 'openai', 'openai');
@@ -238,7 +293,14 @@ describe('pi model resolution helpers', () => {
     expect(forced.reasoning).toBe(true);
 
     // Force reasoning=false on a model that would auto-detect
-    const suppressed = buildSyntheticPiModel('kimi-k2.5', 'moonshot', 'openai', '', undefined, false);
+    const suppressed = buildSyntheticPiModel(
+      'kimi-k2.5',
+      'moonshot',
+      'openai',
+      '',
+      undefined,
+      false
+    );
     expect(suppressed.reasoning).toBe(false);
   });
 
@@ -272,7 +334,7 @@ describe('pi model resolution helpers', () => {
         configProvider: 'ollama',
         rawProvider: 'ollama',
         customBaseUrl: 'http://localhost:11434/v1',
-      },
+      }
     );
 
     expect(model.baseUrl).toBe('http://localhost:11434/v1');
@@ -297,11 +359,13 @@ describe('pi model resolution helpers', () => {
         configProvider: 'openai',
         rawProvider: 'ollama',
         customBaseUrl: 'http://localhost:11434/v1',
-      },
+      }
     );
 
     expect(model.compat?.supportsReasoningEffort).toBe(true);
-    expect((model.compat?.reasoningEffortMap as Record<string, string> | undefined)?.off).toBe('none');
+    expect((model.compat?.reasoningEffortMap as Record<string, string> | undefined)?.off).toBe(
+      'none'
+    );
   });
 
   it('disables developer role for openrouter with custom endpoint', () => {
@@ -322,7 +386,7 @@ describe('pi model resolution helpers', () => {
         configProvider: 'openrouter',
         rawProvider: 'openrouter',
         customBaseUrl: 'https://openrouter.ai/api/v1',
-      },
+      }
     );
 
     expect(model.compat?.supportsDeveloperRole).toBe(false);
@@ -346,7 +410,7 @@ describe('pi model resolution helpers', () => {
         configProvider: 'openai',
         rawProvider: 'openai',
         customBaseUrl: 'https://api.moonshot.cn/v1',
-      },
+      }
     );
 
     expect(model.compat?.supportsDeveloperRole).toBe(false);
@@ -366,17 +430,68 @@ describe('pi model resolution helpers', () => {
         cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
         contextWindow: 128000,
         maxTokens: 16384,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         compat: { supportsStreaming: true } as any,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any,
       {
         configProvider: 'custom',
         rawProvider: 'custom',
         customBaseUrl: 'https://my-relay.example.com/v1',
-      },
+      }
     );
 
     expect(model.compat?.supportsDeveloperRole).toBe(false);
     expect(model.compat?.supportsStore).toBe(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((model.compat as any)?.supportsStreaming).toBe(true);
+  });
+
+  it('sets requiresThinkingInContent for DeepSeek V4 models on custom endpoints', () => {
+    const model = applyPiModelRuntimeOverrides(
+      {
+        id: 'deepseek-v4-pro',
+        name: 'deepseek-v4-pro',
+        api: 'openai-completions',
+        provider: 'custom',
+        baseUrl: 'https://my-relay.example.com/v1',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 16384,
+      },
+      {
+        configProvider: 'custom',
+        rawProvider: 'custom',
+        customBaseUrl: 'https://my-relay.example.com/v1',
+      }
+    );
+
+    expect(model.compat?.requiresThinkingInContent).toBe(true);
+  });
+
+  it('does not set requiresThinkingInContent for non-V4 DeepSeek models on custom endpoints', () => {
+    const model = applyPiModelRuntimeOverrides(
+      {
+        id: 'deepseek-reasoner',
+        name: 'deepseek-reasoner',
+        api: 'openai-completions',
+        provider: 'custom',
+        baseUrl: 'https://my-relay.example.com/v1',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 16384,
+      },
+      {
+        configProvider: 'custom',
+        rawProvider: 'custom',
+        customBaseUrl: 'https://my-relay.example.com/v1',
+      }
+    );
+
+    expect(model.compat?.requiresThinkingInContent).toBeUndefined();
   });
 });
