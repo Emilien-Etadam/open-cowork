@@ -1,5 +1,21 @@
 ---
 layout: home
+head:
+  - - link
+    - rel: canonical
+      href: https://opencoworkai.github.io/open-cowork/
+  - - link
+    - rel: alternate
+      hreflang: en
+      href: https://opencoworkai.github.io/open-cowork/
+  - - link
+    - rel: alternate
+      hreflang: zh-CN
+      href: https://opencoworkai.github.io/open-cowork/zh/
+  - - link
+    - rel: alternate
+      hreflang: x-default
+      href: https://opencoworkai.github.io/open-cowork/
 
 hero:
   name: Open Cowork
