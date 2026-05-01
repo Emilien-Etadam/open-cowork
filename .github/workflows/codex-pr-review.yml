@@ -91,14 +91,57 @@ jobs:
             ${{ github.event.pull_request.base.ref }} \
             +refs/pull/${{ github.event.pull_request.number }}/head:refs/remotes/pull/${{ github.event.pull_request.number }}/head
 
+      - name: Resolve review provider config
+        if: steps.check_bot.outputs.has_review_for_current_head != 'true'
+        id: review_config
+        shell: bash
+        env:
+          DEFAULT_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DEFAULT_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          DEFAULT_MODEL: ${{ vars.OPENAI_MODEL }}
+          DEFAULT_EFFORT: ${{ vars.OPENAI_EFFORT }}
+          REVIEW_API_KEY: ${{ secrets.REVIEW_OPENAI_API_KEY }}
+          REVIEW_BASE_URL: ${{ secrets.REVIEW_OPENAI_BASE_URL }}
+          REVIEW_MODEL: ${{ vars.REVIEW_OPENAI_MODEL }}
+          REVIEW_EFFORT: ${{ vars.REVIEW_OPENAI_EFFORT }}
+        run: |
+          api_key="$REVIEW_API_KEY"
+          [ -n "$api_key" ] || api_key="$DEFAULT_API_KEY"
+
+          base_url="$REVIEW_BASE_URL"
+          [ -n "$base_url" ] || base_url="$DEFAULT_BASE_URL"
+
+          model="$REVIEW_MODEL"
+          [ -n "$model" ] || model="$DEFAULT_MODEL"
+          [ -n "$model" ] || model='gpt-5.4'
+
+          effort="$REVIEW_EFFORT"
+          [ -n "$effort" ] || effort="$DEFAULT_EFFORT"
+          [ -n "$effort" ] || effort='high'
+
+          is_deepseek='false'
+          case "$base_url" in
+            *api.deepseek.com*)
+              is_deepseek='true'
+              ;;
+          esac
+
+          {
+            echo "api_key=$api_key"
+            echo "base_url=$base_url"
+            echo "model=$model"
+            echo "effort=$effort"
+            echo "is_deepseek=$is_deepseek"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Set up Node.js for DeepSeek review
-        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && contains(secrets.REVIEW_OPENAI_BASE_URL || secrets.OPENAI_BASE_URL, 'api.deepseek.com')
+        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && steps.review_config.outputs.is_deepseek == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "20"
 
       - name: Run DeepSeek for PR Review
-        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && contains(secrets.REVIEW_OPENAI_BASE_URL || secrets.OPENAI_BASE_URL, 'api.deepseek.com')
+        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && steps.review_config.outputs.is_deepseek == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -106,15 +149,15 @@ jobs:
           LATEST_BOT_REVIEW_ID: ${{ steps.check_bot.outputs.latest_bot_review_id }}
           LATEST_BOT_REVIEW_COMMIT: ${{ steps.check_bot.outputs.latest_bot_review_commit }}
           IS_FOLLOW_UP_REVIEW: ${{ steps.check_bot.outputs.is_follow_up_review }}
-          DEEPSEEK_API_KEY: ${{ secrets.REVIEW_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
-          DEEPSEEK_BASE_URL: ${{ secrets.REVIEW_OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
-          DEEPSEEK_MODEL: ${{ vars.REVIEW_OPENAI_MODEL || vars.OPENAI_MODEL || 'deepseek-v4-pro' }}
-          DEEPSEEK_EFFORT: ${{ vars.REVIEW_OPENAI_EFFORT || vars.OPENAI_EFFORT || 'high' }}
+          DEEPSEEK_API_KEY: ${{ steps.review_config.outputs.api_key }}
+          DEEPSEEK_BASE_URL: ${{ steps.review_config.outputs.base_url }}
+          DEEPSEEK_MODEL: ${{ steps.review_config.outputs.model }}
+          DEEPSEEK_EFFORT: ${{ steps.review_config.outputs.effort }}
         run: node .github/scripts/deepseek-pr-review.mjs
 
       - name: Run Codex for PR Review
         id: run_codex
-        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && !contains(secrets.REVIEW_OPENAI_BASE_URL || secrets.OPENAI_BASE_URL, 'api.deepseek.com')
+        if: steps.check_bot.outputs.has_review_for_current_head != 'true' && steps.review_config.outputs.is_deepseek != 'true'
         uses: openai/codex-action@v1
         env:
           GH_TOKEN: ${{ github.token }}
@@ -124,10 +167,10 @@ jobs:
           LATEST_BOT_REVIEW_COMMIT: ${{ steps.check_bot.outputs.latest_bot_review_commit }}
           IS_FOLLOW_UP_REVIEW: ${{ steps.check_bot.outputs.is_follow_up_review }}
         with:
-          openai-api-key: ${{ secrets.REVIEW_OPENAI_API_KEY || secrets.OPENAI_API_KEY }}
-          responses-api-endpoint: ${{ secrets.REVIEW_OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
-          model: ${{ vars.REVIEW_OPENAI_MODEL || vars.OPENAI_MODEL || 'gpt-5.4' }}
-          effort: ${{ vars.REVIEW_OPENAI_EFFORT || vars.OPENAI_EFFORT || 'high' }}
+          openai-api-key: ${{ steps.review_config.outputs.api_key }}
+          responses-api-endpoint: ${{ steps.review_config.outputs.base_url }}
+          model: ${{ steps.review_config.outputs.model }}
+          effort: ${{ steps.review_config.outputs.effort }}
           sandbox: danger-full-access
           safety-strategy: drop-sudo
           prompt-file: .github/prompts/codex-pr-review.md
