@@ -11,7 +11,7 @@ vi.mock('electron', () => ({
   },
 }));
 
-import { MCPManager } from '../src/main/mcp/mcp-manager';
+import { formatMcpToolName, MCPManager } from '../src/main/mcp/mcp-manager';
 
 type TestManagerInternals = {
   clients: Map<string, unknown>;
@@ -321,5 +321,12 @@ describe('MCP tool name parsing', () => {
     const [tool] = manager.getTools();
     expect(tool.name).toBe('mcp__Browser_Context__tool');
     expect(tool.originalName).toBe('!!!');
+  });
+
+  it('falls back to a hashed safe name when an absurdly long suffix leaves no room for the base', () => {
+    const toolName = formatMcpToolName('mcp__Browser_Context__browser_context', '9'.repeat(80));
+
+    expect(toolName.length).toBeLessThanOrEqual(64);
+    expect(toolName.startsWith('tool_')).toBe(true);
   });
 });

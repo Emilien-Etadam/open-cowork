@@ -95,12 +95,18 @@ function truncateMcpToolName(baseName: string, maxLength: number): string {
   return `${baseName.slice(0, prefixLength)}_${hash}`;
 }
 
-function formatMcpToolName(baseName: string, suffix: number | null): string {
+export function formatMcpToolName(baseName: string, suffix: string | null): string {
   const suffixPart = suffix === null ? '' : `_${suffix}`;
-  const truncatedBase = truncateMcpToolName(
-    baseName,
-    MAX_MODEL_TOOL_NAME_LENGTH - suffixPart.length
-  );
+  const availableBaseLength = MAX_MODEL_TOOL_NAME_LENGTH - suffixPart.length;
+
+  if (availableBaseLength <= 0) {
+    return truncateMcpToolName(
+      `tool_${createHash('sha256').update(`${baseName}${suffixPart}`).digest('hex')}`,
+      MAX_MODEL_TOOL_NAME_LENGTH
+    );
+  }
+
+  const truncatedBase = truncateMcpToolName(baseName, availableBaseLength);
 
   return `${truncatedBase}${suffixPart}`;
 }
@@ -113,10 +119,10 @@ function createUniqueMcpToolName(baseName: string, usedNames: Set<string>): stri
   }
 
   let suffix = 2;
-  let candidate = formatMcpToolName(baseName, suffix);
+  let candidate = formatMcpToolName(baseName, String(suffix));
   while (usedNames.has(candidate)) {
     suffix += 1;
-    candidate = formatMcpToolName(baseName, suffix);
+    candidate = formatMcpToolName(baseName, String(suffix));
   }
 
   usedNames.add(candidate);
