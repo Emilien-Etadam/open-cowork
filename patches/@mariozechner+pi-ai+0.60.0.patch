@@ -1,8 +1,8 @@
 diff --git a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
-index 29ae8cf..a1b2c3d 100644
+index 29ae8cf..c5f7df4 100644
 --- a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
 +++ b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
-@@ -485,6 +485,19 @@
+@@ -485,6 +485,19 @@ export function convertMessages(model, context, compat) {
                          assistantMsg.content = [{ type: "text", text: thinkingText }];
                      }
                  }
@@ -22,15 +22,23 @@ index 29ae8cf..a1b2c3d 100644
                  else {
                      // Use the signature from the first thinking block if available (for llama.cpp server + gpt-oss)
                      const signature = nonEmptyThinkingBlocks[0].thinkingSignature;
-@@ -690,6 +703,7 @@
+@@ -658,6 +671,7 @@ function mapStopReason(reason) {
+ function detectCompat(model) {
+     const provider = model.provider;
+     const baseUrl = model.baseUrl;
++    const isDeepSeekV4 = /^deepseek-v4(?:$|[-:])/i.test(model.id);
+     const isZai = provider === "zai" || baseUrl.includes("api.z.ai");
+     const isNonStandard = provider === "cerebras" ||
+         baseUrl.includes("cerebras.ai") ||
+@@ -690,6 +704,7 @@ function detectCompat(model) {
          requiresToolResultName: false,
          requiresAssistantAfterToolResult: false,
          requiresThinkingAsText: false,
-+        requiresThinkingInContent: provider === "deepseek" || baseUrl.includes("deepseek.com"),
++        requiresThinkingInContent: isDeepSeekV4,
          thinkingFormat: isZai ? "zai" : "openai",
          openRouterRouting: {},
          vercelGatewayRouting: {},
-@@ -714,6 +728,7 @@
+@@ -714,6 +729,7 @@ function getCompat(model) {
          requiresToolResultName: model.compat.requiresToolResultName ?? detected.requiresToolResultName,
          requiresAssistantAfterToolResult: model.compat.requiresAssistantAfterToolResult ?? detected.requiresAssistantAfterToolResult,
          requiresThinkingAsText: model.compat.requiresThinkingAsText ?? detected.requiresThinkingAsText,

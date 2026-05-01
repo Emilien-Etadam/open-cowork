@@ -447,7 +447,7 @@ describe('pi model resolution helpers', () => {
     expect((model.compat as any)?.supportsStreaming).toBe(true);
   });
 
-  it('sets requiresThinkingInContent for DeepSeek models on custom endpoints', () => {
+  it('sets requiresThinkingInContent for DeepSeek V4 models on custom endpoints', () => {
     const model = applyPiModelRuntimeOverrides(
       {
         id: 'deepseek-v4-pro',
@@ -469,5 +469,29 @@ describe('pi model resolution helpers', () => {
     );
 
     expect(model.compat?.requiresThinkingInContent).toBe(true);
+  });
+
+  it('does not set requiresThinkingInContent for non-V4 DeepSeek models on custom endpoints', () => {
+    const model = applyPiModelRuntimeOverrides(
+      {
+        id: 'deepseek-reasoner',
+        name: 'deepseek-reasoner',
+        api: 'openai-completions',
+        provider: 'custom',
+        baseUrl: 'https://my-relay.example.com/v1',
+        reasoning: true,
+        input: ['text'],
+        cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+        contextWindow: 128000,
+        maxTokens: 16384,
+      },
+      {
+        configProvider: 'custom',
+        rawProvider: 'custom',
+        customBaseUrl: 'https://my-relay.example.com/v1',
+      }
+    );
+
+    expect(model.compat?.requiresThinkingInContent).toBeUndefined();
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import path from 'node:path';
 import fs from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 const completionsPath = path.resolve(
   'node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js'
@@ -12,7 +13,7 @@ if (!isPatched) {
   throw new Error('Expected @mariozechner/pi-ai patch to be applied before running this suite');
 }
 
-const mod = await import(completionsPath);
+const mod = await import(pathToFileURL(completionsPath).href);
 const { convertMessages } = mod;
 
 describe('DeepSeek thinking block serialization', () => {

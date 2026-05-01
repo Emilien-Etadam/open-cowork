@@ -5,7 +5,7 @@ const COMMON_FALLBACK_PROVIDERS = ['openai', 'anthropic', 'google'] as const;
 const INVALID_REGISTRY_PROVIDERS = new Set(['', 'custom']);
 const REASONING_MODEL_PATTERN =
   /\bthinking\b|\breasoner\b|deepseek-r1|deepseek-v4|kimi-k2|qwen3(?:\.5)?(?=[:/-]|$)/i;
-const DEEPSEEK_MODEL_PATTERN = /deepseek/i;
+const DEEPSEEK_V4_MODEL_PATTERN = /^deepseek-v4(?:$|[-:])/i;
 type PiRegistryProvider = Parameters<typeof getModel>[0];
 
 export interface PiModelStringInput {
@@ -311,8 +311,8 @@ export function applyPiModelRuntimeOverrides(
     } as typeof nextModel;
   }
 
-  // DeepSeek models on custom/relay endpoints need thinking blocks in content[] array
-  if (nextModel.api === 'openai-completions' && DEEPSEEK_MODEL_PATTERN.test(nextModel.id)) {
+  // DeepSeek V4 models on custom/relay endpoints need thinking blocks in content[] array.
+  if (nextModel.api === 'openai-completions' && DEEPSEEK_V4_MODEL_PATTERN.test(nextModel.id)) {
     const currentCompat = (nextModel.compat || {}) as Record<string, unknown>;
     if (!currentCompat.requiresThinkingInContent) {
       nextModel = {
