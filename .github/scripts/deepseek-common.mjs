@@ -127,9 +127,6 @@ export function mapReasoningEffort(effort) {
 
 export function resolveThinkingConfig(model) {
   const normalized = (model || '').toLowerCase();
-  if (normalized === 'deepseek-chat' || normalized.startsWith('deepseek-v4-flash')) {
-    return { type: 'disabled' };
-  }
   if (normalized === 'deepseek-reasoner' || normalized.startsWith('deepseek-v4-pro')) {
     return { type: 'enabled' };
   }
