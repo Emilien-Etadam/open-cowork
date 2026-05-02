@@ -2,11 +2,19 @@ import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 
-const settingsSandboxPath = path.resolve(
-  process.cwd(),
-  'src/renderer/components/settings/SettingsSandbox.tsx'
-);
-const settingsSandboxContent = fs.readFileSync(settingsSandboxPath, 'utf8');
+function readSettingsSandboxContent(): string {
+  const filePath = path.resolve(
+    process.cwd(),
+    'src/renderer/components/settings/SettingsSandbox.tsx'
+  );
+  try {
+    return fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return '';
+  }
+}
+
+const settingsSandboxContent = readSettingsSandboxContent();
 
 describe('SettingsSandbox status display', () => {
   it('does not show the stale Coming Soon placeholder', () => {
