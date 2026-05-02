@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Shield,
-  AlertCircle,
-  CheckCircle,
-  Settings,
-  Loader2,
-} from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle, Settings, Loader2 } from 'lucide-react';
 import { renderLocalizedBannerMessage } from './shared';
 import type { LocalizedBanner } from './shared';
 
@@ -293,6 +287,11 @@ export function SettingsSandbox() {
     : isMac
       ? status?.lima?.available && status?.lima?.instanceRunning && status?.lima?.nodeAvailable
       : false;
+  const sandboxStatusText = !sandboxEnabled
+    ? t('sandbox.disabledStatus')
+    : sandboxReady
+      ? t('sandbox.readyStatus')
+      : t('sandbox.notReadyStatus');
 
   return (
     <div className="space-y-4">
@@ -310,7 +309,7 @@ export function SettingsSandbox() {
         </div>
       )}
 
-      {/* Enable/Disable Toggle - Temporarily Disabled */}
+      {/* Sandbox overview */}
       <div className="p-6 rounded-lg bg-surface border border-border text-center space-y-4">
         <div className="w-16 h-16 rounded-lg flex items-center justify-center mx-auto bg-surface-muted text-text-muted">
           <Shield className="w-8 h-8" />
@@ -327,17 +326,29 @@ export function SettingsSandbox() {
                 : t('sandbox.nativeDesc')}
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-warning/10 text-warning text-xs font-medium">
-          <span>🚧</span>
-          <span>{t('sandbox.comingSoon')}</span>
+        <div
+          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            sandboxReady
+              ? 'bg-success/10 text-success'
+              : sandboxEnabled
+                ? 'bg-warning/10 text-warning'
+                : 'bg-surface-muted text-text-muted'
+          }`}
+        >
+          {sandboxReady ? (
+            <CheckCircle className="w-3.5 h-3.5" />
+          ) : (
+            <AlertCircle className="w-3.5 h-3.5" />
+          )}
+          <span>{sandboxStatusText}</span>
         </div>
         <p className="text-xs text-text-muted max-w-sm mx-auto">
           {t('sandbox.helpText1')} {t('sandbox.helpText2')}
         </p>
       </div>
 
-      {/* Status Details - Hidden while sandbox is disabled for debugging */}
-      {false && sandboxEnabled && (
+      {/* Status Details */}
+      {sandboxEnabled && (
         <div className="p-4 rounded-lg bg-surface border border-border space-y-4 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-text-primary">
