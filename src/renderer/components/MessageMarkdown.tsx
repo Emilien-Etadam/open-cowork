@@ -7,11 +7,11 @@ import rehypeKatex from 'rehype-katex';
 
 // Hoisted to module scope to avoid re-creating arrays on every render
 const REMARK_PLUGINS = [remarkMath, [remarkGfm, { singleTilde: false }]] as const;
-// rehypeKatex must run BEFORE rehypeSanitize so that KaTeX output is generated
-// first, then sanitized — the reverse order strips KaTeX markup before it renders.
+// Sanitize user-authored HTML before KaTeX expands math nodes. Running
+// rehypeSanitize after rehypeKatex strips the generated KaTeX markup/classes.
 const REHYPE_PLUGINS = [
-  [rehypeKatex, { throwOnError: false, strict: false }],
   rehypeSanitize,
+  [rehypeKatex, { throwOnError: false, strict: false }],
 ] as const;
 
 export interface MessageMarkdownProps {
