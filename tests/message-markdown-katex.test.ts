@@ -10,7 +10,7 @@ describe('MessageMarkdown KaTeX rendering', () => {
     );
 
     expect(html).toContain('katex');
-    expect(html).toContain('math');
+    expect(html).toContain('katex-html');
     expect(html).not.toContain('$E=mc^2$');
   });
 
