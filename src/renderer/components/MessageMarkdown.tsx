@@ -2,15 +2,31 @@ import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import rehypeKatex from 'rehype-katex';
 
 // Hoisted to module scope to avoid re-creating arrays on every render
 const REMARK_PLUGINS = [remarkMath, [remarkGfm, { singleTilde: false }]] as const;
-// Sanitize user-authored HTML before KaTeX expands math nodes. Running
-// rehypeSanitize after rehypeKatex strips the generated KaTeX markup/classes.
+
+// remark-math emits <code class="language-math math-inline"> (inline) and
+// <pre><code class="language-math math-display"> (display). The default schema
+// allows only /^language-./ on <code>, stripping the math-* tokens before
+// rehypeKatex processes them.
+const mathSanitizeSchema = {
+  ...defaultSchema,
+  attributes: {
+    ...defaultSchema.attributes,
+    // Merged into one tuple — findDefinition returns the first match per key,
+    // so a second ['className', ...] entry would be silently ignored.
+    code: [['className', /^language-./, 'math-inline', 'math-display']],
+  },
+};
+
+// NOTE: rehypeSanitize runs BEFORE rehypeKatex — KaTeX output is unsanitized.
+// Safe while trust is false (default), which disables \href, \htmlClass, etc.
+// If KaTeX trust is ever enabled, add a second sanitize pass.
 const REHYPE_PLUGINS = [
-  rehypeSanitize,
+  [rehypeSanitize, mathSanitizeSchema],
   [rehypeKatex, { throwOnError: false, strict: false }],
 ] as const;
 
