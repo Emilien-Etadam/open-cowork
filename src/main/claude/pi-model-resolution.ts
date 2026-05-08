@@ -70,6 +70,18 @@ function shouldDisableDeveloperRoleForEndpoint(
   return true;
 }
 
+function shouldPreserveOpenAIResponsesApi(
+  model: Model<Api>,
+  options: PiModelLookupOptions
+): boolean {
+  if (model.api !== 'openai-responses') {
+    return false;
+  }
+
+  const endpoint = options.customBaseUrl?.trim() || model.baseUrl?.trim();
+  return !endpoint || isOfficialOpenAIBaseUrl(endpoint);
+}
+
 export function inferPiApi(protocol: string): string {
   switch (protocol) {
     case 'anthropic':
@@ -269,7 +281,12 @@ export function applyPiModelRuntimeOverrides(
   }
 
   const effectiveProvider = options.rawProvider || options.configProvider;
-  if (options.customBaseUrl && isCustomProvider && nextModel.api === 'openai-responses') {
+  if (
+    options.customBaseUrl &&
+    isCustomProvider &&
+    nextModel.api === 'openai-responses' &&
+    !shouldPreserveOpenAIResponsesApi(nextModel, options)
+  ) {
     // Most custom OpenAI-compatible relays only implement chat/completions.
     nextModel = { ...nextModel, api: 'openai-completions' } as typeof nextModel;
   }
@@ -328,7 +345,7 @@ export function applyPiModelRuntimeOverrides(
   // Handle custom provider with explicit protocol override
   if (isCustomProvider && options.customProtocol) {
     const targetApi = inferPiApi(options.customProtocol);
-    if (nextModel.api !== targetApi) {
+    if (nextModel.api !== targetApi && !shouldPreserveOpenAIResponsesApi(nextModel, options)) {
       nextModel = { ...nextModel, api: targetApi } as typeof nextModel;
     }
   }

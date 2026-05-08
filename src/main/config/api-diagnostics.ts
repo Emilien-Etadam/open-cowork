@@ -138,6 +138,43 @@ function getApiErrorInfo(err: unknown): { status?: number; message: string } {
   return { message: String(err) };
 }
 
+export function isLikelyAuthFailure(error: { status?: number; message: string }): boolean {
+  if (error.status === 401 || error.status === 403) {
+    return true;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    /api\s*key.*(?:not\s*valid|invalid)|invalid.*api\s*key|unauthorized|forbidden|permission\s*denied/.test(
+      message
+    ) ||
+    (error.status === 400 && /api\s*key|auth|credential|permission/.test(message))
+  );
+}
+
+function isGeminiModelsGetProbeUnavailable(error: { status?: number; message: string }): boolean {
+  if (error.status !== undefined) {
+    return false;
+  }
+
+  return /models\.get|reading ['"]get['"]|reading get/i.test(error.message);
+}
+
+export function shouldContinueAfterGeminiAuthProbeError(error: {
+  status?: number;
+  message: string;
+}): boolean {
+  if (error.status === 404) {
+    return true;
+  }
+
+  if (isLikelyAuthFailure(error)) {
+    return false;
+  }
+
+  return isGeminiModelsGetProbeUnavailable(error);
+}
+
 function getModelDiagnosticFix(
   errorType: Awaited<ReturnType<typeof probeWithClaudeSdk>>['errorType'],
   model: string
@@ -346,18 +383,16 @@ async function stepAuth(input: DiagnosticInput, step: DiagnosticStep): Promise<v
       step.status = 'ok';
     } catch (err) {
       const e = getApiErrorInfo(err);
-      if (e.status === 404) {
-        // Custom Gemini proxy may not implement models.get — treat like OpenAI 404 path
+      if (shouldContinueAfterGeminiAuthProbeError(e)) {
+        // Some SDK/proxy combinations do not support the lightweight models.get
+        // endpoint. Continue to the live model probe, which exercises inference.
         step.status = 'ok';
-        step.fix = 'models_get_not_supported';
-        log(
-          '[Diagnostics] Gemini auth: models.get returned 404 — proxy may not support this endpoint, continuing to model check'
-        );
+        step.fix = e.status === 404 ? 'models_get_not_supported' : 'gemini_auth_probe_unavailable';
+        log('[Diagnostics] Gemini auth probe unavailable, continuing to model check:', e.message);
       } else {
         step.status = 'fail';
         step.error = e.message;
-        step.fix =
-          e.status === 401 || e.status === 403 ? 'auth_invalid_key' : 'auth_request_failed';
+        step.fix = isLikelyAuthFailure(e) ? 'auth_invalid_key' : 'auth_request_failed';
       }
     }
 
