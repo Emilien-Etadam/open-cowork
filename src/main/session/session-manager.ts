@@ -127,7 +127,7 @@ export class SessionManager {
    */
   private createAgentRunner(): void {
     this.agentRunner = this.createClaudeAgentRunner();
-    log('[SessionManager] Using pi-coding-agent runner');
+    log('[SessionManager] Using Open Cowork agent runner');
   }
 
   private createClaudeAgentRunner(): ClaudeAgentRunner {
@@ -278,7 +278,9 @@ export class SessionManager {
     const envCwd = process.env.COWORK_WORKDIR || process.env.WORKDIR || process.env.DEFAULT_CWD;
     const effectiveCwd = cwd || envCwd;
     const resolvedMemoryEnabled =
-      typeof memoryEnabled === 'boolean' ? memoryEnabled : configStore.get('memoryEnabled') !== false;
+      typeof memoryEnabled === 'boolean'
+        ? memoryEnabled
+        : configStore.get('memoryEnabled') !== false;
     return {
       id: uuidv4(),
       title,
