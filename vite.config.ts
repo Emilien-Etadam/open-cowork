@@ -5,7 +5,7 @@ import { resolve } from 'path';
 import { builtinModules } from 'module';
 
 // Node built-in modules must be external for Electron main process
-const nodeBuiltins = builtinModules.flatMap(m => [m, `node:${m}`]);
+const nodeBuiltins = builtinModules.flatMap((m) => [m, `node:${m}`]);
 const ignoredWatchPaths = [
   '**/release/**',
   '**/dist/**',
@@ -35,7 +35,7 @@ export default defineConfig({
                 'utf-8-validate',
                 'electron',
                 // Externalize large CJS-compatible main-process dependencies
-                // NOTE: ESM-only packages (pi-coding-agent, pi-ai, electron-store, uuid)
+                // NOTE: ESM-only packages (@mariozechner/pi-coding-agent, pi-ai, electron-store, uuid)
                 // must stay bundled — CJS require() can't load them
                 '@anthropic-ai/sdk',
                 '@larksuiteoapi/node-sdk',

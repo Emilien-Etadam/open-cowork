@@ -4,7 +4,7 @@
  * AI query execution engine (1514 lines).
  *
  * Responsibilities:
- * - Runs AI conversations via the pi-coding-agent SDK (createAgentSession)
+ * - Runs AI conversations via the Open Cowork agent SDK (createAgentSession)
  * - Routes providers via pi-ai SDK for model resolution
  * - Bridges MCP tools into SDK ToolDefinition format
  * - Streams responses back as ServerEvents (stream.message, stream.partial, trace.step)
@@ -272,7 +272,7 @@ async function enrichProcessPathForBuild(): Promise<void> {
 // Shared pi-ai auth storage — created once, reused across sessions.
 
 /**
- * Bridge MCP tools from MCPManager into pi-coding-agent ToolDefinition[] format.
+ * Bridge MCP tools from MCPManager into ToolDefinition[] format for the agent SDK.
  * Each MCP tool becomes a customTool whose execute() delegates to mcpManager.callTool().
  */
 function buildMcpCustomTools(mcpManager: MCPManager): ToolDefinition[] {
@@ -762,7 +762,7 @@ ${hints.join('\n')}
     this._skillsAdapter = skillsAdapter;
     this.extensionManager = extensionManager;
 
-    log('[ClaudeAgentRunner] Initialized with pi-coding-agent SDK');
+    log('[ClaudeAgentRunner] Initialized with Open Cowork agent SDK');
     log('[ClaudeAgentRunner] Skills enabled: settingSources=[user, project], Skill tool enabled');
     if (mcpManager) {
       log('[ClaudeAgentRunner] MCP support enabled');
@@ -879,7 +879,7 @@ ${hints.join('\n')}
 
   /**
    * Wrap the bash tool to inject a default timeout when the model omits one.
-   * The pi-coding-agent SDK's bash tool has no default timeout, which means
+   * The agent SDK's bash tool has no default timeout, which means
    * commands can run indefinitely if the model doesn't specify a timeout.
    */
   private static wrapBashToolWithDefaultTimeout(tools: ToolDefinition[]): ToolDefinition[] {
@@ -1440,7 +1440,7 @@ ${hints.join('\n')}
 
       logTiming('after pi-ai model resolution', runStartTime);
 
-      // pi-coding-agent handles path sandboxing via its own tools
+      // the agent SDK handles path sandboxing via its own tools
       const imageCapable = true; // pi-ai models generally support images; let the model handle unsupported cases
       const effectiveCwd =
         useSandboxIsolation && sandboxPath ? sandboxPath : workingDir || process.cwd();
@@ -1845,10 +1845,10 @@ Tool routing:
         .filter((section): section is string => Boolean(section && section.trim()))
         .join('\n\n');
 
-      logTiming('before pi-coding-agent session creation', runStartTime);
+      logTiming('before agent session creation', runStartTime);
 
-      // Create or reuse pi-coding-agent session
-      // Bridge MCP tools as customTools for pi-coding-agent.
+      // Create or reuse agent session
+      // Bridge MCP tools as customTools for the agent SDK.
       // Re-read every query so newly added/removed MCP servers take effect immediately.
       const mcpCustomTools = this.mcpManager ? buildMcpCustomTools(this.mcpManager) : [];
       const extensionCustomTools = extensionResult.customTools || [];
@@ -1934,9 +1934,9 @@ Tool routing:
         }
 
         logCtx('[ClaudeAgentRunner] Reusing cached pi session for:', session.id);
-        logTiming('pi-coding-agent session reused', runStartTime);
+        logTiming('agent session reused', runStartTime);
       } else {
-        // First query in this session — create new pi-coding-agent session
+        // First query in this session — create new agent session
         // ResourceLoader + ModelRegistry only needed for session creation — skip on reuse
         const { DefaultResourceLoader } = await import('@mariozechner/pi-coding-agent');
         const resourceLoader = new DefaultResourceLoader({
@@ -2053,10 +2053,10 @@ Tool routing:
           } // end else (_onPayload exists)
         }
 
-        logTiming('pi-coding-agent session created', runStartTime);
+        logTiming('agent session created', runStartTime);
       }
 
-      // Set up event handler to bridge pi-coding-agent events → our ServerEvent protocol
+      // Set up event handler to bridge agent SDK events → our ServerEvent protocol
 
       // Accumulate streamed text deltas in case message_end.content is empty (pi SDK streaming behaviour)
       let streamedText = '';
@@ -2502,7 +2502,7 @@ Tool routing:
         if (ollamaColdStartTimerId) clearTimeout(ollamaColdStartTimerId);
       }
 
-      logTiming('pi-coding-agent prompt completed', runStartTime);
+      logTiming('agent prompt completed', runStartTime);
 
       // If the SDK swallowed the AbortError and returned void, detect timeout here
       if (controller.signal.aborted && abortedByTimeout) {

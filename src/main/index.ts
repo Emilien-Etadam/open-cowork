@@ -810,7 +810,7 @@ app
     log('=== Open Cowork Starting ===');
     log('Config file:', configStore.getPath());
     log('Is configured:', configStore.isConfigured());
-    log('[Runtime] Using pi-coding-agent SDK for all providers');
+    log('[Runtime] Using Open Cowork agent SDK for all providers');
     log('Developer logs:', enableDevLogs ? 'Enabled' : 'Disabled');
     log('Environment Variables:');
     log('  ANTHROPIC_AUTH_TOKEN:', process.env.ANTHROPIC_AUTH_TOKEN ? '✓ Set' : '✗ Not set');
@@ -834,9 +834,7 @@ app
 
     pluginRuntimeService = new PluginRuntimeService(new PluginCatalogService());
     memoryService = new MemoryService(db);
-    const extensionManager = new AgentRuntimeExtensionManager([
-      new MemoryExtension(memoryService),
-    ]);
+    const extensionManager = new AgentRuntimeExtensionManager([new MemoryExtension(memoryService)]);
 
     // Initialize session manager before creating an interactive window.
     // This avoids session.start racing the startup path and hitting a null manager.
@@ -1470,7 +1468,10 @@ ipcMain.handle('config.save', async (_event, newConfig: Partial<AppConfig>) => {
       ? {
           ...newConfig.memoryRuntime,
           llm: newConfig.memoryRuntime.llm
-            ? { ...newConfig.memoryRuntime.llm, apiKey: newConfig.memoryRuntime.llm.apiKey ? '***' : '' }
+            ? {
+                ...newConfig.memoryRuntime.llm,
+                apiKey: newConfig.memoryRuntime.llm.apiKey ? '***' : '',
+              }
             : undefined,
           embedding: newConfig.memoryRuntime.embedding
             ? {
