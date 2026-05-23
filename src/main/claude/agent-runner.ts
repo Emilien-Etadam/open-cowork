@@ -1211,6 +1211,10 @@ ${hints.join('\n')}
 
     const thinkingStepId = uuidv4();
     let abortedByTimeout = false;
+    // Set to true when the loop-guard unilaterally aborts (hash_abort / freq_abort).
+    // The catch block consults this flag to avoid overwriting the 'error' trace
+    // status that handleLoopGuardDecision has already published.
+    let abortedByLoopGuard = false;
 
     try {
       this.pathResolver.registerSession(session.id, session.mountedPaths);
@@ -2356,6 +2360,10 @@ Tool routing:
             title: 'Stopped: tool-call loop detected',
           });
           try {
+            // Mark BEFORE calling abort() so the AbortError handler in the
+            // outer catch can distinguish a loop-guard abort from a user
+            // cancel and skip the "Cancelled" trace overwrite.
+            abortedByLoopGuard = true;
             controller.abort();
           } catch (abortErr) {
             logWarn('[LoopGuard] abort error:', abortErr);
@@ -2868,6 +2876,14 @@ Tool routing:
         });
         return;
       }
+      // If the SDK swallowed the AbortError after a loop-guard abort, preserve
+      // the 'error' trace status that handleLoopGuardDecision already published.
+      // The user-facing message and trace step are already set; do not overwrite
+      // them with the default "Task completed" below.
+      if (controller.signal.aborted && abortedByLoopGuard) {
+        logCtx('[ClaudeAgentRunner] Aborted by loop guard (detected after prompt returned)');
+        return;
+      }
       // Complete - update the initial thinking step
       this.sendTraceUpdate(session.id, thinkingStepId, {
         status: terminalErrorText ? 'error' : 'completed',
@@ -2889,6 +2905,11 @@ Tool routing:
             status: 'error',
             title: 'Request timed out',
           });
+        } else if (abortedByLoopGuard) {
+          // Loop guard already published the user-facing assistant message and
+          // an 'error' trace step with the loop-detected title. Do NOT overwrite
+          // them here with a 'completed/Cancelled' state.
+          logCtx('[ClaudeAgentRunner] Aborted by loop guard');
         } else {
           logCtx('[ClaudeAgentRunner] Aborted by user');
           this.sendTraceUpdate(session.id, thinkingStepId, {
