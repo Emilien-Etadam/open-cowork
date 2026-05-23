@@ -86,6 +86,27 @@ function estimateCharsPerToken(sampleText: string): number {
   return 4 - cjkRatio * 2.5; // Range: 1.5 (pure CJK) ~ 4 (pure English)
 }
 
+// Escape characters that would break the cold-start `<conversation_history>`
+// envelope when interpolated into XML tag bodies or attribute values. Raw user
+// text blocks are intentionally not escaped (preserves legacy compatibility);
+// only the new wrapper tags (`<thinking>`, `<tool_use>`, `<tool_result>`) and
+// their attributes pass through these.
+//
+// Attribute values additionally need `"` escaped because attributes are
+// double-quoted. Tag bodies do not (keeping `"` keeps JSON input legible to
+// the model).
+function escapeXmlAttr(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function escapeXmlText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 /**
  * Serialize a message's content blocks into the XML representation used inside the
  * cold-start `<conversation_history>` preamble.
@@ -117,7 +138,7 @@ export function serializeMessageContentForHistory(content: ContentBlock[]): stri
       }
       case 'thinking': {
         const thinking = block.thinking ?? '';
-        if (thinking.length > 0) parts.push(`<thinking>${thinking}</thinking>`);
+        if (thinking.length > 0) parts.push(`<thinking>${escapeXmlText(thinking)}</thinking>`);
         break;
       }
       case 'tool_use': {
@@ -129,14 +150,36 @@ export function serializeMessageContentForHistory(content: ContentBlock[]): stri
         } catch {
           inputStr = '{}';
         }
-        parts.push(`<tool_use name="${name}" id="${id}">${inputStr}</tool_use>`);
+        parts.push(
+          `<tool_use name="${escapeXmlAttr(name)}" id="${escapeXmlAttr(id)}">${escapeXmlText(inputStr)}</tool_use>`
+        );
         break;
       }
       case 'tool_result': {
         const id = block.toolUseId ?? '';
         const errAttr = block.isError ? ' is_error="true"' : '';
-        const text = block.content ?? '';
-        parts.push(`<tool_result tool_use_id="${id}"${errAttr}>${text}</tool_result>`);
+        // Local type says `content: string`, but Anthropic-style payloads
+        // from older message rows or third-party providers may store an
+        // array of content blocks. Flatten defensively so we never serialize
+        // "[object Object]".
+        const rawContent = (block as { content: unknown }).content;
+        let text: string;
+        if (typeof rawContent === 'string') {
+          text = rawContent;
+        } else if (Array.isArray(rawContent)) {
+          text = rawContent
+            .map((c) =>
+              c && typeof c === 'object' && 'text' in c
+                ? String((c as { text: unknown }).text ?? '')
+                : ''
+            )
+            .join('\n');
+        } else {
+          text = '';
+        }
+        parts.push(
+          `<tool_result tool_use_id="${escapeXmlAttr(id)}"${errAttr}>${escapeXmlText(text)}</tool_result>`
+        );
         break;
       }
       case 'image':

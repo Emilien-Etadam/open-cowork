@@ -167,4 +167,78 @@ describe('serializeMessageContentForHistory', () => {
     ];
     expect(serializeMessageContentForHistory(blocks)).toBe('');
   });
+
+  it('XML-escapes thinking content so </thinking> or & literals cannot break the envelope', () => {
+    const blocks: ContentBlock[] = [
+      { type: 'thinking', thinking: 'I read </thinking> then ran A & B with <foo>' },
+    ];
+    expect(serializeMessageContentForHistory(blocks)).toBe(
+      '<thinking>I read &lt;/thinking&gt; then ran A &amp; B with &lt;foo&gt;</thinking>'
+    );
+  });
+
+  it('XML-escapes tool_use attributes and body', () => {
+    const blocks: ContentBlock[] = [
+      {
+        type: 'tool_use',
+        id: 'id"with&quote',
+        name: 'name<x>',
+        input: { cmd: 'echo "hi" & echo <bar>' },
+      },
+    ];
+    const out = serializeMessageContentForHistory(blocks);
+    // Attribute values must escape `"` so they don't break the attribute
+    expect(out).toContain('name="name&lt;x&gt;"');
+    expect(out).toContain('id="id&quot;with&amp;quote"');
+    // Body keeps `"` literal (so JSON stays legible) but escapes `<`, `>`, `&`
+    expect(out).toMatch(/<\/tool_use>$/);
+    expect(out).not.toContain('<bar>');
+    expect(out).toContain('&lt;bar&gt;');
+    expect(out).toContain('"cmd"'); // body `"` not escaped
+  });
+
+  it('XML-escapes tool_result content (including </tool_result> literals)', () => {
+    const blocks: ContentBlock[] = [
+      {
+        type: 'tool_result',
+        toolUseId: 'call-1',
+        content: 'output </tool_result> & more',
+      },
+    ];
+    expect(serializeMessageContentForHistory(blocks)).toBe(
+      '<tool_result tool_use_id="call-1">output &lt;/tool_result&gt; &amp; more</tool_result>'
+    );
+  });
+
+  it('flattens tool_result.content when stored as a content-block array (defensive)', () => {
+    // Older message rows or third-party providers may persist tool_result.content
+    // as an Anthropic-style array of content blocks. The local TS type is `string`,
+    // but the serializer must not produce "[object Object]" for legacy data.
+    const blocks = [
+      {
+        type: 'tool_result',
+        toolUseId: 'call-2',
+        content: [
+          { type: 'text', text: 'first line' },
+          { type: 'text', text: 'second line' },
+        ] as unknown as string,
+      },
+    ] as ContentBlock[];
+    const out = serializeMessageContentForHistory(blocks);
+    expect(out).toBe('<tool_result tool_use_id="call-2">first line\nsecond line</tool_result>');
+    expect(out).not.toContain('[object Object]');
+  });
+
+  it('falls back to empty string when tool_result.content is neither string nor array', () => {
+    const blocks = [
+      {
+        type: 'tool_result',
+        toolUseId: 'call-3',
+        content: 42 as unknown as string,
+      },
+    ] as ContentBlock[];
+    expect(serializeMessageContentForHistory(blocks)).toBe(
+      '<tool_result tool_use_id="call-3"></tool_result>'
+    );
+  });
 });
