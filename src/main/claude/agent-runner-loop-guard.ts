@@ -3,12 +3,16 @@
  *
  * Two-layer strategy:
  *
- *   Layer 1  Hash-based group detection
+ *   Layer 1  Hash-based group detection (consecutive streak)
  *     - Hash the entire tool-call list of each assistant message (MD5 over stable keys).
- *     - Track hashes in a sliding window (default 20 entries).
- *     - 3 repeats  → warn  (inject a "please stop" steering message)
- *     - 5 repeats  → halt  (inject a hard "stop now, produce text" steering message)
- *     - 8 repeats  → abort (upstream gave up listening — kill the turn)
+ *     - Count the *current consecutive streak* of identical hashes. Any different
+ *       hash resets the streak to 1. This avoids false positives from interleaved
+ *       patterns like A/B/A/B/A which are not actually loops.
+ *     - The recent hashes are still retained in a sliding window (default 20 entries)
+ *       for diagnostics; the window does NOT influence the streak comparison.
+ *     - 3 in a row  → warn  (inject a "please stop" steering message)
+ *     - 5 in a row  → halt  (inject a hard "stop now, produce text" steering message)
+ *     - 8 in a row  → abort (upstream gave up listening — kill the turn)
  *
  *   Layer 2  Per-tool frequency detection (no parameter comparison)
  *     - Tracks cumulative invocations of each tool type within the turn.
@@ -196,10 +200,14 @@ export function messageCallsHash(
 export class LoopGuard {
   private readonly config: LoopGuardConfig;
   private readonly hashWindow: string[] = [];
-  private readonly hashCounts = new Map<string, number>();
-  private readonly hashWarnIssued = new Set<string>();
-  private readonly hashHaltIssued = new Set<string>();
-  private readonly hashAbortIssued = new Set<string>();
+  /** The hash of the most recently recorded assistant message (null = none yet). */
+  private currentHash: string | null = null;
+  /** Length of the current consecutive run of `currentHash`. */
+  private currentStreak = 0;
+  /** Whether warn/halt/abort have already been emitted for the *current* streak. */
+  private streakWarnIssued = false;
+  private streakHaltIssued = false;
+  private streakAbortIssued = false;
   private readonly toolFrequency = new Map<string, number>();
   private readonly toolWarnIssued = new Set<string>();
   private readonly toolHaltIssued = new Set<string>();
@@ -212,37 +220,52 @@ export class LoopGuard {
   /**
    * Record a complete assistant message's tool-call list and decide whether
    * to intervene. Call once per `message_end` that contains tool_use blocks.
+   *
+   * Decision is based on the *current consecutive streak* of identical hashes,
+   * not the cumulative count over the window. Patterns like A/B/A/B never fire.
    */
   recordAssistantMessage(toolCalls: ToolCallDescriptor[]): LoopGuardDecision {
     if (!toolCalls || toolCalls.length === 0) return NOOP_DECISION;
 
     const hash = messageCallsHash(toolCalls, this.config);
     this.pushHash(hash);
-    const count = this.hashCounts.get(hash) ?? 0;
+    const count = this.currentStreak;
 
-    if (count >= this.config.duplicateHashAbortThreshold && !this.hashAbortIssued.has(hash)) {
-      this.hashAbortIssued.add(hash);
-      return this.mkDecision('hash_abort', `identical tool-call group repeated ${count} times`, {
-        count,
-        hash,
-        window: this.config.messageHashWindow,
-      });
+    if (count >= this.config.duplicateHashAbortThreshold && !this.streakAbortIssued) {
+      this.streakAbortIssued = true;
+      return this.mkDecision(
+        'hash_abort',
+        `identical tool-call group repeated ${count} times in a row`,
+        {
+          count,
+          hash,
+          window: this.config.messageHashWindow,
+        }
+      );
     }
-    if (count >= this.config.duplicateHashHaltThreshold && !this.hashHaltIssued.has(hash)) {
-      this.hashHaltIssued.add(hash);
-      return this.mkDecision('hash_halt', `identical tool-call group repeated ${count} times`, {
-        count,
-        hash,
-        window: this.config.messageHashWindow,
-      });
+    if (count >= this.config.duplicateHashHaltThreshold && !this.streakHaltIssued) {
+      this.streakHaltIssued = true;
+      return this.mkDecision(
+        'hash_halt',
+        `identical tool-call group repeated ${count} times in a row`,
+        {
+          count,
+          hash,
+          window: this.config.messageHashWindow,
+        }
+      );
     }
-    if (count >= this.config.duplicateHashWarnThreshold && !this.hashWarnIssued.has(hash)) {
-      this.hashWarnIssued.add(hash);
-      return this.mkDecision('hash_warn', `identical tool-call group repeated ${count} times`, {
-        count,
-        hash,
-        window: this.config.messageHashWindow,
-      });
+    if (count >= this.config.duplicateHashWarnThreshold && !this.streakWarnIssued) {
+      this.streakWarnIssued = true;
+      return this.mkDecision(
+        'hash_warn',
+        `identical tool-call group repeated ${count} times in a row`,
+        {
+          count,
+          hash,
+          window: this.config.messageHashWindow,
+        }
+      );
     }
     return NOOP_DECISION;
   }
@@ -282,32 +305,39 @@ export class LoopGuard {
 
   /** Expose raw counters for diagnostics / testing. */
   snapshot(): {
-    hashCounts: Record<string, number>;
+    currentHash: string | null;
+    currentStreak: number;
     toolFrequency: Record<string, number>;
     window: string[];
   } {
     return {
-      hashCounts: Object.fromEntries(this.hashCounts),
+      currentHash: this.currentHash,
+      currentStreak: this.currentStreak,
       toolFrequency: Object.fromEntries(this.toolFrequency),
       window: [...this.hashWindow],
     };
   }
 
   private pushHash(hash: string): void {
+    // Maintain a small sliding window purely for diagnostics. The window
+    // length does not influence streak comparison.
     this.hashWindow.push(hash);
-    this.hashCounts.set(hash, (this.hashCounts.get(hash) ?? 0) + 1);
     while (this.hashWindow.length > this.config.messageHashWindow) {
-      const removed = this.hashWindow.shift();
-      if (removed == null) break;
-      const prev = this.hashCounts.get(removed) ?? 0;
-      if (prev <= 1) {
-        this.hashCounts.delete(removed);
-        // once it fully leaves the window, allow fresh warn/halt cycles for it again
-        this.hashWarnIssued.delete(removed);
-        this.hashHaltIssued.delete(removed);
-      } else {
-        this.hashCounts.set(removed, prev - 1);
-      }
+      this.hashWindow.shift();
+    }
+
+    // Streak bookkeeping: only consecutive identical hashes count toward the
+    // duplicate-hash thresholds. A different hash resets the streak to 1 and
+    // clears the per-streak issued flags so the new streak can warn/halt/abort
+    // on its own merits.
+    if (hash === this.currentHash) {
+      this.currentStreak += 1;
+    } else {
+      this.currentHash = hash;
+      this.currentStreak = 1;
+      this.streakWarnIssued = false;
+      this.streakHaltIssued = false;
+      this.streakAbortIssued = false;
     }
   }
 

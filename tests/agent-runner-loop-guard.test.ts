@@ -97,7 +97,7 @@ describe('messageCallsHash', () => {
   });
 });
 
-describe('LoopGuard layer 1 — hash-based group detection', () => {
+describe('LoopGuard layer 1 — hash-based group detection (streak semantics)', () => {
   const buildCall = (name: string, input: Record<string, unknown>): ToolCallDescriptor => ({
     name,
     input,
@@ -124,17 +124,38 @@ describe('LoopGuard layer 1 — hash-based group detection', () => {
     expect(decisions[9].action).toBe('none');
   });
 
-  it('different groups do not contribute to each other', () => {
+  it('A/B/A/B/A interleaved pattern does NOT fire (no consecutive streak)', () => {
+    // Regression test for false-positive bug: under the old frequency-map
+    // semantics, the 5-element A/B/A/B/A sequence would push A's count to 3
+    // and incorrectly trigger hash_warn. Under streak semantics the streak
+    // never exceeds 1 because every message is a different hash from the
+    // previous one.
+    const guard = new LoopGuard();
+    const A = [buildCall('a', { x: 1 })];
+    const B = [buildCall('b', { x: 1 })];
+
+    const actions = [A, B, A, B, A, B, A, B, A, B].map(
+      (g) => guard.recordAssistantMessage(g).action
+    );
+
+    for (const action of actions) {
+      expect(action).toBe('none');
+    }
+  });
+
+  it('different consecutive groups do not contribute to each other', () => {
     const guard = new LoopGuard();
     const groupA = [buildCall('read_file', { file_path: '/a', start_line: 0 })];
     const groupB = [buildCall('read_file', { file_path: '/b', start_line: 0 })];
 
-    const seq = [groupA, groupB, groupA, groupB, groupA, groupB, groupA, groupB];
-    const actions = seq.map((g) => guard.recordAssistantMessage(g).action);
-    expect(actions[4]).toBe('hash_warn');
-    expect(actions[5]).toBe('hash_warn');
-    expect(actions[6]).toBe('none');
-    expect(actions[7]).toBe('none');
+    // Each block of 3 consecutive identical messages fires exactly one warn for
+    // its own hash; the streak resets when the group changes.
+    expect(guard.recordAssistantMessage(groupA).action).toBe('none');
+    expect(guard.recordAssistantMessage(groupA).action).toBe('none');
+    expect(guard.recordAssistantMessage(groupA).action).toBe('hash_warn');
+    expect(guard.recordAssistantMessage(groupB).action).toBe('none');
+    expect(guard.recordAssistantMessage(groupB).action).toBe('none');
+    expect(guard.recordAssistantMessage(groupB).action).toBe('hash_warn');
   });
 
   it('empty tool-call messages (pure text responses) are ignored by the guard', () => {
@@ -144,25 +165,28 @@ describe('LoopGuard layer 1 — hash-based group detection', () => {
     expect(guard.recordAssistantMessage([]).action).toBe('none');
   });
 
-  it('respects sliding window — old entries drop out and allow re-triggering', () => {
-    const guard = new LoopGuard({ messageHashWindow: 3 });
+  it('streak resets when a different hash arrives, allowing fresh warn/halt cycles', () => {
+    const guard = new LoopGuard();
     const A = [buildCall('a', { x: 1 })];
     const B = [buildCall('b', { x: 1 })];
 
+    // First A-streak fires at length 3.
     expect(guard.recordAssistantMessage(A).action).toBe('none');
     expect(guard.recordAssistantMessage(A).action).toBe('none');
     expect(guard.recordAssistantMessage(A).action).toBe('hash_warn');
 
+    // A run of Bs breaks the A-streak and clears its per-streak issued flags.
     guard.recordAssistantMessage(B);
     guard.recordAssistantMessage(B);
     guard.recordAssistantMessage(B);
 
+    // A subsequent A-streak can warn again.
     expect(guard.recordAssistantMessage(A).action).toBe('none');
     expect(guard.recordAssistantMessage(A).action).toBe('none');
     expect(guard.recordAssistantMessage(A).action).toBe('hash_warn');
   });
 
-  it('collapses adjacent read_file ranges so they count as the same group', () => {
+  it('collapses adjacent read_file ranges so they count as the same consecutive group', () => {
     const guard = new LoopGuard();
     const actions = [0, 50, 100, 150, 199]
       .map((start) => [buildCall('read_file', { file_path: '/big.ts', start_line: start })])
@@ -173,6 +197,24 @@ describe('LoopGuard layer 1 — hash-based group detection', () => {
     expect(actions[2]).toBe('hash_warn');
     expect(actions[3]).toBe('none');
     expect(actions[4]).toBe('hash_halt');
+  });
+
+  it('snapshot exposes currentStreak and currentHash for diagnostics', () => {
+    const guard = new LoopGuard();
+    const A = [buildCall('a', { x: 1 })];
+    const B = [buildCall('b', { x: 1 })];
+
+    guard.recordAssistantMessage(A);
+    guard.recordAssistantMessage(A);
+    const snap1 = guard.snapshot();
+    expect(snap1.currentStreak).toBe(2);
+    expect(typeof snap1.currentHash).toBe('string');
+    expect(snap1.window).toHaveLength(2);
+
+    guard.recordAssistantMessage(B);
+    const snap2 = guard.snapshot();
+    expect(snap2.currentStreak).toBe(1);
+    expect(snap2.currentHash).not.toBe(snap1.currentHash);
   });
 });
 
