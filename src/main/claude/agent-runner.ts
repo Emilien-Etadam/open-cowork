@@ -828,6 +828,7 @@ ${hints.join('\n')}
       (agent as any)._beforeToolCall;
 
     const requestPermission = this.requestPermission;
+    const getDisplayName = (name: string): string => this.getToolDisplayName(name);
 
     agent.setBeforeToolCall(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -836,17 +837,28 @@ ${hints.join('\n')}
         const input: Record<string, unknown> = ctx.args ?? {};
 
         const decision = decidePermission(sessionId, toolName, input);
+        // Human-readable name for prompts/messages (e.g. MCP sanitized
+        // 'mcp__chrome__chrome_screenshot__ab12' → 'chrome_screenshot').
+        // Rule matching and rememberAlwaysAllow still use the canonical
+        // `toolName` so allow-once decisions stay stable across calls.
+        const displayName = getDisplayName(toolName);
 
         if (decision === 'deny') {
           log(`[ClaudeAgentRunner] Tool '${toolName}' denied by rule`);
-          return { block: true, reason: `Tool '${toolName}' is denied by your permission rules.` };
+          return {
+            block: true,
+            reason: `Tool '${displayName}' is denied by your permission rules.`,
+          };
         }
 
         if (decision === 'ask') {
           const toolUseId = `${ctx.toolCall?.id ?? 'unknown'}-perm-${uuidv4().slice(0, 8)}`;
           let result: 'allow' | 'deny' | 'allow_always';
           try {
-            result = await requestPermission(sessionId, toolUseId, toolName, input);
+            // Send the display name to the renderer so the dialog shows a
+            // human-readable tool name; canonical `toolName` is still used
+            // for rule matching above and "always allow" memory below.
+            result = await requestPermission(sessionId, toolUseId, displayName, input);
           } catch (permErr) {
             logError(
               `[ClaudeAgentRunner] Permission request failed for '${toolName}' — failing closed`,
@@ -854,13 +866,13 @@ ${hints.join('\n')}
             );
             return {
               block: true,
-              reason: `Permission request failed for '${toolName}'; tool not executed.`,
+              reason: `Permission request failed for '${displayName}'; tool not executed.`,
             };
           }
 
           if (result === 'deny') {
             log(`[ClaudeAgentRunner] Tool '${toolName}' denied by user`);
-            return { block: true, reason: `User denied permission for '${toolName}'.` };
+            return { block: true, reason: `User denied permission for '${displayName}'.` };
           }
 
           if (result === 'allow_always') {
