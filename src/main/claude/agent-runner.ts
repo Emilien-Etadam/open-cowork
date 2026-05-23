@@ -2345,16 +2345,18 @@ Tool routing:
         logWarn(`[LoopGuard] ${context}: action=${decision.action} reason=${decision.reason}`);
 
         if (decision.action === 'hash_abort' || decision.action === 'freq_abort') {
-          if (!hasEmittedError) {
-            hasEmittedError = true;
-            this.sendMessage(session.id, {
-              id: uuidv4(),
-              sessionId: session.id,
-              role: 'assistant',
-              content: [{ type: 'text', text: buildAbortUserMessage(decision) }],
-              timestamp: Date.now(),
-            });
-          }
+          // Always surface the loop-guard explanation, even if an earlier
+          // error already set hasEmittedError — the user must see why the
+          // session stopped. Mark the flag afterward to suppress duplicate
+          // generic-error chatter from later paths in this turn.
+          this.sendMessage(session.id, {
+            id: uuidv4(),
+            sessionId: session.id,
+            role: 'assistant',
+            content: [{ type: 'text', text: buildAbortUserMessage(decision) }],
+            timestamp: Date.now(),
+          });
+          hasEmittedError = true;
           this.sendTraceUpdate(session.id, thinkingStepId, {
             status: 'error',
             title: 'Stopped: tool-call loop detected',

@@ -90,4 +90,29 @@ describe('agent-runner loop-guard abort preserves error trace status', () => {
     const localBlock = agentRunnerContent.slice(localStart, titleIdx);
     expect(localBlock).toContain("status: 'error'");
   });
+
+  it('always emits the buildAbortUserMessage explanation, even if a prior error set hasEmittedError', () => {
+    // Regression test for bot review on PR #225: the original block gated the
+    // sendMessage(buildAbortUserMessage) on `if (!hasEmittedError)`, which
+    // suppressed the loop-guard explanation when any earlier path had already
+    // emitted an error. Users would then see only the error trace step with no
+    // chat message explaining why the session stopped.
+    //
+    // Pin: the sendMessage that wraps buildAbortUserMessage must NOT be inside
+    // an `if (!hasEmittedError)` gate, and the assignment to hasEmittedError
+    // should follow the sendMessage so the suppression intent is preserved for
+    // later generic-error paths.
+    const sendIdx = agentRunnerContent.indexOf('text: buildAbortUserMessage(decision)');
+    expect(sendIdx).toBeGreaterThan(-1);
+
+    // The 200 chars immediately before the sendMessage must not contain a
+    // bare `if (!hasEmittedError) {` gate (i.e., the old suppression check).
+    const preamble = agentRunnerContent.slice(Math.max(0, sendIdx - 400), sendIdx);
+    expect(preamble).not.toMatch(/if\s*\(\s*!hasEmittedError\s*\)\s*\{/);
+
+    // hasEmittedError should be assigned AFTER the sendMessage to suppress
+    // duplicate generic errors later in this turn, not before.
+    const trailing = agentRunnerContent.slice(sendIdx, sendIdx + 400);
+    expect(trailing).toContain('hasEmittedError = true');
+  });
 });
