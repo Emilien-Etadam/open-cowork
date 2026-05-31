@@ -1,4 +1,10 @@
-import type { AssistantMessage, TextContent, ThinkingContent, ToolCall } from '@mariozechner/pi-ai';
+import type {
+  AssistantMessage,
+  AssistantMessageEvent,
+  TextContent,
+  ThinkingContent,
+  ToolCall,
+} from '@mariozechner/pi-ai';
 import { splitThinkTagBlocks } from './think-tag-parser';
 
 type MessageEndContentBlock = TextContent | ThinkingContent | ToolCall;
@@ -16,6 +22,23 @@ interface ResolvedMessageEndPayload {
   nextStreamedText: string;
   shouldEmitMessage: boolean;
 }
+
+const FOUR_XX_ERROR_RE = /\b4\d{2}\b/;
+
+export interface TerminalErrorEmissionDetails {
+  thinkingDelta?: string;
+  textDelta?: string;
+  partialText: string;
+  messageText: string;
+}
+
+export interface AbortDispositionFlags {
+  abortedByTimeout: boolean;
+  abortedByLoopGuard: boolean;
+  abortedByStreamError: boolean;
+}
+
+export type AbortDisposition = 'timeout' | 'loop_guard' | 'stream_error' | 'user';
 
 export function toUserFacingErrorText(errorText: string): string {
   const lower = errorText.toLowerCase();
@@ -70,6 +93,57 @@ export function toUserFacingErrorText(errorText: string): string {
     return `网络连接中断（${errorText}），可能是代理/网关不稳定，SDK 将自动重试。`;
   }
   return errorText;
+}
+
+export function resolveAssistantStreamErrorText(
+  event: Extract<AssistantMessageEvent, { type: 'error' }>
+): string {
+  const rawError = event.error?.errorMessage?.trim() || event.reason || 'stream_error';
+  return toUserFacingErrorText(rawError);
+}
+
+export function buildTerminalErrorMessage(errorText: string, partialText = ''): string {
+  const normalizedPartial = partialText.trimEnd();
+  const hint = FOUR_XX_ERROR_RE.test(errorText)
+    ? '_请检查配置后重试。_'
+    : '_Agent 正在自动重试，请稍候..._';
+  const errorBlock = `**Error**: ${errorText}\n\n${hint}`;
+  return normalizedPartial ? `${normalizedPartial}\n\n${errorBlock}` : errorBlock;
+}
+
+export function buildTerminalErrorEmissionDetails(options: {
+  errorText: string;
+  streamedText: string;
+  flushedThinking?: string;
+  flushedText?: string;
+}): TerminalErrorEmissionDetails {
+  const thinkingDelta = options.flushedThinking || undefined;
+  const textDelta = options.flushedText || undefined;
+  const partialText = `${options.streamedText}${options.flushedText || ''}`;
+
+  return {
+    thinkingDelta,
+    textDelta,
+    partialText,
+    messageText: buildTerminalErrorMessage(options.errorText, partialText),
+  };
+}
+
+export function resolveAbortDisposition(flags: AbortDispositionFlags): AbortDisposition {
+  if (flags.abortedByTimeout) {
+    return 'timeout';
+  }
+  if (flags.abortedByLoopGuard) {
+    return 'loop_guard';
+  }
+  if (flags.abortedByStreamError) {
+    return 'stream_error';
+  }
+  return 'user';
+}
+
+export function shouldPreserveExistingTrace(disposition: AbortDisposition): boolean {
+  return disposition === 'loop_guard' || disposition === 'stream_error';
 }
 
 export function resolveMessageEndPayload(

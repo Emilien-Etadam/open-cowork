@@ -54,7 +54,15 @@ import type { SkillsAdapter } from '../skills/skills-adapter';
 import { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
 import { configStore } from '../config/config-store';
 import { normalizeOpenAICompatibleBaseUrl } from '../config/auth-utils';
-import { resolveMessageEndPayload, toUserFacingErrorText } from './agent-runner-message-end';
+import {
+  buildTerminalErrorEmissionDetails,
+  buildTerminalErrorMessage,
+  resolveAbortDisposition,
+  resolveAssistantStreamErrorText,
+  resolveMessageEndPayload,
+  shouldPreserveExistingTrace,
+  toUserFacingErrorText,
+} from './agent-runner-message-end';
 import {
   applyPiModelRuntimeOverrides,
   buildSyntheticPiModel,
@@ -1215,6 +1223,10 @@ ${hints.join('\n')}
     // The catch block consults this flag to avoid overwriting the 'error' trace
     // status that handleLoopGuardDecision has already published.
     let abortedByLoopGuard = false;
+    // Set to true when the provider emits a terminal stream error mid-turn.
+    // The catch block consults this flag to avoid overwriting the published
+    // 'Request failed' trace state with a generic 'Cancelled' update.
+    let abortedByStreamError = false;
 
     try {
       this.pathResolver.registerSession(session.id, session.mountedPaths);
@@ -2460,6 +2472,74 @@ Tool routing:
           )
         );
 
+      const emitTerminalError = (
+        errorText: string,
+        options: { abort?: boolean; includePartialText?: boolean } = {}
+      ): void => {
+        terminalErrorText = errorText;
+
+        let flushedThinking = '';
+        let flushedText = '';
+
+        if (options.includePartialText) {
+          const flushed = thinkParser.flush();
+          flushedThinking = flushed.thinking;
+          flushedText = flushed.text;
+        }
+
+        const emission = buildTerminalErrorEmissionDetails({
+          errorText,
+          streamedText,
+          flushedThinking,
+          flushedText,
+        });
+
+        if (emission.thinkingDelta) {
+          this.sendToRenderer({
+            type: 'stream.thinking',
+            payload: { sessionId: session.id, delta: emission.thinkingDelta },
+          });
+        }
+        if (emission.textDelta) {
+          this.sendPartial(session.id, emission.textDelta);
+        }
+
+        const partialText = emission.partialText ? sanitizeOutputPaths(emission.partialText) : '';
+        const messageText = buildTerminalErrorMessage(errorText, partialText);
+        streamedText = '';
+        this.sendToRenderer({
+          type: 'stream.partial',
+          payload: { sessionId: session.id, delta: '' },
+        });
+
+        if (!hasEmittedError) {
+          hasEmittedError = true;
+          this.sendMessage(session.id, {
+            id: uuidv4(),
+            sessionId: session.id,
+            role: 'assistant',
+            content: [{ type: 'text', text: messageText }],
+            timestamp: Date.now(),
+          });
+        }
+
+        this.sendTraceUpdate(session.id, thinkingStepId, {
+          status: 'error',
+          title: 'Request failed',
+        });
+
+        if (options.abort && !controller.signal.aborted) {
+          try {
+            // Mark BEFORE calling abort() so AbortError handling preserves the
+            // 'Request failed' state instead of treating this as a user cancel.
+            abortedByStreamError = true;
+            controller.abort();
+          } catch (abortErr) {
+            logWarn('[ClaudeAgentRunner] stream-error abort failed:', abortErr);
+          }
+        }
+      };
+
       const unsubscribe = piSession.subscribe((event) => {
         try {
           if (controller.signal.aborted) return;
@@ -2543,8 +2623,13 @@ Tool routing:
                 // in message_end below as a unified path for all providers.
                 log('[ClaudeAgentRunner] message_update done event (handled in message_end)');
               } else if (ame.type === 'error') {
+                markFirstStreamEvent(ame.type);
                 const errorDetail = JSON.stringify(ame.error?.content || 'no content');
                 logCtxError('[ClaudeAgentRunner] pi-ai stream error:', ame.reason, errorDetail);
+                emitTerminalError(resolveAssistantStreamErrorText(ame), {
+                  abort: true,
+                  includePartialText: true,
+                });
               }
               break;
             }
@@ -2597,26 +2682,7 @@ Tool routing:
                 );
               }
               if (resolvedPayload.errorText) {
-                terminalErrorText = resolvedPayload.errorText;
-                if (!hasEmittedError) {
-                  hasEmittedError = true;
-                  this.sendMessage(session.id, {
-                    id: uuidv4(),
-                    sessionId: session.id,
-                    role: 'assistant',
-                    content: [
-                      {
-                        type: 'text',
-                        text: `**Error**: ${resolvedPayload.errorText}\n\n${
-                          /\b4\d{2}\b/.test(resolvedPayload.errorText)
-                            ? '_请检查配置后重试。_'
-                            : '_Agent 正在自动重试，请稍候..._'
-                        }`,
-                      },
-                    ],
-                    timestamp: Date.now(),
-                  });
-                }
+                emitTerminalError(resolvedPayload.errorText, { includePartialText: true });
                 break;
               }
               if (resolvedPayload.shouldEmitMessage) {
@@ -2882,8 +2948,15 @@ Tool routing:
       // the 'error' trace status that handleLoopGuardDecision already published.
       // The user-facing message and trace step are already set; do not overwrite
       // them with the default "Task completed" below.
-      if (controller.signal.aborted && abortedByLoopGuard) {
-        logCtx('[ClaudeAgentRunner] Aborted by loop guard (detected after prompt returned)');
+      const abortDisposition = resolveAbortDisposition({
+        abortedByTimeout,
+        abortedByLoopGuard,
+        abortedByStreamError,
+      });
+      if (controller.signal.aborted && shouldPreserveExistingTrace(abortDisposition)) {
+        logCtx(
+          `[ClaudeAgentRunner] Aborted by ${abortDisposition === 'loop_guard' ? 'loop guard' : 'stream error'} (detected after prompt returned)`
+        );
         return;
       }
       // Complete - update the initial thinking step
@@ -2893,7 +2966,12 @@ Tool routing:
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        if (abortedByTimeout) {
+        const abortDisposition = resolveAbortDisposition({
+          abortedByTimeout,
+          abortedByLoopGuard,
+          abortedByStreamError,
+        });
+        if (abortDisposition === 'timeout') {
           logCtx('[ClaudeAgentRunner] Aborted due to timeout');
           const errorMsg: Message = {
             id: uuidv4(),
@@ -2907,11 +2985,15 @@ Tool routing:
             status: 'error',
             title: 'Request timed out',
           });
-        } else if (abortedByLoopGuard) {
+        } else if (abortDisposition === 'loop_guard') {
           // Loop guard already published the user-facing assistant message and
           // an 'error' trace step with the loop-detected title. Do NOT overwrite
           // them here with a 'completed/Cancelled' state.
           logCtx('[ClaudeAgentRunner] Aborted by loop guard');
+        } else if (abortDisposition === 'stream_error') {
+          // Stream-error handling already published the user-facing assistant
+          // message and the 'Request failed' trace state. Preserve them.
+          logCtx('[ClaudeAgentRunner] Aborted by stream error');
         } else {
           logCtx('[ClaudeAgentRunner] Aborted by user');
           this.sendTraceUpdate(session.id, thinkingStepId, {
