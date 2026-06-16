@@ -21,6 +21,16 @@ export function SettingsGeneral() {
   const languages = [
     { code: 'en', nativeName: 'English' },
     { code: 'zh', nativeName: '中文' },
+    { code: 'es', nativeName: 'Español' },
+    { code: 'fr', nativeName: 'Français' },
+    { code: 'de', nativeName: 'Deutsch' },
+    { code: 'it', nativeName: 'Italiano' },
+    { code: 'uk', nativeName: 'Українська' },
+    { code: 'pl', nativeName: 'Polski' },
+    { code: 'sv', nativeName: 'Svenska' },
+    { code: 'no', nativeName: 'Norsk' },
+    { code: 'nl', nativeName: 'Nederlands' },
+    { code: 'ro', nativeName: 'Română' },
   ];
 
   const themeOptions = [
