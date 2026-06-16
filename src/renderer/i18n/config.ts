@@ -16,33 +16,59 @@ import nlTranslations from './locales/nl.json';
 import roTranslations from './locales/ro.json';
 
 i18n
-  .use(LanguageDetector) // auto-detect the browser/UI language
-  .use(initReactI18next) // initialize react-i18next
+  .use(LanguageDetector) // 自动检测浏览器语言
+  .use(initReactI18next) // 初始化 react-i18next
   .init({
     resources: {
-      en: { translation: enTranslations },
-      zh: { translation: zhTranslations },
-      es: { translation: esTranslations },
-      fr: { translation: frTranslations },
-      de: { translation: deTranslations },
-      it: { translation: itTranslations },
-      uk: { translation: ukTranslations },
-      pl: { translation: plTranslations },
-      sv: { translation: svTranslations },
-      no: { translation: noTranslations },
-      nl: { translation: nlTranslations },
-      ro: { translation: roTranslations },
+      en: {
+        translation: enTranslations,
+      },
+      zh: {
+        translation: zhTranslations,
+      },
+      es: {
+        translation: esTranslations,
+      },
+      fr: {
+        translation: frTranslations,
+      },
+      de: {
+        translation: deTranslations,
+      },
+      it: {
+        translation: itTranslations,
+      },
+      uk: {
+        translation: ukTranslations,
+      },
+      pl: {
+        translation: plTranslations,
+      },
+      sv: {
+        translation: svTranslations,
+      },
+      no: {
+        translation: noTranslations,
+      },
+      nl: {
+        translation: nlTranslations,
+      },
+      ro: {
+        translation: roTranslations,
+      },
     },
-    fallbackLng: 'en', // default language
-    supportedLngs: ['en', 'zh', 'es', 'fr', 'de', 'it', 'uk', 'pl', 'sv', 'no', 'nl', 'ro'],
+    // 默认语言；挪威语 nb/nn 回退到 no
+    fallbackLng: { nb: ['no'], nn: ['no'], default: ['en'] },
+    supportedLngs: ['en', 'zh', 'es', 'fr', 'de', 'it', 'uk', 'pl', 'sv', 'no', 'nl', 'ro'], // 支持的语言
+    nonExplicitSupportedLngs: true, // 接受区域变体，例如 es-ES → es、zh-CN → zh
     interpolation: {
-      escapeValue: false, // React already guards against XSS
+      escapeValue: false, // React 已经处理了 XSS
     },
-    pluralSeparator: '_', // plural separator
-    contextSeparator: '_', // context separator
+    pluralSeparator: '_', // 复数分隔符
+    contextSeparator: '_', // 上下文分隔符
     detection: {
-      order: ['localStorage', 'navigator'], // check localStorage first, then the browser language
-      caches: ['localStorage'], // persist the language choice to localStorage
+      order: ['localStorage', 'navigator'], // 先检查 localStorage，再检查浏览器语言
+      caches: ['localStorage'], // 将语言选择保存到 localStorage
       lookupLocalStorage: 'i18nextLng', // localStorage key
     },
   });

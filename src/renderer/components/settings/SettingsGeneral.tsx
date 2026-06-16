@@ -6,7 +6,11 @@ export function SettingsGeneral() {
   const { i18n, t } = useTranslation();
   const settings = useAppStore((s) => s.settings);
   const updateSettings = useAppStore((s) => s.updateSettings);
-  const currentLang = i18n.language.startsWith('zh') ? 'zh' : 'en';
+  // Normalize the active language to its base code so the highlight matches
+  // every supported language (e.g. "es-ES" -> "es", "zh-CN" -> "zh"), and map
+  // Norwegian variants (nb/nn) to the "no" locale we ship.
+  const baseLang = i18n.language.split('-')[0];
+  const currentLang = baseLang === 'nb' || baseLang === 'nn' ? 'no' : baseLang;
   const [appVer, setAppVer] = useState('');
   useEffect(() => {
     try {
