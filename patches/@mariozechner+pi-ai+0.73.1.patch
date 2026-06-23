@@ -1,0 +1,45 @@
+diff --git a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
+index 3ec63be..7bf5577 100644
+--- a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
++++ b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
+@@ -641,7 +641,15 @@ export function convertMessages(model, context, compat) {
+                 .filter(isThinkingContentBlock)
+                 .filter((block) => block.thinking.trim().length > 0);
+             if (nonEmptyThinkingBlocks.length > 0) {
+-                if (compat.requiresThinkingAsText) {
++                if (compat.requiresThinkingInContent) {
++                    // DeepSeek V4 Pro requires thinking blocks in content[] array, not as top-level field
++                    const thinkingContent = nonEmptyThinkingBlocks.map((block) => ({
++                        type: "thinking",
++                        thinking: sanitizeSurrogates(block.thinking),
++                    }));
++                    assistantMsg.content = [...thinkingContent, ...assistantTextParts];
++                }
++                else if (compat.requiresThinkingAsText) {
+                     // Convert thinking blocks to plain text (no tags to avoid model mimicking them)
+                     const thinkingText = nonEmptyThinkingBlocks
+                         .map((block) => sanitizeSurrogates(block.thinking))
+@@ -866,6 +874,7 @@ function detectCompat(model) {
+     const useMaxTokens = baseUrl.includes("chutes.ai") || isMoonshot || isCloudflareAiGateway;
+     const isGrok = provider === "xai" || baseUrl.includes("api.x.ai");
+     const isDeepSeek = provider === "deepseek" || baseUrl.includes("deepseek.com");
++    const isDeepSeekV4 = /(?:^|[/_-])deepseek[-_.]?v4(?:$|[-:_.])/i.test(model.id);
+     const cacheControlFormat = provider === "openrouter" && model.id.startsWith("anthropic/") ? "anthropic" : undefined;
+     return {
+         supportsStore: !isNonStandard,
+@@ -876,6 +885,7 @@ function detectCompat(model) {
+         requiresToolResultName: false,
+         requiresAssistantAfterToolResult: false,
+         requiresThinkingAsText: false,
++        requiresThinkingInContent: isDeepSeekV4,
+         requiresReasoningContentOnAssistantMessages: isDeepSeek,
+         thinkingFormat: isDeepSeek
+             ? "deepseek"
+@@ -910,6 +920,7 @@ function getCompat(model) {
+         requiresToolResultName: model.compat.requiresToolResultName ?? detected.requiresToolResultName,
+         requiresAssistantAfterToolResult: model.compat.requiresAssistantAfterToolResult ?? detected.requiresAssistantAfterToolResult,
+         requiresThinkingAsText: model.compat.requiresThinkingAsText ?? detected.requiresThinkingAsText,
++        requiresThinkingInContent: model.compat.requiresThinkingInContent ?? detected.requiresThinkingInContent,
+         requiresReasoningContentOnAssistantMessages: model.compat.requiresReasoningContentOnAssistantMessages ??
+             detected.requiresReasoningContentOnAssistantMessages,
+         thinkingFormat: model.compat.thinkingFormat ?? detected.thinkingFormat,
