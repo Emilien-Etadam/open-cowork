@@ -9,6 +9,7 @@ import type {
   Message,
   TraceStep,
   ContentBlock,
+  UiLanguage,
 } from '../types';
 import i18n from '../i18n/config';
 
@@ -120,7 +121,11 @@ export function useIPC() {
       const isInitialConfigStatus = !store.hasSeenInitialConfigStatus;
       store.setIsConfigured(isConfigured);
       store.setAppConfig(config);
-      store.setSettings({ theme: config.theme || 'light' });
+      const uiLanguage: UiLanguage = config.uiLanguage?.startsWith('zh') ? 'zh' : 'en';
+      store.setSettings({ theme: config.theme || 'light', uiLanguage });
+      if (i18n.language !== uiLanguage) {
+        void i18n.changeLanguage(uiLanguage);
+      }
       if (isInitialConfigStatus) {
         store.markInitialConfigStatusSeen();
       }

@@ -37,6 +37,7 @@ import { API_PROVIDER_PRESETS, PI_AI_CURATED_PRESETS } from '../../shared/api-mo
 export type ProviderType = 'openrouter' | 'anthropic' | 'custom' | 'openai' | 'gemini' | 'ollama';
 export type CustomProtocolType = 'anthropic' | 'openai' | 'gemini';
 export type AppTheme = 'dark' | 'light' | 'system';
+export type UiLanguage = 'en' | 'zh';
 export type ProviderProfileKey =
   | 'openrouter'
   | 'anthropic'
@@ -112,6 +113,9 @@ export interface AppConfig {
   // UI theme preference
   theme: AppTheme;
 
+  // UI language preference
+  uiLanguage: UiLanguage;
+
   // Sandbox mode (WSL/Lima isolation)
   sandboxEnabled: boolean;
 
@@ -167,6 +171,7 @@ const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'globalSkillsPath',
   'enableDevLogs',
   'theme',
+  'uiLanguage',
   'sandboxEnabled',
   'memoryEnabled',
   'enableThinking',
@@ -243,6 +248,7 @@ const defaultConfig: AppConfig = {
   globalSkillsPath: '',
   enableDevLogs: false,
   theme: 'light',
+  uiLanguage: 'en',
   sandboxEnabled: false,
   memoryEnabled: true,
   memoryRuntime: {
@@ -363,6 +369,10 @@ function isProfileKey(value: unknown): value is ProviderProfileKey {
 
 function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && VALID_THEMES.includes(value as AppTheme);
+}
+
+function isUiLanguage(value: unknown): value is UiLanguage {
+  return value === 'en' || value === 'zh';
 }
 
 function isMemoryModelRuntimeConfig(value: unknown): value is Partial<MemoryModelRuntimeConfig> {
@@ -974,6 +984,7 @@ export class ConfigStore {
           : defaultConfig.globalSkillsPath,
       enableDevLogs: toBoolean(raw.enableDevLogs, defaultConfig.enableDevLogs),
       theme: isAppTheme(raw.theme) ? raw.theme : defaultConfig.theme,
+      uiLanguage: isUiLanguage(raw.uiLanguage) ? raw.uiLanguage : defaultConfig.uiLanguage,
       sandboxEnabled: toBoolean(raw.sandboxEnabled, defaultConfig.sandboxEnabled),
       memoryEnabled: toBoolean(raw.memoryEnabled, defaultConfig.memoryEnabled),
       memoryRuntime: normalizeMemoryRuntimeConfig(raw.memoryRuntime),
@@ -1388,6 +1399,7 @@ export class ConfigStore {
       enableDevLogs:
         updates.enableDevLogs !== undefined ? updates.enableDevLogs : current.enableDevLogs,
       theme: updates.theme !== undefined ? updates.theme : current.theme,
+      uiLanguage: updates.uiLanguage !== undefined ? updates.uiLanguage : current.uiLanguage,
       sandboxEnabled:
         updates.sandboxEnabled !== undefined ? updates.sandboxEnabled : current.sandboxEnabled,
       memoryEnabled:

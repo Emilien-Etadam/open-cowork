@@ -64,6 +64,7 @@ import { createScheduledTaskStore } from './schedule/scheduled-task-store';
 import {
   buildScheduledTaskFallbackTitle,
   buildScheduledTaskTitle,
+  normalizeScheduleTitleLocale,
 } from '../shared/schedule/task-title';
 import {
   isUncPath,
@@ -136,10 +137,11 @@ async function resolveScheduledTaskTitle(
   _cwd?: string,
   fallbackTitle?: string
 ): Promise<string> {
+  const locale = normalizeScheduleTitleLocale(configStore.get('uiLanguage'));
   const normalizedPrompt = prompt.trim();
   const fallback = fallbackTitle
-    ? buildScheduledTaskTitle(fallbackTitle)
-    : buildScheduledTaskFallbackTitle(normalizedPrompt);
+    ? buildScheduledTaskTitle(fallbackTitle, locale)
+    : buildScheduledTaskFallbackTitle(normalizedPrompt, locale);
   if (!sessionManager) {
     return fallback;
   }
@@ -926,11 +928,12 @@ app
         if (unsupportedReason) {
           throw new Error(unsupportedReason);
         }
-        const fallbackTitle = buildScheduledTaskFallbackTitle(task.prompt);
+        const locale = normalizeScheduleTitleLocale(configStore.get('uiLanguage'));
+        const fallbackTitle = buildScheduledTaskFallbackTitle(task.prompt, locale);
         const needsRegeneratedTitle = !task.title?.trim() || task.title === fallbackTitle;
         const title = needsRegeneratedTitle
           ? await resolveScheduledTaskTitle(task.prompt, task.cwd, task.title)
-          : buildScheduledTaskTitle(task.title);
+          : buildScheduledTaskTitle(task.title, locale);
         if (title !== task.title) {
           scheduledTaskStore.update(task.id, { title });
         }
@@ -2466,7 +2469,10 @@ ipcMain.handle('schedule.update', async (_event, id: string, updates: ScheduledT
       updates.title ?? existing.title
     );
   } else if (updates.title !== undefined) {
-    normalizedUpdates.title = buildScheduledTaskTitle(updates.title);
+    normalizedUpdates.title = buildScheduledTaskTitle(
+      updates.title,
+      normalizeScheduleTitleLocale(configStore.get('uiLanguage'))
+    );
   }
 
   return scheduledTaskManager.update(id, normalizedUpdates);
@@ -2784,6 +2790,17 @@ async function handleClientEvent(event: ClientEvent): Promise<unknown> {
           const effectiveTheme = resolveEffectiveTheme(nextTheme);
           mainWindow.setBackgroundColor(effectiveTheme === 'dark' ? DARK_BG : LIGHT_BG);
         }
+        sendToRenderer({
+          type: 'config.status',
+          payload: {
+            isConfigured: configStore.isConfigured(),
+            config: configStore.getAll(),
+          },
+        });
+      }
+
+      if (event.payload.uiLanguage === 'en' || event.payload.uiLanguage === 'zh') {
+        configStore.update({ uiLanguage: event.payload.uiLanguage });
         sendToRenderer({
           type: 'config.status',
           payload: {

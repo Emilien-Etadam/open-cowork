@@ -14,7 +14,9 @@
 import {
   buildScheduledTaskFallbackTitle,
   buildScheduledTaskTitle,
+  normalizeScheduleTitleLocale,
 } from '../../shared/schedule/task-title';
+import { configStore } from '../config/config-store';
 import { log, logError } from '../utils/logger';
 
 export type ScheduleRepeatUnit = 'minute' | 'hour' | 'day';
@@ -159,10 +161,11 @@ export class ScheduledTaskManager {
   }
 
   create(input: ScheduledTaskCreateInput): ScheduledTask {
+    const locale = normalizeScheduleTitleLocale(configStore.get('uiLanguage'));
     const normalizedPrompt = input.prompt.trim();
     const normalizedTitle = input.title
-      ? buildScheduledTaskTitle(input.title)
-      : buildScheduledTaskFallbackTitle(normalizedPrompt);
+      ? buildScheduledTaskTitle(input.title, locale)
+      : buildScheduledTaskFallbackTitle(normalizedPrompt, locale);
     const normalizedScheduleConfig = normalizeScheduleConfig(input.scheduleConfig);
     const normalizedRepeatEvery = normalizedScheduleConfig
       ? null
@@ -189,10 +192,11 @@ export class ScheduledTaskManager {
     const current = this.store.get(id);
     if (!current) return null;
     const nextPrompt = updates.prompt === undefined ? current.prompt : updates.prompt.trim();
+    const locale = normalizeScheduleTitleLocale(configStore.get('uiLanguage'));
     const nextTitle =
       updates.title === undefined
         ? current.title
-        : buildScheduledTaskTitle(updates.title || nextPrompt);
+        : buildScheduledTaskTitle(updates.title || nextPrompt, locale);
     const nextScheduleConfig =
       updates.scheduleConfig === undefined
         ? undefined

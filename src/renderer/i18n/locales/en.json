@@ -76,7 +76,8 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "language": "Language"
+    "language": "Language",
+    "languageSaved": "Language preference saved"
   },
   "memory": {
     "title": "Memory",
@@ -121,7 +122,45 @@
     "clearCoreConfirm": "Clear all global core memory? This cannot be undone.",
     "rebuildSuccess": "Workspace memory rebuilt",
     "clearWorkspaceSuccess": "Workspace memory cleared",
-    "clearCoreSuccess": "Core memory cleared"
+    "clearCoreSuccess": "Core memory cleared",
+    "runtimeSaved": "Memory runtime settings saved",
+    "rebuildAllConfirm": "This will clear and rebuild all memory. Continue?",
+    "rebuildAllSuccess": "Rebuilt all memory: {{sessionCount}} session(s), {{workspaceCount}} source workspace(s)",
+    "storageRoot": "Storage root",
+    "noWorkspace": "No workspace",
+    "runtimeTitle": "Runtime settings",
+    "runtimeDescription": "Inherits the active API configuration by default. Adjust navigation depth, embedding, and storage paths here.",
+    "maxNavSteps": "Navigation steps",
+    "ingestionConcurrency": "Rebuild concurrency",
+    "useEmbedding": "Enable embedding retrieval",
+    "evalEnabled": "Enable live model evaluation",
+    "evalArtifactsRoot": "Evaluation artifacts directory",
+    "evalMaxRounds": "Evaluation rounds",
+    "promptIterationRounds": "Prompt iteration rounds",
+    "llmConfig": "Memory LLM",
+    "embeddingConfig": "Embedding",
+    "inheritActive": "Inherit active API",
+    "modelOverride": "Model override",
+    "baseUrlOverride": "Base URL override",
+    "apiKeyOverride": "API Key override",
+    "saveRuntime": "Save runtime settings",
+    "allSources": "All sources",
+    "groupRawSessions": "Raw sessions",
+    "sourceFile": "Source file",
+    "inspectSessionButton": "View full session memory",
+    "inspectSessionTitle": "Session memory",
+    "revealInFinder": "Reveal in file manager",
+    "inspectSessionHint": "Select a session or chunk from the search results above to inspect it here.",
+    "filesTitle": "Raw file viewer",
+    "filesDescription": "Inspect on-disk core, unified experience, session_state, and evaluation artifacts.",
+    "fileList": "File list",
+    "refreshFiles": "Refresh",
+    "noFiles": "No memory files yet",
+    "fileContent": "File content",
+    "emptyFile": "File is empty",
+    "selectFileHint": "Select a file on the left to view the raw JSON",
+    "rebuildAll": "Rebuild all memory",
+    "topSources": "Top sources"
   },
   "language": {
     "english": "English",
@@ -286,6 +325,29 @@
     "renameSetTitle": "Rename Config Set",
     "unsavedBeforeActionPrompt": "Current config set has unsaved changes. Choose an action before \"{{action}}\".",
     "newSetDefaultName": "New Config Set",
+    "defaultConfigSetName": "Default",
+    "unnamedConfigSet": "Config Set {{index}}",
+    "providerHints": {
+      "openrouter": {
+        "keyHint": "Get your key from openrouter.ai/keys"
+      },
+      "anthropic": {
+        "keyHint": "Get your key from console.anthropic.com"
+      },
+      "openai": {
+        "keyHint": "Get your key from platform.openai.com"
+      },
+      "gemini": {
+        "keyHint": "Get your key from aistudio.google.com"
+      },
+      "ollama": {
+        "keyPlaceholder": "Optional",
+        "keyHint": "Most Ollama deployments do not require a key. Enter one only if your proxy layer requires authentication."
+      },
+      "custom": {
+        "keyHint": "Enter your API Key"
+      }
+    },
     "copyNameSuffix": "Copy",
     "currentSetLabel": "Current set: ",
     "unsavedBadge": "Unsaved",

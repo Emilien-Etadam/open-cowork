@@ -16,6 +16,7 @@ import type { AppConfig, ApiTestResult } from '../types';
 import { useApiConfigState } from '../hooks/useApiConfigState';
 import { ApiConfigSetManager } from './ApiConfigSetManager';
 import { CommonProviderSetupsCard, GuidanceInlineHint } from './ProviderGuidance';
+import { getProviderKeyHint, getProviderKeyPlaceholder } from '../utils/i18n-format';
 
 interface ConfigModalProps {
   isOpen: boolean;
@@ -231,11 +232,18 @@ export function ConfigModal({
               type="password"
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
-              placeholder={currentPreset?.keyPlaceholder || t('api.enterApiKey')}
+              placeholder={getProviderKeyPlaceholder(
+                provider,
+                currentPreset?.keyPlaceholder,
+                t,
+                t('api.enterApiKey')
+              )}
               className="w-full px-4 py-3 rounded-xl bg-background border border-border text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
             />
-            {currentPreset?.keyHint && (
-              <p className="text-xs text-text-muted">{currentPreset.keyHint}</p>
+            {getProviderKeyHint(provider, currentPreset?.keyHint, t) && (
+              <p className="text-xs text-text-muted">
+                {getProviderKeyHint(provider, currentPreset?.keyHint, t)}
+              </p>
             )}
           </div>
 
@@ -360,8 +368,12 @@ export function ConfigModal({
                   >
                     <Edit3 className="w-3 h-3" />
                     {isOllamaMode
-                      ? (useCustomModel ? t('api.useDetectedModels') : t('api.manualModel'))
-                      : (useCustomModel ? t('api.usePreset') : t('api.custom'))}
+                      ? useCustomModel
+                        ? t('api.useDetectedModels')
+                        : t('api.manualModel')
+                      : useCustomModel
+                        ? t('api.usePreset')
+                        : t('api.custom')}
                   </button>
                 )}
               </div>

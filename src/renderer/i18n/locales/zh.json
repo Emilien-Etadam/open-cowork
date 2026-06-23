@@ -76,7 +76,8 @@
     "themeLight": "浅色",
     "themeDark": "深色",
     "themeSystem": "跟随系统",
-    "language": "语言"
+    "language": "语言",
+    "languageSaved": "语言偏好已保存"
   },
   "memory": {
     "title": "Memory 机制",
@@ -121,7 +122,45 @@
     "clearCoreConfirm": "确认清空全局 core memory？此操作不可撤销。",
     "rebuildSuccess": "工作区记忆已重建",
     "clearWorkspaceSuccess": "当前工作区记忆已清空",
-    "clearCoreSuccess": "Core memory 已清空"
+    "clearCoreSuccess": "Core memory 已清空",
+    "runtimeSaved": "记忆运行时配置已保存",
+    "rebuildAllConfirm": "这会清空并重建全部记忆，是否继续？",
+    "rebuildAllSuccess": "已重建全部记忆：{{sessionCount}} 个会话，{{workspaceCount}} 个来源工作区",
+    "storageRoot": "存储根目录",
+    "noWorkspace": "暂无工作区",
+    "runtimeTitle": "运行时配置",
+    "runtimeDescription": "默认继承当前激活的 API 配置。这里主要调节导航深度、embedding 和落盘目录。",
+    "maxNavSteps": "导航步数",
+    "ingestionConcurrency": "重建并发度",
+    "useEmbedding": "启用 embedding 检索",
+    "evalEnabled": "启用真实模型评测",
+    "evalArtifactsRoot": "评测产物目录",
+    "evalMaxRounds": "评测轮数",
+    "promptIterationRounds": "Prompt 迭代轮数",
+    "llmConfig": "Memory LLM",
+    "embeddingConfig": "Embedding",
+    "inheritActive": "继承当前激活 API",
+    "modelOverride": "模型覆盖",
+    "baseUrlOverride": "Base URL 覆盖",
+    "apiKeyOverride": "API Key 覆盖",
+    "saveRuntime": "保存运行时配置",
+    "allSources": "全部来源",
+    "groupRawSessions": "原始会话",
+    "sourceFile": "来源文件",
+    "inspectSessionButton": "查看该会话的完整记忆",
+    "inspectSessionTitle": "查看会话记忆",
+    "revealInFinder": "在文件管理器中显示",
+    "inspectSessionHint": "从上方搜索结果中选择一个 session 或 chunk 后查看",
+    "filesTitle": "原始文件查看",
+    "filesDescription": "直接查看实际落盘的 core / unified experience / session_state / eval artifacts。",
+    "fileList": "文件列表",
+    "refreshFiles": "刷新",
+    "noFiles": "还没有记忆文件",
+    "fileContent": "文件内容",
+    "emptyFile": "文件为空",
+    "selectFileHint": "选择左侧文件后即可查看原始 JSON",
+    "rebuildAll": "重建全部记忆",
+    "topSources": "主要来源"
   },
   "language": {
     "english": "English",
@@ -286,6 +325,29 @@
     "renameSetTitle": "重命名配置方案",
     "unsavedBeforeActionPrompt": "当前方案有未保存修改，执行“{{action}}”前请选择操作。",
     "newSetDefaultName": "新方案",
+    "defaultConfigSetName": "默认方案",
+    "unnamedConfigSet": "配置方案 {{index}}",
+    "providerHints": {
+      "openrouter": {
+        "keyHint": "从 openrouter.ai/keys 获取"
+      },
+      "anthropic": {
+        "keyHint": "从 console.anthropic.com 获取"
+      },
+      "openai": {
+        "keyHint": "从 platform.openai.com 获取"
+      },
+      "gemini": {
+        "keyHint": "从 aistudio.google.com 获取"
+      },
+      "ollama": {
+        "keyPlaceholder": "可留空",
+        "keyHint": "多数 Ollama 部署可留空；如果你的代理层要求鉴权，也可以填写 Key"
+      },
+      "custom": {
+        "keyHint": "输入你的 API Key"
+      }
+    },
     "copyNameSuffix": "副本",
     "currentSetLabel": "当前方案：",
     "unsavedBadge": "未保存",
