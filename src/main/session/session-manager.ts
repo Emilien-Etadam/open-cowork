@@ -61,6 +61,10 @@ import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
 interface AgentRunner {
   run(session: Session, prompt: string, existingMessages: Message[]): Promise<void>;
   cancel(sessionId: string): void;
+  compactSession?(
+    session: Session,
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }>;
   clearSdkSession?(sessionId: string): void;
   clearAllSdkSessions?(): void;
 }
@@ -421,6 +425,61 @@ export class SessionManager {
     }
 
     this.enqueuePrompt(session, prompt, content);
+  }
+
+  async compactSession(
+    sessionId: string,
+    customInstructions?: string
+  ): Promise<{ success: boolean; errorKey?: string; error?: string }> {
+    log('[SessionManager] Manual compaction requested for session:', sessionId);
+
+    const session = this.loadSession(sessionId);
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+
+    if (this.activeSessions.has(sessionId)) {
+      this.stopSession(sessionId);
+    }
+
+    if (!this.agentRunner.compactSession) {
+      return { success: false, errorKey: 'errCompactFailed' };
+    }
+
+    try {
+      const result = await this.agentRunner.compactSession(session, customInstructions);
+      const compactionMessage: Message = {
+        id: uuidv4(),
+        sessionId,
+        role: 'system',
+        content: [
+          {
+            type: 'compaction_summary',
+            summary: result.summary,
+            tokensBefore: result.tokensBefore,
+            customInstructions,
+          },
+        ],
+        timestamp: Date.now(),
+      };
+      this.saveMessage(compactionMessage);
+      this.sendToRenderer({
+        type: 'stream.message',
+        payload: { sessionId, message: compactionMessage },
+      });
+      return { success: true };
+    } catch (error) {
+      const errorKey =
+        error instanceof Error && error.message.startsWith('errCompact')
+          ? error.message
+          : undefined;
+      logError('[SessionManager] Manual compaction failed:', error);
+      return {
+        success: false,
+        errorKey,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   async generateSessionTitleFromPrompt(prompt: string): Promise<string> {

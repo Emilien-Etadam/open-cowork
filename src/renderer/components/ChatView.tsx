@@ -14,6 +14,7 @@ import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
+import { parseSlashCommand } from '../../shared/slash-commands';
 import { Send, Square, Plus, Loader2, Plug, X, Clock } from 'lucide-react';
 
 type AttachedFile = {
@@ -36,7 +37,7 @@ export function ChatView() {
   const executionClock = useActiveExecutionClock();
   const appConfig = useAppConfig();
   const setGlobalNotice = useAppStore((s) => s.setGlobalNotice);
-  const { continueSession, stopSession, isElectron } = useIPC();
+  const { continueSession, compactSession, stopSession, isElectron } = useIPC();
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<
@@ -562,6 +563,23 @@ export function ChatView() {
 
     setIsSubmitting(true);
     try {
+      const textOnly =
+        currentPrompt.trim() &&
+        pastedImages.length === 0 &&
+        attachedFiles.length === 0 &&
+        currentPrompt.trim();
+      if (textOnly) {
+        const command = parseSlashCommand(textOnly);
+        if (command.kind === 'compact') {
+          await compactSession(activeSessionId, command.instructions);
+          setPrompt('');
+          if (textareaRef.current) {
+            textareaRef.current.value = '';
+          }
+          return;
+        }
+      }
+
       // Build content blocks
       const contentBlocks: ContentBlock[] = [];
 

@@ -662,6 +662,46 @@ export function useIPC() {
     ]
   );
 
+  const compactSession = useCallback(
+    async (
+      sessionId: string,
+      customInstructions?: string
+    ): Promise<{ success: boolean; errorKey?: string }> => {
+      if (!isElectron) {
+        return { success: false, errorKey: 'errCompactFailed' };
+      }
+
+      try {
+        const result = await invoke<{ success: boolean; errorKey?: string; error?: string }>({
+          type: 'session.compact',
+          payload: { sessionId, customInstructions },
+        });
+        if (!result.success) {
+          const noticeKey = result.errorKey || 'errCompactFailed';
+          useAppStore.getState().setGlobalNotice({
+            id: `notice-compact-${Date.now()}`,
+            type: 'warning',
+            message: i18n.t(`chat.compactErrors.${noticeKey}`, {
+              defaultValue: result.error || noticeKey,
+            }),
+            messageKey: `chat.compactErrors.${noticeKey}`,
+          });
+        }
+        return result;
+      } catch (error) {
+        useAppStore.getState().setGlobalNotice({
+          id: `notice-compact-${Date.now()}`,
+          type: 'error',
+          message:
+            error instanceof Error ? error.message : i18n.t('chat.compactErrors.errCompactFailed'),
+          messageKey: 'chat.compactErrors.errCompactFailed',
+        });
+        return { success: false, errorKey: 'errCompactFailed' };
+      }
+    },
+    [invoke]
+  );
+
   const stopSession = useCallback(
     (sessionId: string) => {
       cancelQueuedMessages(sessionId);
@@ -809,6 +849,7 @@ export function useIPC() {
     invoke,
     startSession,
     continueSession,
+    compactSession,
     stopSession,
     deleteSession,
     batchDeleteSessions,
