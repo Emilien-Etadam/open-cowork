@@ -45,6 +45,7 @@ export function SettingsSandbox() {
   const [error, setError] = useState<LocalizedBanner | null>(null);
   const [success, setSuccess] = useState<LocalizedBanner | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const platform = window.electronAPI?.platform || 'unknown';
   const isWindows = platform === 'win32';
@@ -70,7 +71,7 @@ export function SettingsSandbox() {
 
         if (cancelled) return;
 
-        setSandboxEnabled(cfg.sandboxEnabled !== false);
+        setSandboxEnabled(cfg.sandboxEnabled === true);
         setStatus(s);
         setError(null);
       } catch (err) {
@@ -103,8 +104,31 @@ export function SettingsSandbox() {
     }
   }
 
-  // TODO: Re-enable when sandbox debugging is complete
-  // async function handleToggleSandbox() { ... }
+  async function handleToggleSandbox() {
+    if (!isElectron || isSaving) return;
+
+    const newEnabled = !sandboxEnabled;
+    setSandboxEnabled(newEnabled);
+    setError(null);
+    setSuccess(null);
+    setIsSaving(true);
+
+    try {
+      await window.electronAPI.config.save({ sandboxEnabled: newEnabled });
+      setSuccess({
+        text: newEnabled ? t('sandbox.enabledWillSetup') : t('sandbox.disabled'),
+      });
+      await loadStatus();
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setSandboxEnabled(!newEnabled);
+      setError({
+        text: err instanceof Error ? err.message : t('sandbox.failedToSave'),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   async function handleCheckStatus() {
     if (isChecking) return; // Prevent double-click
@@ -310,45 +334,74 @@ export function SettingsSandbox() {
       )}
 
       {/* Sandbox overview */}
-      <div className="p-6 rounded-lg bg-surface border border-border text-center space-y-4">
-        <div className="w-16 h-16 rounded-lg flex items-center justify-center mx-auto bg-surface-muted text-text-muted">
-          <Shield className="w-8 h-8" />
-        </div>
-        <div>
-          <h3 className="text-base font-semibold text-text-primary">
-            {t('sandbox.enableSandbox')}
-          </h3>
-          <p className="text-sm text-text-muted mt-1">
-            {isWindows
-              ? t('sandbox.wslDesc')
-              : isMac
-                ? t('sandbox.limaDesc')
-                : t('sandbox.nativeDesc')}
+      <div className="p-6 rounded-lg bg-surface border border-border space-y-4">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center bg-surface-muted text-text-muted">
+            <Shield className="w-8 h-8" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-text-primary">
+              {t('sandbox.enableSandbox')}
+            </h3>
+            <p className="text-sm text-text-muted mt-1">
+              {isWindows
+                ? t('sandbox.wslDesc')
+                : isMac
+                  ? t('sandbox.limaDesc')
+                  : t('sandbox.nativeDesc')}
+            </p>
+          </div>
+          <div
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+              sandboxReady && sandboxEnabled
+                ? 'bg-success/10 text-success'
+                : sandboxEnabled
+                  ? 'bg-warning/10 text-warning'
+                  : 'bg-surface-muted text-text-muted'
+            }`}
+          >
+            {sandboxReady && sandboxEnabled ? (
+              <CheckCircle className="w-3.5 h-3.5" />
+            ) : (
+              <AlertCircle className="w-3.5 h-3.5" />
+            )}
+            <span>{sandboxStatusText}</span>
+          </div>
+          <p className="text-xs text-text-muted max-w-sm">
+            {t('sandbox.helpText1')} {t('sandbox.helpText2')}
           </p>
         </div>
-        <div
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-            sandboxReady
-              ? 'bg-success/10 text-success'
-              : sandboxEnabled
-                ? 'bg-warning/10 text-warning'
-                : 'bg-surface-muted text-text-muted'
-          }`}
-        >
-          {sandboxReady ? (
-            <CheckCircle className="w-3.5 h-3.5" />
-          ) : (
-            <AlertCircle className="w-3.5 h-3.5" />
-          )}
-          <span>{sandboxStatusText}</span>
-        </div>
-        <p className="text-xs text-text-muted max-w-sm mx-auto">
-          {t('sandbox.helpText1')} {t('sandbox.helpText2')}
-        </p>
+
+        {isElectron && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-background px-4 py-3">
+            <div className="min-w-0 text-left">
+              <p className="text-sm font-medium text-text-primary">{t('sandbox.enableSandbox')}</p>
+              <p className="mt-1 text-xs text-text-muted">
+                {sandboxEnabled ? t('sandbox.enabledWillSetup') : t('sandbox.disabledStatus')}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={sandboxEnabled}
+              onClick={handleToggleSandbox}
+              disabled={isSaving || isLoading}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 ${
+                sandboxEnabled ? 'bg-accent' : 'bg-surface-muted'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-text-primary transition-transform ${
+                  sandboxEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Status Details */}
-      {sandboxEnabled && (
+      {/* Status Details — visible even when disabled so WSL/Lima readiness is clear */}
+      {isElectron && (
         <div className="p-4 rounded-lg bg-surface border border-border space-y-4 animate-in fade-in duration-200">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-text-primary">
