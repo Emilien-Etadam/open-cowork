@@ -665,6 +665,17 @@
     "noModel": "Kein Modell",
     "connectorCount_one": "{{count}} Konnektor",
     "connectorCount_other": "{{count}} Konnektoren",
+    "compactErrors": {
+      "errCompactNoSession": "Keine aktive Agent-Sitzung zum Komprimieren. Senden Sie zuerst mindestens eine Nachricht in dieser Unterhaltung.",
+      "errCompactNothingToCompact": "Noch nichts zu komprimieren — die Unterhaltung ist noch zu kurz.",
+      "errCompactAlreadyCompacted": "Die Unterhaltung wurde kürzlich bereits komprimiert.",
+      "errCompactFailed": "Kontextkomprimierung fehlgeschlagen. Bitte erneut versuchen."
+    },
+    "handoffSuccess": "Neue Sitzung mit Fortsetzungszusammenfassung erstellt.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Noch nichts zusammenzufassen — die Unterhaltung ist noch zu kurz.",
+      "errHandoffFailed": "Neue Sitzung aus dieser Unterhaltung konnte nicht gestartet werden. Bitte erneut versuchen."
+    },
     "scrollToBottom": "Nach unten scrollen"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Keine Fragen",
     "question": "Frage",
     "thinking": "Denkt nach",
-    "executionTime": "Ausführungszeit: {{time}}"
+    "executionTime": "Ausführungszeit: {{time}}",
+    "compactionTitle": "Kontext komprimiert",
+    "compactionHandoffTitle": "Fortsetzung von „{{sourceTitle}}“",
+    "compactionMeta": "{{tokensBefore}} Tokens zusammengefasst",
+    "compactionInstructions": "Fokus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Zeitplan erstellen",

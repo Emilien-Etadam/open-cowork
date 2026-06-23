@@ -665,6 +665,17 @@
     "noModel": "无模型",
     "connectorCount_one": "{{count}} 个连接器",
     "connectorCount_other": "{{count}} 个连接器",
+    "compactErrors": {
+      "errCompactNoSession": "没有可压缩的活动代理会话。请先在此对话中发送至少一条消息。",
+      "errCompactNothingToCompact": "暂无可压缩内容——对话仍然太短。",
+      "errCompactAlreadyCompacted": "此对话最近已经压缩过。",
+      "errCompactFailed": "上下文压缩失败，请重试。"
+    },
+    "handoffSuccess": "已创建包含续接摘要的新会话。",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "暂无可总结内容——对话仍然太短。",
+      "errHandoffFailed": "从此对话创建新会话失败，请重试。"
+    },
     "scrollToBottom": "滚动到底部"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "暂无问题",
     "question": "问题",
     "thinking": "思考",
-    "executionTime": "执行时间: {{time}}"
+    "executionTime": "执行时间: {{time}}",
+    "compactionTitle": "上下文已压缩",
+    "compactionHandoffTitle": "续接自「{{sourceTitle}}」",
+    "compactionMeta": "已总结 {{tokensBefore}} 个 token",
+    "compactionInstructions": "重点：{{instructions}}"
   },
   "schedule": {
     "createTitle": "新建定时任务",

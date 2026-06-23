@@ -665,6 +665,17 @@
     "noModel": "Niciun model",
     "connectorCount_one": "{{count}} conector",
     "connectorCount_other": "{{count}} conectori",
+    "compactErrors": {
+      "errCompactNoSession": "Nicio sesiune de agent activă de compactat. Trimite mai întâi cel puțin un mesaj în această conversație.",
+      "errCompactNothingToCompact": "Nimic de compactat deocamdată — conversația este încă prea scurtă.",
+      "errCompactAlreadyCompacted": "Conversația a fost deja compactată recent.",
+      "errCompactFailed": "Compactarea contextului a eșuat. Încearcă din nou."
+    },
+    "handoffSuccess": "Sesiune nouă creată cu rezumat de continuare.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Nimic de rezumat deocamdată — conversația este încă prea scurtă.",
+      "errHandoffFailed": "Nu s-a putut porni o sesiune nouă din această conversație. Încearcă din nou."
+    },
     "scrollToBottom": "Derulează la final"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Nicio întrebare",
     "question": "Întrebare",
     "thinking": "Se gândește",
-    "executionTime": "Timp de execuție: {{time}}"
+    "executionTime": "Timp de execuție: {{time}}",
+    "compactionTitle": "Context compactat",
+    "compactionHandoffTitle": "Continuare din «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} tokeni rezumați",
+    "compactionInstructions": "Focus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Creează programare",
