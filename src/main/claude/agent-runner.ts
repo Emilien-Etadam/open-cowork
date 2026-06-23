@@ -87,6 +87,8 @@ import {
 } from './tool-result-utils';
 import { fetchOllamaModelInfo } from '../config/ollama-api';
 import { createWindowsBashOperations } from './windows-bash-operations';
+import { createWslSandboxBashOperations } from './wsl-sandbox-bash-operations';
+import { wslUnixPathToWindowsUnc } from '../sandbox/sandbox-workspace-path';
 import {
   buildCompactionSettings,
   estimateTokensFromText,
@@ -1729,8 +1731,13 @@ ${hints.join('\n')}
 
       // the agent SDK handles path sandboxing via its own tools
       const imageCapable = true; // pi-ai models generally support images; let the model handle unsupported cases
+      const wslDistro = sandbox.isWSL ? sandbox.wslStatus?.distro : undefined;
       const effectiveCwd =
-        useSandboxIsolation && sandboxPath ? sandboxPath : workingDir || process.cwd();
+        useSandboxIsolation && sandboxPath && wslDistro
+          ? wslUnixPathToWindowsUnc(wslDistro, sandboxPath)
+          : useSandboxIsolation && sandboxPath
+            ? sandboxPath
+            : workingDir || process.cwd();
 
       // Use app-specific Claude config directory to avoid conflicts with user settings
       // SDK uses CLAUDE_CONFIG_DIR to locate skills
@@ -2160,8 +2167,26 @@ Tool routing:
       // executed via Pi SDK's Bash tool can find bundled and user-installed executables.
       await enrichProcessPathForBuild();
 
-      const bashOptions: BashToolOptions | undefined =
-        process.platform === 'win32' ? { operations: createWindowsBashOperations() } : undefined;
+      const isolatedSandboxPath = sandboxPath;
+      const useWslSandboxBash = Boolean(
+        useSandboxIsolation && isolatedSandboxPath && sandbox.isWSL && sandbox.wslStatus?.distro
+      );
+      const bashOptions: BashToolOptions | undefined = useWslSandboxBash
+        ? {
+            operations: createWslSandboxBashOperations({
+              distro: sandbox.wslStatus!.distro!,
+              sandboxPath: isolatedSandboxPath!,
+              virtualWorkspacePath: VIRTUAL_WORKSPACE_PATH,
+            }),
+          }
+        : process.platform === 'win32'
+          ? { operations: createWindowsBashOperations() }
+          : undefined;
+      if (useWslSandboxBash) {
+        log(
+          `[ClaudeAgentRunner] Using WSL sandbox bash (distro=${sandbox.wslStatus!.distro}, sandbox=${sandboxPath})`
+        );
+      }
       const bashDefinition = createBashToolDefinition(effectiveCwd, bashOptions);
 
       // Inject a default 120s timeout for bash commands when the model omits one
