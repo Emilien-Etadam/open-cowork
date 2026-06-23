@@ -570,6 +570,7 @@ export type ServerEvent =
 // Settings types
 export interface Settings {
   theme: AppTheme;
+  themePreset: ThemePreset;
   apiKey?: string;
   defaultTools: string[];
   permissionRules: PermissionRule[];
@@ -607,6 +608,7 @@ export interface ExecutionContext {
 export type ProviderType = 'openrouter' | 'anthropic' | 'custom' | 'openai' | 'gemini' | 'ollama';
 export type CustomProtocolType = 'anthropic' | 'openai' | 'gemini';
 export type AppTheme = 'dark' | 'light' | 'system';
+export type ThemePreset = 'default' | 'vscode';
 export type ProviderProfileKey =
   | 'openrouter'
   | 'anthropic'
@@ -684,6 +686,7 @@ export interface AppConfig {
   defaultWorkdir?: string;
   globalSkillsPath?: string;
   theme?: AppTheme;
+  themePreset?: ThemePreset;
   uiLanguage?: string;
   sandboxEnabled?: boolean;
   memoryEnabled?: boolean;

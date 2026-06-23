@@ -76,6 +76,9 @@
     "themeLight": "Hell",
     "themeDark": "Dunkel",
     "themeSystem": "System",
+    "themePreset": "Stil",
+    "themePresetDefault": "Standard",
+    "themePresetVscode": "VS Code",
     "language": "Sprache"
   },
   "memory": {

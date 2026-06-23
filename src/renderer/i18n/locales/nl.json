@@ -76,6 +76,9 @@
     "themeLight": "Licht",
     "themeDark": "Donker",
     "themeSystem": "Systeem",
+    "themePreset": "Stijl",
+    "themePresetDefault": "Standaard",
+    "themePresetVscode": "VS Code",
     "language": "Taal"
   },
   "memory": {

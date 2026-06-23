@@ -197,7 +197,8 @@
     font-style: italic;
   }
 
-  .prose-chat ul, .prose-chat ol {
+  .prose-chat ul,
+  .prose-chat ol {
     margin: 0.75rem 0;
     padding-left: 1.5rem;
   }
@@ -241,7 +242,10 @@
     margin-bottom: 0.35rem;
   }
 
-  .prose-chat h1, .prose-chat h2, .prose-chat h3, .prose-chat h4 {
+  .prose-chat h1,
+  .prose-chat h2,
+  .prose-chat h3,
+  .prose-chat h4 {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     font-weight: 600;
     margin-top: 1.25rem;
@@ -252,10 +256,18 @@
     margin-top: 0;
   }
 
-  .prose-chat h1 { font-size: 1.5rem; }
-  .prose-chat h2 { font-size: 1.25rem; }
-  .prose-chat h3 { font-size: 1.125rem; }
-  .prose-chat h4 { font-size: 1rem; }
+  .prose-chat h1 {
+    font-size: 1.5rem;
+  }
+  .prose-chat h2 {
+    font-size: 1.25rem;
+  }
+  .prose-chat h3 {
+    font-size: 1.125rem;
+  }
+  .prose-chat h4 {
+    font-size: 1rem;
+  }
 
   .prose-chat .katex-display {
     margin: 1rem 0;
@@ -327,9 +339,83 @@
   }
 }
 
+/* VS Code theme preset — Dark+ */
+:root[data-preset='vscode'] {
+  --color-background: #1e1e1e;
+  --color-background-secondary: #252526;
+  --color-surface: #252526;
+  --color-surface-hover: #2a2d2e;
+  --color-surface-active: #37373d;
+  --color-surface-muted: #1e1e1e;
+  --color-border: #454545;
+  --color-border-muted: #3c3c3c;
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-accent: #007acc;
+  --color-accent-hover: #0062a3;
+  --color-accent-muted: rgba(0, 122, 204, 0.15);
+  --color-text-primary: #cccccc;
+  --color-text-secondary: #969696;
+  --color-text-muted: #6e6e6e;
+  --color-success: #89d185;
+  --color-warning: #cca700;
+  --color-error: #f48771;
+  --shadow-soft: none;
+  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.36);
+}
+
+/* VS Code theme preset — Light+ */
+:root[data-preset='vscode'].light {
+  --color-background: #ffffff;
+  --color-background-secondary: #f3f3f3;
+  --color-surface: #f3f3f3;
+  --color-surface-hover: #e8e8e8;
+  --color-surface-active: #d4d4d4;
+  --color-surface-muted: #f8f8f8;
+  --color-border: #e5e5e5;
+  --color-border-muted: #eeeeee;
+  --color-border-subtle: rgba(0, 0, 0, 0.06);
+  --color-accent: #007acc;
+  --color-accent-hover: #0062a3;
+  --color-accent-muted: rgba(0, 122, 204, 0.1);
+  --color-text-primary: #333333;
+  --color-text-secondary: #616161;
+  --color-text-muted: #8c8c8c;
+  --color-success: #16825d;
+  --color-warning: #bf8803;
+  --color-error: #e51400;
+  --shadow-soft: none;
+  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.08);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+[data-preset='vscode'] body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+[data-preset='vscode'] .prose-chat,
+[data-preset='vscode'] .heading-serif {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+[data-preset='vscode'] .code-block,
+[data-preset='vscode'] .code-block code,
+[data-preset='vscode'] code {
+  font-family: Consolas, 'Courier New', 'SF Mono', Monaco, Menlo, monospace;
+}
+
+[data-preset='vscode'] .btn,
+[data-preset='vscode'] .input,
+[data-preset='vscode'] .card,
+[data-preset='vscode'] .tag {
+  border-radius: 3px;
+}
+
 /* Respect reduced motion preferences */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
