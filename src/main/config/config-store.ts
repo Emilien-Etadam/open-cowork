@@ -18,6 +18,11 @@ import {
   getLegacyDerivedKeyHexes,
 } from '../utils/store-encryption';
 import {
+  getMachineEncryptionKey,
+  LEGACY_STATIC_ENCRYPTION_KEYS,
+} from '../utils/machine-encryption-key';
+import { runConfigMigrations } from './config-migrations';
+import {
   isOpenAIProvider,
   isOllamaLegacyCustomOpenAIConfig,
   normalizeAnthropicBaseUrl,
@@ -238,6 +243,10 @@ const defaultConfigSet: ApiConfigSet = {
   updatedAt: '1970-01-01T00:00:00.000Z',
 };
 
+function getDefaultSandboxEnabled(): boolean {
+  return process.platform === 'win32';
+}
+
 const defaultConfig: AppConfig = {
   provider: defaultConfigSet.provider,
   apiKey: defaultProfiles.openrouter.apiKey,
@@ -255,7 +264,7 @@ const defaultConfig: AppConfig = {
   theme: 'light',
   themePreset: 'default',
   uiLanguage: DEFAULT_BACKEND_LANGUAGE,
-  sandboxEnabled: false,
+  sandboxEnabled: getDefaultSandboxEnabled(),
   memoryEnabled: true,
   memoryRuntime: {
     llm: {
@@ -540,8 +549,9 @@ export class ConfigStore {
     // AppConfig is a structurally compatible object type at runtime.
     type AppConfigRecord = AppConfig & Record<string, unknown>;
     this.store = createEncryptedStoreWithKeyRotation<AppConfigRecord>({
-      stableKey: 'open-cowork-config-stable-v1',
+      stableKey: getMachineEncryptionKey(),
       legacyKeys: [
+        ...LEGACY_STATIC_ENCRYPTION_KEYS,
         'open-cowork-config-v1',
         ...getLegacyDerivedKeyHexes({
           moduleDirname: __dirname,
@@ -555,6 +565,7 @@ export class ConfigStore {
       log,
       warn: logWarn,
     }) as unknown as Store<AppConfig>;
+    runConfigMigrations(this.store);
     this.ensureNormalized();
     // Seed the backend translator from the persisted UI language so main-process
     // strings (errors, dialogs) match the user's last choice from first launch.

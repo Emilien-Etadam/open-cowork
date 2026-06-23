@@ -46,6 +46,7 @@ import { execFileSync, spawn } from 'child_process';
 import { app } from 'electron';
 import { setMaxListeners } from 'node:events';
 import { getSandboxAdapter } from '../sandbox/sandbox-adapter';
+import { getSandboxExecutionBlockReason } from '../sandbox/sandbox-execution-guard';
 import { pathConverter } from '../sandbox/wsl-bridge';
 import { SandboxSync } from '../sandbox/sandbox-sync';
 import { extractArtifactsFromText, buildArtifactTraceSteps } from '../utils/artifact-parser';
@@ -1274,6 +1275,29 @@ ${hints.join('\n')}
 
       // Initialize sandbox sync if WSL mode is active
       const sandbox = getSandboxAdapter();
+      const sandboxEnabled = configStore.get('sandboxEnabled') !== false;
+
+      const initialSandboxBlock = getSandboxExecutionBlockReason({
+        sandboxEnabled,
+        platform: process.platform,
+        sandbox,
+      });
+      if (initialSandboxBlock) {
+        logError('[ClaudeAgentRunner] Sandbox execution blocked:', initialSandboxBlock);
+        const errorMsg: Message = {
+          id: uuidv4(),
+          sessionId: session.id,
+          role: 'assistant',
+          content: [{ type: 'text', text: `**Sandbox indisponible** : ${initialSandboxBlock}` }],
+          timestamp: Date.now(),
+        };
+        this.sendMessage(session.id, errorMsg);
+        this.sendTraceUpdate(session.id, thinkingStepId, {
+          status: 'error',
+          title: 'Sandbox unavailable',
+        });
+        return;
+      }
 
       if (sandbox.isWSL && sandbox.wslStatus?.distro && workingDir) {
         log('[ClaudeAgentRunner] WSL mode active, initializing sandbox sync...');
@@ -1410,19 +1434,38 @@ ${hints.join('\n')}
           }
         } else {
           logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          log('[ClaudeAgentRunner] Falling back to /mnt/ access (less secure)');
-
-          if (isNewSession) {
-            // Notify UI: error (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'error',
-                message: 'Sandbox file sync failed, falling back to direct access mode',
-                detail: 'Falling back to direct access mode (less secure)',
-              },
+          const syncBlockReason = getSandboxExecutionBlockReason({
+            sandboxEnabled,
+            platform: process.platform,
+            sandbox,
+            syncFailed: true,
+            syncError: syncResult.error,
+          });
+          if (syncBlockReason) {
+            if (isNewSession) {
+              this.sendToRenderer({
+                type: 'sandbox.sync',
+                payload: {
+                  sessionId: session.id,
+                  phase: 'error',
+                  message: 'Sandbox file sync failed',
+                  detail: syncBlockReason,
+                },
+              });
+            }
+            const errorMsg: Message = {
+              id: uuidv4(),
+              sessionId: session.id,
+              role: 'assistant',
+              content: [{ type: 'text', text: `**Sandbox indisponible** : ${syncBlockReason}` }],
+              timestamp: Date.now(),
+            };
+            this.sendMessage(session.id, errorMsg);
+            this.sendTraceUpdate(session.id, thinkingStepId, {
+              status: 'error',
+              title: 'Sandbox sync failed',
             });
+            return;
           }
         }
       }
@@ -1579,19 +1622,40 @@ ${hints.join('\n')}
           }
         } else {
           logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          log('[ClaudeAgentRunner] Falling back to direct access (less secure)');
-
-          if (isNewLimaSession) {
-            // Notify UI: error (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'error',
-                message: 'Sandbox file sync failed, falling back to direct access mode',
-                detail: 'Falling back to direct access mode (less secure)',
-              },
+          const limaSyncBlockReason = getSandboxExecutionBlockReason({
+            sandboxEnabled,
+            platform: process.platform,
+            sandbox,
+            syncFailed: true,
+            syncError: syncResult.error,
+          });
+          if (limaSyncBlockReason) {
+            if (isNewLimaSession) {
+              this.sendToRenderer({
+                type: 'sandbox.sync',
+                payload: {
+                  sessionId: session.id,
+                  phase: 'error',
+                  message: 'Sandbox file sync failed',
+                  detail: limaSyncBlockReason,
+                },
+              });
+            }
+            const errorMsg: Message = {
+              id: uuidv4(),
+              sessionId: session.id,
+              role: 'assistant',
+              content: [
+                { type: 'text', text: `**Sandbox indisponible** : ${limaSyncBlockReason}` },
+              ],
+              timestamp: Date.now(),
+            };
+            this.sendMessage(session.id, errorMsg);
+            this.sendTraceUpdate(session.id, thinkingStepId, {
+              status: 'error',
+              title: 'Sandbox sync failed',
             });
+            return;
           }
         }
       }
