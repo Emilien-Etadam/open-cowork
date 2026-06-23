@@ -225,58 +225,86 @@ let tray: Tray | null = null;
 const DARK_BG = '#171614';
 const LIGHT_BG = '#f5f3ee';
 
-function buildMacMenu() {
-  if (process.platform !== 'darwin') return;
+const editMenuItems: Electron.MenuItemConstructorOptions[] = [
+  { role: 'undo' },
+  { role: 'redo' },
+  { type: 'separator' },
+  { role: 'cut' },
+  { role: 'copy' },
+  { role: 'paste' },
+  { role: 'selectAll' },
+];
 
-  const template: Electron.MenuItemConstructorOptions[] = [
-    {
-      label: app.name,
-      submenu: [
-        { role: 'about' },
-        { type: 'separator' },
-        {
-          label: 'Preferences…',
-          accelerator: 'CmdOrCtrl+,',
-          click: () =>
-            mainWindow?.webContents.send('server-event', { type: 'navigate', payload: 'settings' }),
-        },
-        { type: 'separator' },
-        { role: 'services' },
-        { type: 'separator' },
-        { role: 'hide' },
-        { role: 'hideOthers' },
-        { role: 'unhide' },
-        { type: 'separator' },
-        { role: 'quit' },
-      ],
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-      ],
-    },
-    {
-      label: 'View',
-      submenu: [
-        { role: 'togglefullscreen' },
-        { type: 'separator' },
-        { role: 'zoomIn' },
-        { role: 'zoomOut' },
-        { role: 'resetZoom' },
-      ],
-    },
-    {
-      label: 'Window',
-      submenu: [{ role: 'minimize' }, { role: 'close' }, { type: 'separator' }, { role: 'front' }],
-    },
-  ];
+function buildContextMenu(params: Electron.ContextMenuParams): Menu | null {
+  const template: Electron.MenuItemConstructorOptions[] = [];
+
+  if (params.isEditable) {
+    template.push(...editMenuItems);
+  } else if (params.selectionText) {
+    template.push({ role: 'copy' }, { role: 'selectAll' });
+  }
+
+  return template.length > 0 ? Menu.buildFromTemplate(template) : null;
+}
+
+function buildApplicationMenu() {
+  const template: Electron.MenuItemConstructorOptions[] =
+    process.platform === 'darwin'
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: 'about' },
+              { type: 'separator' },
+              {
+                label: 'Preferences…',
+                accelerator: 'CmdOrCtrl+,',
+                click: () =>
+                  mainWindow?.webContents.send('server-event', {
+                    type: 'navigate',
+                    payload: 'settings',
+                  }),
+              },
+              { type: 'separator' },
+              { role: 'services' },
+              { type: 'separator' },
+              { role: 'hide' },
+              { role: 'hideOthers' },
+              { role: 'unhide' },
+              { type: 'separator' },
+              { role: 'quit' },
+            ],
+          },
+          {
+            label: 'Edit',
+            submenu: editMenuItems,
+          },
+          {
+            label: 'View',
+            submenu: [
+              { role: 'togglefullscreen' },
+              { type: 'separator' },
+              { role: 'zoomIn' },
+              { role: 'zoomOut' },
+              { role: 'resetZoom' },
+            ],
+          },
+          {
+            label: 'Window',
+            submenu: [
+              { role: 'minimize' },
+              { role: 'close' },
+              { type: 'separator' },
+              { role: 'front' },
+            ],
+          },
+        ]
+      : [
+          {
+            label: 'Edit',
+            submenu: editMenuItems,
+          },
+        ];
 
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
@@ -436,6 +464,18 @@ function createWindow() {
   }
 
   mainWindow = new BrowserWindow(windowOptions);
+
+  if (!isMac) {
+    // Keep accelerators (Ctrl+C/V/X) without showing a menu bar on frameless windows.
+    mainWindow.setMenuBarVisibility(false);
+  }
+
+  mainWindow.webContents.on('context-menu', (_event, params) => {
+    const menu = buildContextMenu(params);
+    if (menu && mainWindow) {
+      menu.popup({ window: mainWindow });
+    }
+  });
 
   const allowedOrigins = new Set<string>();
   if (process.env.VITE_DEV_SERVER_URL) {
@@ -857,8 +897,8 @@ app
     });
     // pi-ai handles model routing natively — no proxy warmup needed
 
-    // macOS: application menu, dock menu, tray icon
-    buildMacMenu();
+    // Application menu (Edit roles enable copy/paste on all platforms), tray icon
+    buildApplicationMenu();
     setupTray();
 
     // Show window after core managers are ready so first-load actions can be handled.
