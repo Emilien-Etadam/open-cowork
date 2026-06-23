@@ -661,7 +661,8 @@
     "disclaimer": "Open Cowork is AI-gestuurd en kan fouten maken. Controleer de antwoorden goed.",
     "noModel": "Geen model",
     "connectorCount_one": "{{count}} connector",
-    "connectorCount_other": "{{count}} connectoren"
+    "connectorCount_other": "{{count}} connectoren",
+    "scrollToBottom": "Naar beneden scrollen"
   },
   "context": {
     "progress": "Voortgang",

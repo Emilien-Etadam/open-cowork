@@ -661,7 +661,8 @@
     "disclaimer": "Open Cowork працює на основі ШІ та може помилятися. Будь ласка, перевіряйте відповіді.",
     "noModel": "Немає моделі",
     "connectorCount_one": "{{count}} конектор",
-    "connectorCount_other": "{{count}} конекторів"
+    "connectorCount_other": "{{count}} конекторів",
+    "scrollToBottom": "Прокрутити вниз"
   },
   "context": {
     "progress": "Прогрес",

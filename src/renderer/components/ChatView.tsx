@@ -14,7 +14,7 @@ import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
-import { Send, Square, Plus, Loader2, Plug, X, Clock } from 'lucide-react';
+import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
 
 type AttachedFile = {
   name: string;
@@ -51,6 +51,7 @@ export function ChatView() {
   >([]);
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -132,7 +133,8 @@ export function ChatView() {
   const timerActive = Boolean(executionClock?.startAt && executionClock.endAt === null);
 
   // Debounced scroll function to prevent scroll conflicts
-  const scrollToBottom = useRef((behavior: ScrollBehavior = 'auto', immediate: boolean = false) => {
+  const scrollToBottom = useRef(
+    (behavior: ScrollBehavior = 'auto', immediate: boolean = false, force: boolean = false) => {
     // Cancel any pending scroll requests
     if (scrollTimeoutRef.current) {
       clearTimeout(scrollTimeoutRef.current);
@@ -144,7 +146,7 @@ export function ChatView() {
     }
 
     const performScroll = () => {
-      if (!isUserAtBottomRef.current) return;
+      if (!force && !isUserAtBottomRef.current) return;
 
       // Mark as scrolling to prevent concurrent scrolls
       isScrollingRef.current = true;
@@ -168,22 +170,38 @@ export function ChatView() {
         scrollTimeoutRef.current = setTimeout(performScroll, 16); // ~1 frame delay
       });
     }
-  }).current;
+  }
+  ).current;
+
+  const updateScrollState = useCallback(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const distanceToBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const atBottom = distanceToBottom <= 80;
+    isUserAtBottomRef.current = atBottom;
+    setShowScrollToBottom(!atBottom);
+  }, []);
+
+  const handleScrollToBottomClick = () => {
+    isUserAtBottomRef.current = true;
+    setShowScrollToBottom(false);
+    scrollToBottom('smooth', true, true);
+  };
 
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const updateScrollState = () => {
-      const distanceToBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight;
-      isUserAtBottomRef.current = distanceToBottom <= 80;
-    };
     updateScrollState();
     // 用户阅读旧消息时，阻止新消息自动滚动打断视线
     const onScroll = () => updateScrollState();
     container.addEventListener('scroll', onScroll, { passive: true });
     return () => container.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [updateScrollState]);
+
+  useEffect(() => {
+    updateScrollState();
+  }, [displayedMessages.length, activeSessionId, updateScrollState]);
 
   useEffect(() => {
     const messageCount = messages.length;
@@ -721,7 +739,18 @@ export function ChatView() {
       </div>
 
       {/* Input */}
-      <div className="border-t border-border-muted bg-background/92 backdrop-blur-md">
+      <div className="relative border-t border-border-muted bg-background/92 backdrop-blur-md">
+        {showScrollToBottom && (
+          <button
+            type="button"
+            onClick={handleScrollToBottomClick}
+            className="absolute left-1/2 -translate-x-1/2 -top-5 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-background/95 border border-border-muted shadow-soft text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors"
+            title={t('chat.scrollToBottom')}
+            aria-label={t('chat.scrollToBottom')}
+          >
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        )}
         <div className="max-w-[920px] mx-auto px-5 lg:px-8 py-5">
           <form
             onSubmit={handleSubmit}

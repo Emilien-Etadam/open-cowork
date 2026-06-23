@@ -661,7 +661,8 @@
     "disclaimer": "Open Cowork è basato sull'IA e può commettere errori. Verifica sempre le risposte.",
     "noModel": "Nessun modello",
     "connectorCount_one": "{{count}} connettore",
-    "connectorCount_other": "{{count}} connettori"
+    "connectorCount_other": "{{count}} connettori",
+    "scrollToBottom": "Scorri in basso"
   },
   "context": {
     "progress": "Avanzamento",
