@@ -233,10 +233,6 @@ const TITLE_BAR_SYMBOL_COLORS: Record<ThemePreset, { dark: string; light: string
   vscode: { dark: '#cccccc', light: '#333333' },
 };
 
-// Kept for backward compatibility with existing theme persistence tests.
-const DARK_BG = WINDOW_BACKGROUNDS.default.dark;
-const LIGHT_BG = WINDOW_BACKGROUNDS.default.light;
-
 const editMenuItems: Electron.MenuItemConstructorOptions[] = [
   { role: 'undo' },
   { role: 'redo' },

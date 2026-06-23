@@ -16,6 +16,7 @@ const mockConfigState = vi.hoisted(() => ({
     globalSkillsPath: '',
     enableDevLogs: false,
     theme: 'light',
+    themePreset: 'default',
     sandboxEnabled: false,
     memoryEnabled: true,
     memoryRuntime: {

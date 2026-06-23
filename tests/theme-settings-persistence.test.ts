@@ -10,8 +10,8 @@ describe('theme settings persistence', () => {
   it('persists theme updates in the main process and applies them to native window state', () => {
     const source = fs.readFileSync(mainIndexPath, 'utf8');
 
-    expect(source).toContain('const DARK_BG = WINDOW_BACKGROUNDS.default.dark;');
-    expect(source).toContain('const LIGHT_BG = WINDOW_BACKGROUNDS.default.light;');
+    expect(source).toContain('const WINDOW_BACKGROUNDS');
+    expect(source).toContain("default: { dark: '#171614', light: '#f5f3ee' }");
     expect(source).toContain('configStore.update({ theme: nextTheme });');
     expect(source).toContain('configStore.update({ themePreset:');
     expect(source).toContain('getWindowBackground(');
