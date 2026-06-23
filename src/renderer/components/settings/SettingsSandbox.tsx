@@ -377,7 +377,11 @@ export function SettingsSandbox() {
             <div className="min-w-0 text-left">
               <p className="text-sm font-medium text-text-primary">{t('sandbox.enableSandbox')}</p>
               <p className="mt-1 text-xs text-text-muted">
-                {sandboxEnabled ? t('sandbox.enabledWillSetup') : t('sandbox.disabledStatus')}
+                {!sandboxEnabled
+                  ? t('sandbox.disabledStatus')
+                  : sandboxReady
+                    ? t('sandbox.readyStatus')
+                    : t('sandbox.enabledWillSetup')}
               </p>
             </div>
             <button

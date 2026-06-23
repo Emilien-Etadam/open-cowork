@@ -38,6 +38,7 @@ import { mt, setBackendLanguage, DEFAULT_BACKEND_LANGUAGE } from '../i18n';
 export type ProviderType = 'openrouter' | 'anthropic' | 'custom' | 'openai' | 'gemini' | 'ollama';
 export type CustomProtocolType = 'anthropic' | 'openai' | 'gemini';
 export type AppTheme = 'dark' | 'light' | 'system';
+export type ThemePreset = 'default' | 'vscode';
 export type ProviderProfileKey =
   | 'openrouter'
   | 'anthropic'
@@ -113,6 +114,9 @@ export interface AppConfig {
   // UI theme preference
   theme: AppTheme;
 
+  // UI theme preset (default Claude palette or VS Code palette)
+  themePreset: ThemePreset;
+
   // UI language. Mirrors the renderer's active react-i18next language and drives
   // backend (main-process) strings via setBackendLanguage(). Defaults to Chinese.
   uiLanguage?: string;
@@ -172,6 +176,7 @@ const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'globalSkillsPath',
   'enableDevLogs',
   'theme',
+  'themePreset',
   'sandboxEnabled',
   'memoryEnabled',
   'enableThinking',
@@ -248,6 +253,7 @@ const defaultConfig: AppConfig = {
   globalSkillsPath: '',
   enableDevLogs: false,
   theme: 'light',
+  themePreset: 'default',
   uiLanguage: DEFAULT_BACKEND_LANGUAGE,
   sandboxEnabled: false,
   memoryEnabled: true,
@@ -347,6 +353,7 @@ const PROFILE_KEYS: ProviderProfileKey[] = [
   'custom:gemini',
 ];
 const VALID_THEMES: AppTheme[] = ['dark', 'light', 'system'];
+const VALID_THEME_PRESETS: ThemePreset[] = ['default', 'vscode'];
 
 function isProviderType(value: unknown): value is ProviderType {
   return (
@@ -369,6 +376,10 @@ function isProfileKey(value: unknown): value is ProviderProfileKey {
 
 function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && VALID_THEMES.includes(value as AppTheme);
+}
+
+function isThemePreset(value: unknown): value is ThemePreset {
+  return typeof value === 'string' && VALID_THEME_PRESETS.includes(value as ThemePreset);
 }
 
 function isMemoryModelRuntimeConfig(value: unknown): value is Partial<MemoryModelRuntimeConfig> {
@@ -983,6 +994,7 @@ export class ConfigStore {
           : defaultConfig.globalSkillsPath,
       enableDevLogs: toBoolean(raw.enableDevLogs, defaultConfig.enableDevLogs),
       theme: isAppTheme(raw.theme) ? raw.theme : defaultConfig.theme,
+      themePreset: isThemePreset(raw.themePreset) ? raw.themePreset : defaultConfig.themePreset,
       uiLanguage:
         typeof raw.uiLanguage === 'string' && raw.uiLanguage.trim()
           ? raw.uiLanguage
@@ -1126,6 +1138,9 @@ export class ConfigStore {
           return defaultConfig[key];
         }
         if (key === 'theme' && !isAppTheme(rawValue)) {
+          return defaultConfig[key];
+        }
+        if (key === 'themePreset' && !isThemePreset(rawValue)) {
           return defaultConfig[key];
         }
         if (
@@ -1403,6 +1418,7 @@ export class ConfigStore {
       enableDevLogs:
         updates.enableDevLogs !== undefined ? updates.enableDevLogs : current.enableDevLogs,
       theme: updates.theme !== undefined ? updates.theme : current.theme,
+      themePreset: updates.themePreset !== undefined ? updates.themePreset : current.themePreset,
       uiLanguage: updates.uiLanguage !== undefined ? updates.uiLanguage : current.uiLanguage,
       sandboxEnabled:
         updates.sandboxEnabled !== undefined ? updates.sandboxEnabled : current.sandboxEnabled,

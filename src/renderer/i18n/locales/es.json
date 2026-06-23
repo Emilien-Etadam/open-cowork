@@ -76,6 +76,9 @@
     "themeLight": "Claro",
     "themeDark": "Oscuro",
     "themeSystem": "Sistema",
+    "themePreset": "Estilo",
+    "themePresetDefault": "Predeterminado",
+    "themePresetVscode": "VS Code",
     "language": "Idioma"
   },
   "memory": {
@@ -661,7 +664,8 @@
     "disclaimer": "Open Cowork funciona con IA y puede cometer errores. Por favor, verifica las respuestas.",
     "noModel": "Sin modelo",
     "connectorCount_one": "{{count}} conector",
-    "connectorCount_other": "{{count}} conectores"
+    "connectorCount_other": "{{count}} conectores",
+    "scrollToBottom": "Ir al final"
   },
   "context": {
     "progress": "Progreso",

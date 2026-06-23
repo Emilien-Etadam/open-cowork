@@ -76,6 +76,9 @@
     "themeLight": "Ljust",
     "themeDark": "Mörkt",
     "themeSystem": "System",
+    "themePreset": "Stil",
+    "themePresetDefault": "Standard",
+    "themePresetVscode": "VS Code",
     "language": "Språk"
   },
   "memory": {
@@ -661,7 +664,8 @@
     "disclaimer": "Open Cowork är AI-driven och kan göra misstag. Dubbelkolla svaren.",
     "noModel": "Ingen modell",
     "connectorCount_one": "{{count}} anslutning",
-    "connectorCount_other": "{{count}} anslutningar"
+    "connectorCount_other": "{{count}} anslutningar",
+    "scrollToBottom": "Scrolla till botten"
   },
   "context": {
     "progress": "Förlopp",

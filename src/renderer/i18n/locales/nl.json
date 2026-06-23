@@ -76,6 +76,9 @@
     "themeLight": "Licht",
     "themeDark": "Donker",
     "themeSystem": "Systeem",
+    "themePreset": "Stijl",
+    "themePresetDefault": "Standaard",
+    "themePresetVscode": "VS Code",
     "language": "Taal"
   },
   "memory": {
@@ -661,7 +664,8 @@
     "disclaimer": "Open Cowork is AI-gestuurd en kan fouten maken. Controleer de antwoorden goed.",
     "noModel": "Geen model",
     "connectorCount_one": "{{count}} connector",
-    "connectorCount_other": "{{count}} connectoren"
+    "connectorCount_other": "{{count}} connectoren",
+    "scrollToBottom": "Naar beneden scrollen"
   },
   "context": {
     "progress": "Voortgang",

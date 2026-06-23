@@ -16,12 +16,13 @@ import {
   createAgentSession,
   SessionManager as PiSessionManager,
   SettingsManager as PiSettingsManager,
-  createCodingTools,
+  createBashToolDefinition,
+  getAgentDir,
   type BashToolOptions,
   type AgentSession as PiAgentSession,
   type ToolDefinition,
 } from '@mariozechner/pi-coding-agent';
-import { Type, type TSchema } from '@sinclair/typebox';
+import { Type, type TSchema } from 'typebox';
 import { getSharedAuthStorage, ModelRegistry } from './shared-auth';
 import type { Session, Message, TraceStep, ServerEvent, ContentBlock } from '../../renderer/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -314,7 +315,7 @@ function resolveBundledToolsBinDir(): string | null {
  * 3. Deduplicates all entries
  * 4. Writes the result back to `process.env.PATH`
  *
- * Called once before the first `createCodingTools()` — subsequent calls are no-ops.
+ * Called once before the first agent session creation — subsequent calls are no-ops.
  */
 let pathEnriched = false;
 
@@ -2153,9 +2154,7 @@ Tool routing:
 - Use WebSearch/WebFetch only when Chrome MCP is unavailable or the user explicitly asks for generic web search.
 </tool_behavior>`,
         this.getBundledPathHints(),
-      ]
-        .filter((section): section is string => Boolean(section && section.trim()))
-        .join('\n\n');
+      ].filter((section): section is string => Boolean(section && section.trim()));
 
       logTiming('before agent session creation', runStartTime);
 
@@ -2164,7 +2163,6 @@ Tool routing:
       // Re-read every query so newly added/removed MCP servers take effect immediately.
       const mcpCustomTools = this.mcpManager ? buildMcpCustomTools(this.mcpManager) : [];
       const extensionCustomTools = extensionResult.customTools || [];
-      const customTools = [...mcpCustomTools, ...extensionCustomTools];
       if (mcpCustomTools.length > 0) {
         log(
           `[ClaudeAgentRunner] Registered ${mcpCustomTools.length} MCP tools as customTools:`,
@@ -2184,30 +2182,29 @@ Tool routing:
 
       const bashOptions: BashToolOptions | undefined =
         process.platform === 'win32' ? { operations: createWindowsBashOperations() } : undefined;
-      const codingTools = createCodingTools(
-        effectiveCwd,
-        bashOptions ? { bash: bashOptions } : undefined
-      );
+      const bashDefinition = createBashToolDefinition(effectiveCwd, bashOptions);
 
       // Inject a default 120s timeout for bash commands when the model omits one
-      const withTimeout = ClaudeAgentRunner.wrapBashToolWithDefaultTimeout(
-        codingTools as ToolDefinition[]
-      );
+      const withTimeout = ClaudeAgentRunner.wrapBashToolWithDefaultTimeout([
+        bashDefinition as ToolDefinition,
+      ]);
 
-      // Wrap the bash tool to intercept sudo commands and request passwords
-      // Note: wrapBashToolForSudo returns ToolDefinition[] (5-param execute) but
-      // createAgentSession.tools expects Tool[] (4-param execute). The extra ctx
-      // parameter is simply not passed by the session runner — safe to cast.
-      const wrappedTools = this.wrapBashToolForSudo(withTimeout, session.id, effectiveCwd);
+      // Wrap the bash tool to intercept sudo commands and request passwords.
+      // Passed via customTools to override the SDK built-in bash tool.
+      const wrappedBashTools = this.wrapBashToolForSudo(withTimeout, session.id, effectiveCwd);
+      const wrappedBash = wrappedBashTools.find((tool) => tool.name === 'bash');
+      const allCustomTools = [
+        ...(wrappedBash ? [wrappedBash] : []),
+        ...mcpCustomTools,
+        ...extensionCustomTools,
+      ];
 
       // Diagnostic: log tools being passed to SDK (helps debug Ollama tool use)
       logCtx(`[ClaudeAgentRunner] Session reuse check: cached=${!!cachedSession}`);
       logCtx(`[ClaudeAgentRunner] Model=${piModel.id}, thinkingLevel=${thinkingLevel}`);
+      log('[ClaudeAgentRunner] Built-in tools: read, bash, edit, write');
       log(
-        `[ClaudeAgentRunner] Built-in tools (${wrappedTools.length}): ${wrappedTools.map((t: { name?: string; type?: string }) => t.name || t.type).join(', ')}`
-      );
-      log(
-        `[ClaudeAgentRunner] Custom tools (${customTools.length}): ${customTools.map((t) => t.name).join(', ')}`
+        `[ClaudeAgentRunner] Custom tools (${allCustomTools.length}): ${allCustomTools.map((t) => t.name).join(', ')}`
       );
 
       let piSession: PiAgentSession;
@@ -2253,12 +2250,13 @@ Tool routing:
         const { DefaultResourceLoader } = await import('@mariozechner/pi-coding-agent');
         const resourceLoader = new DefaultResourceLoader({
           cwd: effectiveCwd,
+          agentDir: getAgentDir(),
           additionalSkillPaths: skillPaths,
           appendSystemPrompt: coworkAppendPrompt,
         });
         await resourceLoader.reload();
 
-        const modelRegistry = new ModelRegistry(authStorage);
+        const modelRegistry = ModelRegistry.create(authStorage);
 
         const memoryPrefixTokenEstimate = estimateTokensFromText(
           extensionResult.promptPrefix || ''
@@ -2284,8 +2282,7 @@ Tool routing:
           thinkingLevel,
           authStorage,
           modelRegistry,
-          tools: wrappedTools as unknown as ReturnType<typeof createCodingTools>,
-          customTools,
+          customTools: allCustomTools,
           sessionManager: PiSessionManager.inMemory(),
           settingsManager: PiSettingsManager.inMemory({
             compaction: compactionSettings,
@@ -2893,7 +2890,7 @@ Tool routing:
               break;
             }
 
-            case 'auto_compaction_start': {
+            case 'compaction_start': {
               log('[ClaudeAgentRunner] Auto-compaction started, reason:', event.reason);
               this.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
               compactionStepId = `compaction-${Date.now()}`;
@@ -2907,7 +2904,7 @@ Tool routing:
               break;
             }
 
-            case 'auto_compaction_end': {
+            case 'compaction_end': {
               const status = event.aborted ? 'error' : event.errorMessage ? 'error' : 'completed';
               const title = event.aborted
                 ? 'Context compaction aborted'

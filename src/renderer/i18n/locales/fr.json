@@ -76,6 +76,9 @@
     "themeLight": "Clair",
     "themeDark": "Sombre",
     "themeSystem": "Système",
+    "themePreset": "Style",
+    "themePresetDefault": "Par défaut",
+    "themePresetVscode": "VS Code",
     "language": "Langue"
   },
   "memory": {
@@ -672,7 +675,8 @@
     "handoffErrors": {
       "errHandoffNothingToSummarize": "Rien à résumer pour l'instant — la conversation est encore trop courte.",
       "errHandoffFailed": "La reprise dans une nouvelle session a échoué. Veuillez réessayer."
-    }
+    },
+    "scrollToBottom": "Descendre en bas"
   },
   "context": {
     "progress": "Progression",

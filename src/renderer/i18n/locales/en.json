@@ -76,6 +76,9 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
+    "themePreset": "Style",
+    "themePresetDefault": "Default",
+    "themePresetVscode": "VS Code",
     "language": "Language"
   },
   "memory": {
@@ -672,7 +675,8 @@
     "handoffErrors": {
       "errHandoffNothingToSummarize": "Nothing to summarize yet — the conversation is still too short.",
       "errHandoffFailed": "Starting a new session from this conversation failed. Please try again."
-    }
+    },
+    "scrollToBottom": "Scroll to bottom"
   },
   "context": {
     "progress": "Progress",
