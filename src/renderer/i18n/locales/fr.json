@@ -76,6 +76,9 @@
     "themeLight": "Clair",
     "themeDark": "Sombre",
     "themeSystem": "Système",
+    "themePreset": "Style",
+    "themePresetDefault": "Par défaut",
+    "themePresetVscode": "VS Code",
     "language": "Langue"
   },
   "memory": {

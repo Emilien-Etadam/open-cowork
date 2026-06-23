@@ -76,6 +76,9 @@
     "themeLight": "Ljust",
     "themeDark": "Mörkt",
     "themeSystem": "System",
+    "themePreset": "Stil",
+    "themePresetDefault": "Standard",
+    "themePresetVscode": "VS Code",
     "language": "Språk"
   },
   "memory": {

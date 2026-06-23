@@ -30,6 +30,7 @@ import {
   getPiAiModelPresets,
   type AppConfig,
   type AppTheme,
+  type ThemePreset,
   type CreateConfigSetPayload,
 } from './config/config-store';
 import { mt } from './i18n';
@@ -222,8 +223,15 @@ if (!hasSingleInstanceLock) {
 
 // Tray instance (kept alive to prevent GC)
 let tray: Tray | null = null;
-const DARK_BG = '#171614';
-const LIGHT_BG = '#f5f3ee';
+const WINDOW_BACKGROUNDS: Record<ThemePreset, { dark: string; light: string }> = {
+  default: { dark: '#171614', light: '#f5f3ee' },
+  vscode: { dark: '#1e1e1e', light: '#ffffff' },
+};
+
+const TITLE_BAR_SYMBOL_COLORS: Record<ThemePreset, { dark: string; light: string }> = {
+  default: { dark: '#f1ece4', light: '#1a1a1a' },
+  vscode: { dark: '#cccccc', light: '#333333' },
+};
 
 const editMenuItems: Electron.MenuItemConstructorOptions[] = [
   { role: 'undo' },
@@ -397,6 +405,21 @@ function getSavedThemePreference(): AppTheme {
   return theme === 'dark' || theme === 'system' ? theme : 'light';
 }
 
+function getSavedThemePreset(): ThemePreset {
+  const preset = configStore.get('themePreset');
+  return preset === 'vscode' ? 'vscode' : 'default';
+}
+
+function getWindowBackground(preset: ThemePreset, effectiveTheme: 'dark' | 'light'): string {
+  return WINDOW_BACKGROUNDS[preset][effectiveTheme];
+}
+
+function applyWindowBackground(preset: ThemePreset, effectiveTheme: 'dark' | 'light'): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.setBackgroundColor(getWindowBackground(preset, effectiveTheme));
+  }
+}
+
 function resolveEffectiveTheme(theme: AppTheme): 'dark' | 'light' {
   if (theme === 'system') {
     return nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
@@ -410,19 +433,20 @@ function applyNativeThemePreference(theme: AppTheme): void {
 
 function createWindow() {
   const savedTheme = getSavedThemePreference();
+  const savedPreset = getSavedThemePreset();
   applyNativeThemePreference(savedTheme);
   const effectiveTheme = resolveEffectiveTheme(savedTheme);
   const THEME =
     effectiveTheme === 'dark'
       ? {
-          background: DARK_BG,
-          titleBar: DARK_BG,
-          titleBarSymbol: '#f1ece4',
+          background: getWindowBackground(savedPreset, 'dark'),
+          titleBar: getWindowBackground(savedPreset, 'dark'),
+          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS[savedPreset].dark,
         }
       : {
-          background: LIGHT_BG,
-          titleBar: LIGHT_BG,
-          titleBarSymbol: '#1a1a1a',
+          background: getWindowBackground(savedPreset, 'light'),
+          titleBar: getWindowBackground(savedPreset, 'light'),
+          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS[savedPreset].light,
         };
 
   // Platform-specific window configuration
@@ -937,7 +961,9 @@ app
         payload: { shouldUseDarkColors: nativeTheme.shouldUseDarkColors },
       });
       if (getSavedThemePreference() === 'system' && mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.setBackgroundColor(nativeTheme.shouldUseDarkColors ? DARK_BG : LIGHT_BG);
+        const preset = getSavedThemePreset();
+        const effectiveTheme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
+        mainWindow.setBackgroundColor(getWindowBackground(preset, effectiveTheme));
       }
     });
 
@@ -2812,19 +2838,28 @@ async function handleClientEvent(event: ClientEvent): Promise<unknown> {
       return { success: false, path: '', error: 'User cancelled' };
     }
 
-    case 'settings.update':
-      if (
-        event.payload.theme === 'dark' ||
-        event.payload.theme === 'light' ||
-        event.payload.theme === 'system'
-      ) {
-        const nextTheme = event.payload.theme as AppTheme;
+    case 'settings.update': {
+      const payload = event.payload as Record<string, unknown>;
+      let themeChanged = false;
+      let presetChanged = false;
+
+      if (payload.theme === 'dark' || payload.theme === 'light' || payload.theme === 'system') {
+        const nextTheme = payload.theme as AppTheme;
         configStore.update({ theme: nextTheme });
         applyNativeThemePreference(nextTheme);
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          const effectiveTheme = resolveEffectiveTheme(nextTheme);
-          mainWindow.setBackgroundColor(effectiveTheme === 'dark' ? DARK_BG : LIGHT_BG);
-        }
+        themeChanged = true;
+      }
+
+      if (payload.themePreset === 'default' || payload.themePreset === 'vscode') {
+        configStore.update({ themePreset: payload.themePreset as ThemePreset });
+        presetChanged = true;
+      }
+
+      if (themeChanged || presetChanged) {
+        const savedTheme = getSavedThemePreference();
+        const savedPreset = getSavedThemePreset();
+        const effectiveTheme = resolveEffectiveTheme(savedTheme);
+        applyWindowBackground(savedPreset, effectiveTheme);
         sendToRenderer({
           type: 'config.status',
           payload: {
@@ -2840,6 +2875,7 @@ async function handleClientEvent(event: ClientEvent): Promise<unknown> {
         );
       }
       return null;
+    }
 
     default:
       logWarn('Unknown event type:', event);
