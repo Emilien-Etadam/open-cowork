@@ -13,6 +13,7 @@
 export type BackendMessageKey =
   | 'errModelTimeout'
   | 'errEmptySuccess'
+  | 'errContextOverflow'
   | 'errBadRequest'
   | 'errAuthFailed'
   | 'errRateLimited'
@@ -21,6 +22,9 @@ export type BackendMessageKey =
   | 'errCheckConfigHint'
   | 'errRetryingHint'
   | 'errConfigRequired'
+  | 'noticeCompactionStart'
+  | 'noticeCompactionFailed'
+  | 'noticeCompactionCompleted'
   | 'startupFailedTitle'
   | 'startupFailedBody'
   | 'configDefaultSetName'
@@ -50,6 +54,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errModelTimeout: '模型响应超时：长时间未收到上游返回，请稍后重试或检查当前模型/网关负载。',
     errEmptySuccess:
       '模型返回了一个空的成功结果，当前模型或网关兼容性可能有问题，请重试或切换协议后再试。',
+    errContextOverflow:
+      '对话上下文已满。请开始新的对话，或减少消息长度，或在 API 设置中降低最大输出 tokens。（限制：{{limit}} tokens，已用：{{input}} input + {{output}} output）',
     errBadRequest:
       '请求被上游拒绝（400），可能是模型/协议配置不兼容。请检查模型名称、协议设置和 API 端点。\n原始错误: {{error}}',
     errAuthFailed:
@@ -62,6 +68,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errCheckConfigHint: '_请检查配置后重试。_',
     errRetryingHint: '_Agent 正在自动重试，请稍候..._',
     errConfigRequired: '当前方案未配置可用凭证，请先在 API 设置中完成配置',
+    noticeCompactionStart: '正在压缩对话上下文以释放空间...',
+    noticeCompactionFailed: '上下文压缩失败：{{error}}',
+    noticeCompactionCompleted: '上下文压缩完成，正在继续处理请求。',
     startupFailedTitle: 'Open Cowork 启动失败',
     startupFailedBody: '{{message}}\n\n请查看日志获取更多信息。',
     configDefaultSetName: '默认方案',
@@ -72,6 +81,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Model response timed out: no reply from the upstream service for a while. Please retry later or check the current model/gateway load.',
     errEmptySuccess:
       'The model returned an empty successful result. The current model or gateway may have a compatibility issue — please retry or switch protocol and try again.',
+    errContextOverflow:
+      'The conversation context is full. Start a new conversation, shorten your messages, or lower max output tokens in API Settings. (Limit: {{limit}} tokens, used: {{input}} input + {{output}} output)',
     errBadRequest:
       'The request was rejected upstream (400). The model/protocol configuration may be incompatible. Please check the model name, protocol settings and API endpoint.\nOriginal error: {{error}}',
     errAuthFailed:
@@ -86,6 +97,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_The agent is retrying automatically, please wait..._',
     errConfigRequired:
       'The current configuration set has no usable credentials. Please complete the setup in API Settings first.',
+    noticeCompactionStart: 'Compacting conversation context to free space...',
+    noticeCompactionFailed: 'Context compaction failed: {{error}}',
+    noticeCompactionCompleted: 'Context compaction completed. Continuing the request.',
     startupFailedTitle: 'Open Cowork failed to start',
     startupFailedBody: '{{message}}\n\nPlease check the logs for more information.',
     configDefaultSetName: 'Default',
@@ -96,6 +110,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Se agotó el tiempo de espera de la respuesta del modelo: el servicio remoto no respondió durante un rato. Vuelve a intentarlo más tarde o revisa la carga actual del modelo o la pasarela.',
     errEmptySuccess:
       'El modelo devolvió un resultado correcto pero vacío. Es posible que el modelo o la pasarela actual tengan un problema de compatibilidad; vuelve a intentarlo o cambia de protocolo e inténtalo de nuevo.',
+    errContextOverflow:
+      'El contexto de la conversación está lleno. Inicia una conversación nueva, acorta los mensajes o reduce los tokens máximos de salida en los Ajustes de la API. (Límite: {{limit}} tokens, usado: {{input}} input + {{output}} output)',
     errBadRequest:
       'El servicio remoto rechazó la solicitud (400). Puede que la configuración del modelo o el protocolo sea incompatible. Comprueba el nombre del modelo, los ajustes del protocolo y el endpoint de la API.\nError original: {{error}}',
     errAuthFailed:
@@ -110,6 +126,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_El agente está reintentando automáticamente, espera un momento..._',
     errConfigRequired:
       'El conjunto de configuración actual no tiene credenciales utilizables. Completa primero la configuración en los Ajustes de la API.',
+    noticeCompactionStart: 'Compactando el contexto de la conversación para liberar espacio...',
+    noticeCompactionFailed: 'Error al compactar el contexto: {{error}}',
+    noticeCompactionCompleted: 'Compactación del contexto completada. Continuando la solicitud.',
     startupFailedTitle: 'No se pudo iniciar Open Cowork',
     startupFailedBody: '{{message}}\n\nConsulta los registros para obtener más información.',
     configDefaultSetName: 'Predeterminada',
@@ -120,6 +139,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       "Le délai d'attente de la réponse du modèle a expiré : aucune réponse du service en amont depuis un certain temps. Veuillez réessayer plus tard ou vérifier la charge actuelle du modèle ou de la passerelle.",
     errEmptySuccess:
       'Le modèle a renvoyé un résultat vide alors que la requête a abouti. Le modèle ou la passerelle actuels présentent peut-être un problème de compatibilité — veuillez réessayer ou changer de protocole, puis recommencer.',
+    errContextOverflow:
+      "Le contexte de la conversation est plein. Démarrez une nouvelle conversation, réduisez la taille des messages ou diminuez les tokens de sortie maximaux dans les Paramètres de l'API. (Limite : {{limit}} tokens, utilisé : {{input}} input + {{output}} output)",
     errBadRequest:
       "La requête a été rejetée en amont (400). La configuration du modèle ou du protocole est peut-être incompatible. Veuillez vérifier le nom du modèle, les paramètres du protocole et le point de terminaison de l'API.\nErreur d'origine : {{error}}",
     errAuthFailed:
@@ -134,6 +155,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: "_L'agent réessaie automatiquement, veuillez patienter..._",
     errConfigRequired:
       "Le jeu de configuration actuel ne contient aucun identifiant utilisable. Veuillez d'abord finaliser la configuration dans les Paramètres de l'API.",
+    noticeCompactionStart: 'Compaction du contexte de la conversation en cours...',
+    noticeCompactionFailed: 'Échec de la compaction du contexte : {{error}}',
+    noticeCompactionCompleted: 'Compaction du contexte terminée. Poursuite de la requête.',
     startupFailedTitle: "Échec du démarrage d'Open Cowork",
     startupFailedBody: '{{message}}\n\nVeuillez consulter les journaux pour plus d’informations.',
     configDefaultSetName: 'Par défaut',
@@ -144,6 +168,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Zeitüberschreitung bei der Modellantwort: Der vorgelagerte Dienst hat längere Zeit nicht reagiert. Bitte versuchen Sie es später erneut oder prüfen Sie die aktuelle Auslastung von Modell/Gateway.',
     errEmptySuccess:
       'Das Modell hat ein leeres, aber erfolgreiches Ergebnis zurückgegeben. Möglicherweise besteht ein Kompatibilitätsproblem mit dem aktuellen Modell oder Gateway – bitte versuchen Sie es erneut oder wechseln Sie das Protokoll.',
+    errContextOverflow:
+      'Der Gesprächskontext ist voll. Starten Sie eine neue Unterhaltung, kürzen Sie Nachrichten oder verringern Sie die maximalen Ausgabe-Tokens in den API-Einstellungen. (Limit: {{limit}} Tokens, genutzt: {{input}} input + {{output}} output)',
     errBadRequest:
       'Die Anfrage wurde vorgelagert abgelehnt (400). Die Konfiguration von Modell/Protokoll ist möglicherweise inkompatibel. Bitte prüfen Sie Modellname, Protokolleinstellungen und API-Endpunkt.\nUrsprünglicher Fehler: {{error}}',
     errAuthFailed:
@@ -158,6 +184,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Der Agent wiederholt den Vorgang automatisch, bitte warten ..._',
     errConfigRequired:
       'Der aktuelle Konfigurationssatz enthält keine verwendbaren Anmeldedaten. Bitte schließen Sie zunächst die Einrichtung in den API-Einstellungen ab.',
+    noticeCompactionStart: 'Gesprächskontext wird komprimiert, um Speicher freizugeben...',
+    noticeCompactionFailed: 'Kontextkomprimierung fehlgeschlagen: {{error}}',
+    noticeCompactionCompleted: 'Kontextkomprimierung abgeschlossen. Anfrage wird fortgesetzt.',
     startupFailedTitle: 'Open Cowork konnte nicht gestartet werden',
     startupFailedBody: '{{message}}\n\nWeitere Informationen finden Sie in den Protokollen.',
     configDefaultSetName: 'Standard',
@@ -168,6 +197,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       "Risposta del modello scaduta: nessuna risposta dal servizio upstream da un po'. Riprova più tardi o controlla il carico attuale del modello/gateway.",
     errEmptySuccess:
       'Il modello ha restituito un risultato vuoto pur con esito positivo. Il modello o il gateway attuale potrebbe avere un problema di compatibilità: riprova oppure cambia protocollo e riprova.',
+    errContextOverflow:
+      'Il contesto della conversazione è pieno. Avvia una nuova conversazione, accorcia i messaggi o riduci i token di output massimi nelle Impostazioni API. (Limite: {{limit}} token, usati: {{input}} input + {{output}} output)',
     errBadRequest:
       "La richiesta è stata rifiutata dall'upstream (400). La configurazione del modello/protocollo potrebbe essere incompatibile. Controlla il nome del modello, le impostazioni del protocollo e l'endpoint API.\nErrore originale: {{error}}",
     errAuthFailed:
@@ -182,6 +213,10 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: "_L'agente sta riprovando automaticamente, attendi..._",
     errConfigRequired:
       'Il set di configurazione attuale non ha credenziali utilizzabili. Completa prima la configurazione in Impostazioni API.',
+    noticeCompactionStart: 'Compressione del contesto della conversazione in corso...',
+    noticeCompactionFailed: 'Compressione del contesto non riuscita: {{error}}',
+    noticeCompactionCompleted:
+      'Compressione del contesto completata. Continuazione della richiesta.',
     startupFailedTitle: 'Avvio di Open Cowork non riuscito',
     startupFailedBody: '{{message}}\n\nControlla i log per maggiori informazioni.',
     configDefaultSetName: 'Predefinito',
@@ -192,6 +227,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Час очікування відповіді моделі вичерпано: вихідний сервіс деякий час не надсилав відповіді. Повторіть спробу пізніше або перевірте поточне навантаження на модель чи шлюз.',
     errEmptySuccess:
       'Модель повернула порожній успішний результат. Можливо, поточна модель або шлюз має проблему сумісності — повторіть спробу або змініть протокол і спробуйте знову.',
+    errContextOverflow:
+      'Контекст розмови заповнено. Почніть нову розмову, скоротьте повідомлення або зменшіть максимальні вихідні токени в налаштуваннях API. (Ліміт: {{limit}} tokens, використано: {{input}} input + {{output}} output)',
     errBadRequest:
       'Запит відхилено на вихідному сервісі (400). Можливо, конфігурація моделі чи протоколу несумісна. Перевірте назву моделі, налаштування протоколу та точку доступу API.\nПервинна помилка: {{error}}',
     errAuthFailed:
@@ -206,6 +243,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Агент повторює спробу автоматично, зачекайте..._',
     errConfigRequired:
       'Поточний набір конфігурації не має придатних облікових даних. Спершу завершіть налаштування в розділі параметрів API.',
+    noticeCompactionStart: 'Стискаємо контекст розмови, щоб звільнити місце...',
+    noticeCompactionFailed: 'Не вдалося стиснути контекст: {{error}}',
+    noticeCompactionCompleted: 'Стиснення контексту завершено. Продовжуємо запит.',
     startupFailedTitle: 'Не вдалося запустити Open Cowork',
     startupFailedBody: '{{message}}\n\nПерегляньте журнали для отримання додаткової інформації.',
     configDefaultSetName: 'За замовчуванням',
@@ -216,6 +256,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Przekroczono limit czasu odpowiedzi modelu: usługa nadrzędna od pewnego czasu nie odpowiada. Spróbuj ponownie później lub sprawdź bieżące obciążenie modelu/bramy.',
     errEmptySuccess:
       'Model zwrócił pusty wynik mimo powodzenia. Bieżący model lub brama mogą mieć problem ze zgodnością — spróbuj ponownie albo zmień protokół i spróbuj jeszcze raz.',
+    errContextOverflow:
+      'Kontekst rozmowy jest pełny. Rozpocznij nową rozmowę, skróć wiadomości lub zmniejsz maksymalną liczbę tokenów wyjściowych w ustawieniach API. (Limit: {{limit}} tokenów, użyto: {{input}} input + {{output}} output)',
     errBadRequest:
       'Żądanie zostało odrzucone po stronie usługi nadrzędnej (400). Konfiguracja modelu/protokołu może być niezgodna. Sprawdź nazwę modelu, ustawienia protokołu oraz punkt końcowy API.\nBłąd źródłowy: {{error}}',
     errAuthFailed:
@@ -230,6 +272,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Agent automatycznie ponawia próbę, proszę czekać..._',
     errConfigRequired:
       'Bieżący zestaw konfiguracji nie zawiera użytecznych poświadczeń. Najpierw dokończ konfigurację w ustawieniach API.',
+    noticeCompactionStart: 'Kompresowanie kontekstu rozmowy w celu zwolnienia miejsca...',
+    noticeCompactionFailed: 'Kompresja kontekstu nie powiodła się: {{error}}',
+    noticeCompactionCompleted: 'Kompresja kontekstu zakończona. Kontynuowanie żądania.',
     startupFailedTitle: 'Nie udało się uruchomić Open Cowork',
     startupFailedBody: '{{message}}\n\nSprawdź dzienniki, aby uzyskać więcej informacji.',
     configDefaultSetName: 'Domyślny',
@@ -240,6 +285,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Modellsvaret tog för lång tid: inget svar från uppströmstjänsten på ett tag. Försök igen senare eller kontrollera den aktuella belastningen på modellen/gatewayen.',
     errEmptySuccess:
       'Modellen returnerade ett tomt lyckat resultat. Den aktuella modellen eller gatewayen kan ha ett kompatibilitetsproblem – försök igen eller byt protokoll och försök på nytt.',
+    errContextOverflow:
+      'Konversationskontexten är full. Starta en ny konversation, förkorta meddelanden eller sänk max antal utdatatokens i API-inställningarna. (Gräns: {{limit}} tokens, använt: {{input}} input + {{output}} output)',
     errBadRequest:
       'Begäran avvisades uppströms (400). Konfigurationen för modellen/protokollet kan vara inkompatibel. Kontrollera modellnamnet, protokollinställningarna och API-slutpunkten.\nUrsprungligt fel: {{error}}',
     errAuthFailed:
@@ -254,6 +301,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Agenten försöker igen automatiskt, vänta..._',
     errConfigRequired:
       'Den aktuella konfigurationsuppsättningen saknar användbara autentiseringsuppgifter. Slutför först konfigurationen i API-inställningarna.',
+    noticeCompactionStart: 'Komprimerar konversationskontexten för att frigöra utrymme...',
+    noticeCompactionFailed: 'Kontextkomprimering misslyckades: {{error}}',
+    noticeCompactionCompleted: 'Kontextkomprimering slutförd. Fortsätter begäran.',
     startupFailedTitle: 'Open Cowork kunde inte starta',
     startupFailedBody: '{{message}}\n\nKontrollera loggarna för mer information.',
     configDefaultSetName: 'Standard',
@@ -264,6 +314,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Tidsavbrudd for modellsvaret: ingen respons fra den underliggende tjenesten på en stund. Prøv igjen senere, eller sjekk gjeldende belastning på modellen/gatewayen.',
     errEmptySuccess:
       'Modellen returnerte et tomt, vellykket resultat. Gjeldende modell eller gateway kan ha et kompatibilitetsproblem – prøv igjen, eller bytt protokoll og prøv på nytt.',
+    errContextOverflow:
+      'Samtalekonteksten er full. Start en ny samtale, forkort meldingene eller senk maks antall utdatatokens i API-innstillingene. (Grense: {{limit}} tokens, brukt: {{input}} input + {{output}} output)',
     errBadRequest:
       'Forespørselen ble avvist av den underliggende tjenesten (400). Modell-/protokollkonfigurasjonen kan være inkompatibel. Sjekk modellnavnet, protokollinnstillingene og API-endepunktet.\nOpprinnelig feil: {{error}}',
     errAuthFailed:
@@ -278,6 +330,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Agenten prøver automatisk på nytt, vent litt …_',
     errConfigRequired:
       'Gjeldende konfigurasjonssett har ingen brukbare legitimasjoner. Fullfør oppsettet i API-innstillinger først.',
+    noticeCompactionStart: 'Komprimerer samtalekonteksten for å frigjøre plass...',
+    noticeCompactionFailed: 'Kontekstkomprimering mislyktes: {{error}}',
+    noticeCompactionCompleted: 'Kontekstkomprimering fullført. Fortsetter forespørselen.',
     startupFailedTitle: 'Open Cowork kunne ikke starte',
     startupFailedBody: '{{message}}\n\nSjekk loggene for mer informasjon.',
     configDefaultSetName: 'Standard',
@@ -288,6 +343,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Time-out bij modelantwoord: het upstream-service reageerde een tijd lang niet. Probeer het later opnieuw of controleer de huidige belasting van het model/de gateway.',
     errEmptySuccess:
       'Het model gaf een leeg succesvol resultaat terug. Mogelijk is er een compatibiliteitsprobleem met het huidige model of de gateway — probeer het opnieuw of schakel over op een ander protocol en probeer het nogmaals.',
+    errContextOverflow:
+      'De gesprekscontext is vol. Start een nieuw gesprek, verkort berichten of verlaag het maximum aantal outputtokens in de API-instellingen. (Limiet: {{limit}} tokens, gebruikt: {{input}} input + {{output}} output)',
     errBadRequest:
       'De aanvraag werd upstream geweigerd (400). Mogelijk is de model-/protocolconfiguratie niet compatibel. Controleer de modelnaam, de protocolinstellingen en het API-eindpunt.\nOorspronkelijke fout: {{error}}',
     errAuthFailed:
@@ -302,6 +359,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_De agent probeert het automatisch opnieuw, even geduld..._',
     errConfigRequired:
       'De huidige configuratieset bevat geen bruikbare inloggegevens. Voltooi eerst de installatie in de API-instellingen.',
+    noticeCompactionStart: 'Gesprekscontext wordt gecomprimeerd om ruimte vrij te maken...',
+    noticeCompactionFailed: 'Contextcompressie mislukt: {{error}}',
+    noticeCompactionCompleted: 'Contextcompressie voltooid. Verzoek wordt voortgezet.',
     startupFailedTitle: 'Open Cowork kon niet worden gestart',
     startupFailedBody: '{{message}}\n\nRaadpleeg de logbestanden voor meer informatie.',
     configDefaultSetName: 'Standaard',
@@ -312,6 +372,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Răspunsul modelului a expirat: niciun răspuns de la serviciul din amonte pentru o vreme. Reîncearcă mai târziu sau verifică gradul de încărcare al modelului/gateway-ului.',
     errEmptySuccess:
       'Modelul a returnat un rezultat reușit, dar gol. Este posibil ca modelul sau gateway-ul curent să aibă o problemă de compatibilitate — reîncearcă sau schimbă protocolul și încearcă din nou.',
+    errContextOverflow:
+      'Contextul conversației este plin. Începe o conversație nouă, scurtează mesajele sau reduce tokenii maximi de ieșire din Setări API. (Limită: {{limit}} tokeni, folosit: {{input}} input + {{output}} output)',
     errBadRequest:
       'Cererea a fost respinsă în amonte (400). Configurația modelului/protocolului poate fi incompatibilă. Verifică numele modelului, setările de protocol și punctul de acces API.\nEroare originală: {{error}}',
     errAuthFailed:
@@ -326,6 +388,9 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errRetryingHint: '_Agentul reîncearcă automat, te rugăm să aștepți..._',
     errConfigRequired:
       'Setul de configurație curent nu are credențiale utilizabile. Finalizează mai întâi configurarea în Setări API.',
+    noticeCompactionStart: 'Se compactează contextul conversației pentru a elibera spațiu...',
+    noticeCompactionFailed: 'Compactarea contextului a eșuat: {{error}}',
+    noticeCompactionCompleted: 'Compactarea contextului s-a încheiat. Se continuă cererea.',
     startupFailedTitle: 'Open Cowork nu a putut porni',
     startupFailedBody: '{{message}}\n\nVerifică jurnalele pentru mai multe informații.',
     configDefaultSetName: 'Implicit',

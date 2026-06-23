@@ -2,6 +2,7 @@ import type {
   AgentRuntimeExtension,
   BeforeSessionRunResult,
 } from '../extensions/agent-runtime-extension';
+import { computeMemoryPrefixBudget } from '../claude/context-budget';
 import type { MemoryService } from './memory-service';
 
 export class MemoryExtension implements AgentRuntimeExtension {
@@ -12,13 +13,26 @@ export class MemoryExtension implements AgentRuntimeExtension {
   async beforeSessionRun({
     session,
     prompt,
-  }: Parameters<NonNullable<AgentRuntimeExtension['beforeSessionRun']>>[0]): Promise<BeforeSessionRunResult | void> {
+    contextBudget,
+  }: Parameters<
+    NonNullable<AgentRuntimeExtension['beforeSessionRun']>
+  >[0]): Promise<BeforeSessionRunResult | void> {
     if (!this.memoryService.isEnabled() || !session.memoryEnabled) {
       return;
     }
 
+    const maxPrefixTokens = contextBudget
+      ? computeMemoryPrefixBudget(
+          contextBudget.contextWindow,
+          contextBudget.currentInputTokens,
+          contextBudget.maxTokens
+        )
+      : undefined;
+
     return {
-      promptPrefix: await this.memoryService.buildPromptPrefix(session, prompt),
+      promptPrefix: await this.memoryService.buildPromptPrefix(session, prompt, {
+        maxPrefixTokens,
+      }),
     };
   }
 

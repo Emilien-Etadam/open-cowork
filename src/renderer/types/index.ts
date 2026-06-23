@@ -549,7 +549,18 @@ export type ServerEvent =
       payload: { sessionId: string; plugins: Array<{ name: string; path: string }> };
     }
   | { type: 'workdir.changed'; payload: { path: string } }
-  | { type: 'session.contextInfo'; payload: { sessionId: string; contextWindow: number } }
+  | {
+      type: 'session.contextInfo';
+      payload: { sessionId: string; contextWindow: number; maxTokens: number };
+    }
+  | {
+      type: 'session.notice';
+      payload: {
+        sessionId: string;
+        message: string;
+        noticeType: 'info' | 'warning' | 'error' | 'success';
+      };
+    }
   | {
       type: 'navigate.to';
       payload: { page: 'welcome' | 'settings' | 'session'; tab?: string; sessionId?: string };
