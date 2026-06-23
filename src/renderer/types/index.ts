@@ -44,7 +44,15 @@ export type ContentBlock =
   | FileAttachmentContent
   | ToolUseContent
   | ToolResultContent
-  | ThinkingContent;
+  | ThinkingContent
+  | CompactionSummaryContent;
+
+export interface CompactionSummaryContent {
+  type: 'compaction_summary';
+  summary: string;
+  tokensBefore: number;
+  customInstructions?: string;
+}
 
 export interface TextContent {
   type: 'text';
@@ -465,6 +473,10 @@ export type ClientEvent =
       payload: { sessionId: string; prompt: string; content?: ContentBlock[] };
     }
   | { type: 'session.stop'; payload: { sessionId: string } }
+  | {
+      type: 'session.compact';
+      payload: { sessionId: string; customInstructions?: string };
+    }
   | { type: 'session.delete'; payload: { sessionId: string } }
   | { type: 'session.batchDelete'; payload: { sessionIds: string[] } }
   | { type: 'session.list'; payload: Record<string, never> }

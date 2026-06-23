@@ -93,6 +93,10 @@ import {
   getLastInputTokenCount,
   shouldBlockForContextOverflow,
 } from './context-budget';
+import {
+  findLastCompactionAnchor,
+  messagesAfterCompactionAnchor,
+} from '../../shared/compaction-anchor';
 import { mt } from '../i18n';
 
 // Virtual workspace path shown to the model (hides real sandbox path)
@@ -209,6 +213,7 @@ export function serializeMessageContentForHistory(content: ContentBlock[]): stri
       }
       case 'image':
       case 'file_attachment':
+      case 'compaction_summary':
         // Skip \u2014 not representable as XML text in a history preamble.
         break;
     }
@@ -1882,7 +1887,9 @@ ${hints.join('\n')}
       let contextualPrompt = prompt;
       if (!cachedSession) {
         // Cold start: inject recent history into prompt if available
-        const conversationMessages = existingMessages.filter(
+        const anchoredMessages = messagesAfterCompactionAnchor(existingMessages);
+        const { summary: compactionSummary } = findLastCompactionAnchor(existingMessages);
+        const conversationMessages = anchoredMessages.filter(
           (msg) => msg.role === 'user' || msg.role === 'assistant'
         );
         // Filter out messages that contain images (images can't be serialized into text preamble)
@@ -1930,9 +1937,16 @@ ${hints.join('\n')}
 
           if (historyItems.length > 0) {
             const trimmedCount = historyMessages.length - historyItems.length;
+            const compactionPrefix = compactionSummary
+              ? `<compaction_summary tokens_before="${compactionSummary.tokensBefore}">\n${escapeXmlText(compactionSummary.summary)}\n</compaction_summary>\n`
+              : '';
             const historyNote =
-              trimmedCount > 0 ? `[${trimmedCount} older messages omitted]\n` : '';
-            const preamble = `<conversation_history>\n${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
+              trimmedCount > 0
+                ? `[${trimmedCount} older messages omitted]\n`
+                : compactionSummary
+                  ? '[older messages compacted manually]\n'
+                  : '';
+            const preamble = `<conversation_history>\n${compactionPrefix}${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
             contextualPrompt = `${preamble}\n\n${prompt}`;
             log(
               '[ClaudeAgentRunner] Cold start: injecting',
@@ -3137,6 +3151,41 @@ Tool routing:
   cancel(sessionId: string): void {
     const controller = this.activeControllers.get(sessionId);
     if (controller) controller.abort();
+  }
+
+  async compactSession(
+    session: Session,
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }> {
+    const cached = this.piSessions.get(session.id);
+    if (!cached) {
+      throw new Error('errCompactNoSession');
+    }
+
+    this.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
+
+    try {
+      const result = await cached.session.compact(customInstructions);
+      this.sendSessionNotice(session.id, mt('noticeCompactionCompleted'), 'success');
+      return {
+        summary: result.summary,
+        tokensBefore: result.tokensBefore,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Nothing to compact')) {
+        throw new Error('errCompactNothingToCompact');
+      }
+      if (message.includes('Already compacted')) {
+        throw new Error('errCompactAlreadyCompacted');
+      }
+      this.sendSessionNotice(
+        session.id,
+        mt('noticeCompactionFailed', { error: message }),
+        'warning'
+      );
+      throw new Error('errCompactFailed');
+    }
   }
 
   private sendTraceStep(sessionId: string, step: TraceStep): void {

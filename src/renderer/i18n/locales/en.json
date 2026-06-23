@@ -661,7 +661,13 @@
     "disclaimer": "Open Cowork is AI-powered and may make mistakes. Please double-check responses.",
     "noModel": "No model",
     "connectorCount_one": "{{count}} connector",
-    "connectorCount_other": "{{count}} connectors"
+    "connectorCount_other": "{{count}} connectors",
+    "compactErrors": {
+      "errCompactNoSession": "No active agent session to compact. Send at least one message in this conversation first.",
+      "errCompactNothingToCompact": "Nothing to compact yet — the conversation is still too short.",
+      "errCompactAlreadyCompacted": "The conversation was already compacted recently.",
+      "errCompactFailed": "Context compaction failed. Please try again."
+    }
   },
   "context": {
     "progress": "Progress",
@@ -709,7 +715,10 @@
     "noQuestions": "No questions",
     "question": "Question",
     "thinking": "Thinking",
-    "executionTime": "Execution time: {{time}}"
+    "executionTime": "Execution time: {{time}}",
+    "compactionTitle": "Context compacted",
+    "compactionMeta": "{{tokensBefore}} tokens summarized",
+    "compactionInstructions": "Focus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Create Schedule",

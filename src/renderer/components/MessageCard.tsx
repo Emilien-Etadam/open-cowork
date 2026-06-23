@@ -14,6 +14,7 @@ interface MessageCardProps {
 export const MessageCard = memo(function MessageCard({ message, isStreaming }: MessageCardProps) {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
+  const isSystem = message.role === 'system';
   const isQueued = message.localStatus === 'queued';
   const isCancelled = message.localStatus === 'cancelled';
   const rawContent = message.content as unknown;
@@ -105,6 +106,19 @@ export const MessageCard = memo(function MessageCard({ message, isStreaming }: M
               <Copy className="w-3 h-3 text-text-muted" />
             )}
           </button>
+        </div>
+      ) : isSystem ? (
+        <div className="space-y-1.5">
+          {contentBlocks.map((block, index) => (
+            <ContentBlockView
+              key={'id' in block ? (block as { id: string }).id : `block-${block.type}-${index}`}
+              block={block}
+              isUser={false}
+              isStreaming={isStreaming}
+              allBlocks={contentBlocks}
+              message={message}
+            />
+          ))}
         </div>
       ) : (
         // Assistant message — no bubble, direct content (Claude style)
