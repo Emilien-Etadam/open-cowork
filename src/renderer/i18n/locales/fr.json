@@ -667,6 +667,11 @@
       "errCompactNothingToCompact": "Rien à compacter pour l'instant — la conversation est encore trop courte.",
       "errCompactAlreadyCompacted": "La conversation a déjà été compactée récemment.",
       "errCompactFailed": "La compaction du contexte a échoué. Veuillez réessayer."
+    },
+    "handoffSuccess": "Nouvelle session créée avec le résumé de reprise.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Rien à résumer pour l'instant — la conversation est encore trop courte.",
+      "errHandoffFailed": "La reprise dans une nouvelle session a échoué. Veuillez réessayer."
     }
   },
   "context": {
@@ -717,6 +722,7 @@
     "thinking": "Réflexion",
     "executionTime": "Temps d'exécution : {{time}}",
     "compactionTitle": "Contexte compacté",
+    "compactionHandoffTitle": "Reprise depuis « {{sourceTitle}} »",
     "compactionMeta": "{{tokensBefore}} tokens résumés",
     "compactionInstructions": "Focus : {{instructions}}"
   },

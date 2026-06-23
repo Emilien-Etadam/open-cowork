@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { isCompactSlashCommand, parseSlashCommand } from '../../src/shared/slash-commands';
+import {
+  isCompactSlashCommand,
+  isHandoffSlashCommand,
+  parseSlashCommand,
+} from '../../src/shared/slash-commands';
 
 describe('parseSlashCommand', () => {
   it('detects bare /compact', () => {
@@ -14,20 +18,41 @@ describe('parseSlashCommand', () => {
     });
   });
 
+  it('detects bare /handoff', () => {
+    expect(parseSlashCommand('/handoff')).toEqual({ kind: 'handoff', instructions: undefined });
+  });
+
+  it('detects /handoff with custom instructions', () => {
+    expect(parseSlashCommand('/handoff focus on tests')).toEqual({
+      kind: 'handoff',
+      instructions: 'focus on tests',
+    });
+  });
+
   it('is case-insensitive', () => {
     expect(parseSlashCommand('/COMPACT keep tool calls')).toEqual({
       kind: 'compact',
       instructions: 'keep tool calls',
+    });
+    expect(parseSlashCommand('/HANDOFF keep decisions')).toEqual({
+      kind: 'handoff',
+      instructions: 'keep decisions',
     });
   });
 
   it('returns message for normal text', () => {
     expect(parseSlashCommand('hello /compact world')).toEqual({ kind: 'message' });
     expect(parseSlashCommand('please compact this')).toEqual({ kind: 'message' });
+    expect(parseSlashCommand('hello /handoff world')).toEqual({ kind: 'message' });
   });
 
   it('exposes compact predicate', () => {
     expect(isCompactSlashCommand('/compact')).toBe(true);
     expect(isCompactSlashCommand('not a command')).toBe(false);
+  });
+
+  it('exposes handoff predicate', () => {
+    expect(isHandoffSlashCommand('/handoff')).toBe(true);
+    expect(isHandoffSlashCommand('not a command')).toBe(false);
   });
 });

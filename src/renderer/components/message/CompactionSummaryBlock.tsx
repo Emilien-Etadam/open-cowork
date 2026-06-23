@@ -27,7 +27,9 @@ export function CompactionSummaryBlock({ block }: CompactionSummaryBlockProps) {
         <Layers className="w-4 h-4 text-accent flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium text-text-primary">
-            {t('messageCard.compactionTitle')}
+            {block.sourceTitle
+              ? t('messageCard.compactionHandoffTitle', { sourceTitle: block.sourceTitle })
+              : t('messageCard.compactionTitle')}
           </p>
           <p className="text-xs text-text-muted">
             {t('messageCard.compactionMeta', {

@@ -97,6 +97,12 @@ import {
   findLastCompactionAnchor,
   messagesAfterCompactionAnchor,
 } from '../../shared/compaction-anchor';
+import {
+  buildConversationTranscriptForHandoff,
+  buildHandoffSummaryUserPrompt,
+  HANDOFF_SUMMARY_SYSTEM_PROMPT,
+} from '../../shared/compaction-handoff';
+import { runPiAiOneShot } from './claude-sdk-one-shot';
 import { mt } from '../i18n';
 
 // Virtual workspace path shown to the model (hides real sandbox path)
@@ -3185,6 +3191,43 @@ Tool routing:
         'warning'
       );
       throw new Error('errCompactFailed');
+    }
+  }
+
+  async summarizeForHandoff(
+    session: Session,
+    messages: Message[],
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }> {
+    const transcript = buildConversationTranscriptForHandoff(
+      messages,
+      serializeMessageContentForHistory
+    );
+    if (!transcript.trim()) {
+      throw new Error('errHandoffNothingToSummarize');
+    }
+
+    const tokensBefore = getLastInputTokenCount(messages) || estimateTokensFromText(transcript);
+
+    this.sendSessionNotice(session.id, mt('noticeHandoffStart'), 'info');
+
+    try {
+      const config = configStore.getAll();
+      const result = await runPiAiOneShot(
+        buildHandoffSummaryUserPrompt(transcript, customInstructions),
+        HANDOFF_SUMMARY_SYSTEM_PROMPT,
+        config,
+        { maxTokens: 4096 }
+      );
+      const summary = result.text.trim();
+      if (!summary) {
+        throw new Error('errHandoffFailed');
+      }
+      return { summary, tokensBefore };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.sendSessionNotice(session.id, mt('noticeHandoffFailed', { error: message }), 'warning');
+      throw new Error('errHandoffFailed');
     }
   }
 

@@ -702,6 +702,67 @@ export function useIPC() {
     [invoke]
   );
 
+  const handoffSession = useCallback(
+    async (
+      sessionId: string,
+      customInstructions?: string
+    ): Promise<{ success: boolean; errorKey?: string }> => {
+      if (!isElectron) {
+        return { success: false, errorKey: 'errHandoffFailed' };
+      }
+
+      setLoading(true);
+      try {
+        const result = await invoke<{
+          success: boolean;
+          newSession?: Session;
+          errorKey?: string;
+          error?: string;
+        }>({
+          type: 'session.handoff',
+          payload: { sessionId, customInstructions },
+        });
+
+        if (result.success && result.newSession) {
+          addSession(result.newSession);
+          useAppStore.getState().setActiveSession(result.newSession.id);
+          const mockStepId = `pending-handoff-${Date.now()}`;
+          activateNextTurn(result.newSession.id, mockStepId);
+          useAppStore.getState().setGlobalNotice({
+            id: `notice-handoff-${Date.now()}`,
+            type: 'success',
+            message: i18n.t('chat.handoffSuccess'),
+            messageKey: 'chat.handoffSuccess',
+          });
+        } else {
+          setLoading(false);
+          const noticeKey = result.errorKey || 'errHandoffFailed';
+          useAppStore.getState().setGlobalNotice({
+            id: `notice-handoff-${Date.now()}`,
+            type: 'warning',
+            message: i18n.t(`chat.handoffErrors.${noticeKey}`, {
+              defaultValue: result.error || noticeKey,
+            }),
+            messageKey: `chat.handoffErrors.${noticeKey}`,
+          });
+        }
+
+        return result;
+      } catch (error) {
+        setLoading(false);
+        useAppStore.getState().setGlobalNotice({
+          id: `notice-handoff-${Date.now()}`,
+          type: 'error',
+          message:
+            error instanceof Error ? error.message : i18n.t('chat.handoffErrors.errHandoffFailed'),
+          messageKey: 'chat.handoffErrors.errHandoffFailed',
+        });
+        return { success: false, errorKey: 'errHandoffFailed' };
+      }
+    },
+    [invoke, addSession, setLoading, activateNextTurn]
+  );
+
   const stopSession = useCallback(
     (sessionId: string) => {
       cancelQueuedMessages(sessionId);
@@ -850,6 +911,7 @@ export function useIPC() {
     startSession,
     continueSession,
     compactSession,
+    handoffSession,
     stopSession,
     deleteSession,
     batchDeleteSessions,

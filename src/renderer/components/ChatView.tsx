@@ -37,7 +37,7 @@ export function ChatView() {
   const executionClock = useActiveExecutionClock();
   const appConfig = useAppConfig();
   const setGlobalNotice = useAppStore((s) => s.setGlobalNotice);
-  const { continueSession, compactSession, stopSession, isElectron } = useIPC();
+  const { continueSession, compactSession, handoffSession, stopSession, isElectron } = useIPC();
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<
@@ -572,6 +572,14 @@ export function ChatView() {
         const command = parseSlashCommand(textOnly);
         if (command.kind === 'compact') {
           await compactSession(activeSessionId, command.instructions);
+          setPrompt('');
+          if (textareaRef.current) {
+            textareaRef.current.value = '';
+          }
+          return;
+        }
+        if (command.kind === 'handoff') {
+          await handoffSession(activeSessionId, command.instructions);
           setPrompt('');
           if (textareaRef.current) {
             textareaRef.current.value = '';

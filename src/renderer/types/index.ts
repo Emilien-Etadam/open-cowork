@@ -52,6 +52,7 @@ export interface CompactionSummaryContent {
   summary: string;
   tokensBefore: number;
   customInstructions?: string;
+  sourceTitle?: string;
 }
 
 export interface TextContent {
@@ -475,6 +476,10 @@ export type ClientEvent =
   | { type: 'session.stop'; payload: { sessionId: string } }
   | {
       type: 'session.compact';
+      payload: { sessionId: string; customInstructions?: string };
+    }
+  | {
+      type: 'session.handoff';
       payload: { sessionId: string; customInstructions?: string };
     }
   | { type: 'session.delete'; payload: { sessionId: string } }
