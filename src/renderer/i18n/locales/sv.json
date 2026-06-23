@@ -697,7 +697,8 @@
     "copyPath": "Kopiera sökväg",
     "openInFileManager": "Öppna i filhanteraren",
     "contextUsage": "Kontextanvändning",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} input + {{output}} reserved · {{remaining}} remaining"
   },
   "messageCard": {
     "request": "Begäran",

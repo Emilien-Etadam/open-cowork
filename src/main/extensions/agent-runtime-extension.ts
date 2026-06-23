@@ -4,11 +4,18 @@ import type { Message, Session } from '../../renderer/types';
 
 export type AgentRuntimeCustomTool = ToolDefinition<TSchema, unknown>;
 
+export interface ContextBudget {
+  contextWindow: number;
+  maxTokens: number;
+  currentInputTokens: number;
+}
+
 export interface BeforeSessionRunContext {
   session: Session;
   prompt: string;
   existingMessages: Message[];
   isColdStart: boolean;
+  contextBudget?: ContextBudget;
 }
 
 export interface BeforeSessionRunResult {

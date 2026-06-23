@@ -697,7 +697,8 @@
     "copyPath": "Copiar ruta",
     "openInFileManager": "Abrir en el gestor de archivos",
     "contextUsage": "Uso del contexto",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} input + {{output}} reserved · {{remaining}} remaining"
   },
   "messageCard": {
     "request": "Solicitud",

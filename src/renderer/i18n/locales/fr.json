@@ -697,7 +697,8 @@
     "copyPath": "Copier le chemin",
     "openInFileManager": "Ouvrir dans le gestionnaire de fichiers",
     "contextUsage": "Utilisation du contexte",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} entrée + {{output}} réservés · {{remaining}} restants"
   },
   "messageCard": {
     "request": "Requête",

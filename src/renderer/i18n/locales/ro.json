@@ -697,7 +697,8 @@
     "copyPath": "Copiază calea",
     "openInFileManager": "Deschide în managerul de fișiere",
     "contextUsage": "Utilizare context",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} input + {{output}} reserved · {{remaining}} remaining"
   },
   "messageCard": {
     "request": "Cerere",

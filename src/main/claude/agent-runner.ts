@@ -87,6 +87,14 @@ import {
 } from './tool-result-utils';
 import { fetchOllamaModelInfo } from '../config/ollama-api';
 import { createWindowsBashOperations } from './windows-bash-operations';
+import {
+  buildCompactionSettings,
+  estimateTokensFromText,
+  formatContextOverflowError,
+  getLastInputTokenCount,
+  shouldBlockForContextOverflow,
+} from './context-budget';
+import { mt } from '../i18n';
 
 // Virtual workspace path shown to the model (hides real sandbox path)
 const VIRTUAL_WORKSPACE_PATH = '/workspace';
@@ -542,6 +550,7 @@ interface CachedPiSession {
   runtimeSignature: string;
   skillsSignature?: string;
   ollamaNumCtx?: { value: number };
+  compactionEnabled: boolean;
 }
 
 /**
@@ -1671,11 +1680,14 @@ ${hints.join('\n')}
       }
 
       // Send context window info to renderer for UI display
+      const modelContextWindow = piModel.contextWindow || 128000;
+      const modelMaxTokens = piModel.maxTokens || 16384;
       this.sendToRenderer({
         type: 'session.contextInfo',
         payload: {
           sessionId: session.id,
-          contextWindow: piModel.contextWindow || 128000,
+          contextWindow: modelContextWindow,
+          maxTokens: modelMaxTokens,
         },
       });
 
@@ -1860,6 +1872,11 @@ ${hints.join('\n')}
             prompt,
             existingMessages,
             isColdStart: !cachedSession,
+            contextBudget: {
+              contextWindow: modelContextWindow,
+              maxTokens: modelMaxTokens,
+              currentInputTokens: getLastInputTokenCount(existingMessages),
+            },
           })
         : { promptPrefix: undefined, customTools: [] };
 
@@ -2221,34 +2238,23 @@ Tool routing:
 
         const modelRegistry = ModelRegistry.create(authStorage);
 
-        // Ollama-specific compaction tuning based on actual context window
-        const contextWindow = piModel.contextWindow || 128000;
-        let compactionSettings: {
-          enabled: boolean;
-          reserveTokens?: number;
-          keepRecentTokens?: number;
-        };
-        if (provider === 'ollama' && contextWindow < 16384) {
-          // Very small context: disable compaction (weak models produce unreliable summaries)
-          compactionSettings = { enabled: false };
+        const memoryPrefixTokenEstimate = estimateTokensFromText(
+          extensionResult.promptPrefix || ''
+        );
+        const compactionSettings = buildCompactionSettings(
+          provider,
+          modelContextWindow,
+          modelMaxTokens,
+          memoryPrefixTokenEstimate
+        );
+        if (!compactionSettings.enabled) {
           log(
-            '[ClaudeAgentRunner] Ollama small context model, disabling auto-compaction (contextWindow:',
-            contextWindow,
+            '[ClaudeAgentRunner] Auto-compaction disabled (contextWindow:',
+            modelContextWindow,
             ')'
           );
-        } else if (provider === 'ollama' && contextWindow < 65536) {
-          // Medium context: scale reserves proportionally
-          compactionSettings = {
-            enabled: true,
-            reserveTokens: Math.floor(contextWindow * 0.15),
-            keepRecentTokens: Math.floor(contextWindow * 0.25),
-          };
-          log(
-            '[ClaudeAgentRunner] Ollama medium context, scaled compaction:',
-            JSON.stringify(compactionSettings)
-          );
         } else {
-          compactionSettings = { enabled: true };
+          log('[ClaudeAgentRunner] Compaction settings:', JSON.stringify(compactionSettings));
         }
 
         const { session: newPiSession } = await createAgentSession({
@@ -2293,6 +2299,7 @@ Tool routing:
           thinkingLevel,
           runtimeSignature: sessionRuntimeSignature,
           skillsSignature,
+          compactionEnabled: compactionSettings.enabled,
         });
 
         // Ollama: wrap _onPayload to inject num_ctx into every request
@@ -2536,6 +2543,44 @@ Tool routing:
           }
         }
       };
+
+      const compactionEnabled = cachedSession?.compactionEnabled ?? true;
+      const lastInputTokens = getLastInputTokenCount(existingMessages);
+      const memoryPrefixTokens = estimateTokensFromText(extensionResult.promptPrefix || '');
+      const newPromptTokens = estimateTokensFromText(prompt);
+      const projectedInputTokens = cachedSession
+        ? lastInputTokens + newPromptTokens + memoryPrefixTokens
+        : estimateTokensFromText(contextualPrompt);
+      const contextWouldOverflow = shouldBlockForContextOverflow(
+        cachedSession ? lastInputTokens : 0,
+        cachedSession ? newPromptTokens + memoryPrefixTokens : projectedInputTokens,
+        modelMaxTokens,
+        modelContextWindow
+      );
+
+      if (contextWouldOverflow && !compactionEnabled) {
+        const errorText = formatContextOverflowError(
+          modelContextWindow,
+          projectedInputTokens,
+          modelMaxTokens
+        );
+        this.sendMessage(session.id, {
+          id: uuidv4(),
+          sessionId: session.id,
+          role: 'assistant',
+          content: [{ type: 'text', text: buildTerminalErrorMessage(errorText) }],
+          timestamp: Date.now(),
+        });
+        this.sendTraceUpdate(session.id, thinkingStepId, {
+          status: 'error',
+          title: 'Context full',
+        });
+        return;
+      }
+
+      if (contextWouldOverflow && compactionEnabled) {
+        this.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
+      }
 
       const unsubscribe = piSession.subscribe((event) => {
         try {
@@ -2827,6 +2872,7 @@ Tool routing:
 
             case 'compaction_start': {
               log('[ClaudeAgentRunner] Auto-compaction started, reason:', event.reason);
+              this.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
               compactionStepId = `compaction-${Date.now()}`;
               this.sendTraceStep(session.id, {
                 id: compactionStepId,
@@ -2863,6 +2909,21 @@ Tool routing:
                   title,
                   timestamp: Date.now(),
                 });
+              }
+              if (event.aborted) {
+                this.sendSessionNotice(
+                  session.id,
+                  mt('noticeCompactionFailed', { error: title }),
+                  'warning'
+                );
+              } else if (event.errorMessage) {
+                this.sendSessionNotice(
+                  session.id,
+                  mt('noticeCompactionFailed', { error: event.errorMessage }),
+                  'warning'
+                );
+              } else {
+                this.sendSessionNotice(session.id, mt('noticeCompactionCompleted'), 'success');
               }
               break;
             }
@@ -3083,6 +3144,17 @@ Tool routing:
   private sendTraceUpdate(sessionId: string, stepId: string, updates: Partial<TraceStep>): void {
     log(`[Trace] Update step ${stepId}:`, updates);
     this.sendToRenderer({ type: 'trace.update', payload: { sessionId, stepId, updates } });
+  }
+
+  private sendSessionNotice(
+    sessionId: string,
+    message: string,
+    noticeType: 'info' | 'warning' | 'error' | 'success' = 'info'
+  ): void {
+    this.sendToRenderer({
+      type: 'session.notice',
+      payload: { sessionId, message, noticeType },
+    });
   }
 
   private sendMessage(sessionId: string, message: Message): void {

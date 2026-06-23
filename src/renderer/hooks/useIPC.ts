@@ -285,7 +285,20 @@ export function useIPC() {
             break;
 
           case 'session.contextInfo':
-            store.setSessionContextWindow(event.payload.sessionId, event.payload.contextWindow);
+            store.setSessionContextInfo(event.payload.sessionId, {
+              contextWindow: event.payload.contextWindow,
+              maxTokens: event.payload.maxTokens,
+            });
+            break;
+
+          case 'session.notice':
+            if (event.payload.sessionId === store.activeSessionId) {
+              store.setGlobalNotice({
+                id: `notice-session-${Date.now()}`,
+                type: event.payload.noticeType,
+                message: event.payload.message,
+              });
+            }
             break;
 
           case 'error':

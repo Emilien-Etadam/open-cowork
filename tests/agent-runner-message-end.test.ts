@@ -73,6 +73,17 @@ describe('toUserFacingErrorText', () => {
     expect(result).toContain('ROLE_UNSPECIFIED');
   });
 
+  it('maps maximum context length errors before generic 400 handling', () => {
+    const error =
+      "400 This model's maximum context length is 131072 tokens. However, you requested 16384 output tokens and your prompt contains at least 114689 input tokens";
+    const result = toUserFacingErrorText(error);
+    expect(result).toContain('对话上下文已满');
+    expect(result).toContain('131072');
+    expect(result).toContain('114689');
+    expect(result).toContain('16384');
+    expect(result).not.toContain('请求被上游拒绝（400）');
+  });
+
   it('maps invalid request to configuration hint', () => {
     const result = toUserFacingErrorText('invalid request: unsupported parameter "store"');
     expect(result).toContain('请求被上游拒绝（400）');

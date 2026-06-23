@@ -697,7 +697,8 @@
     "copyPath": "Pad kopiëren",
     "openInFileManager": "Openen in bestandsbeheer",
     "contextUsage": "Contextgebruik",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} input + {{output}} reserved · {{remaining}} remaining"
   },
   "messageCard": {
     "request": "Aanvraag",

@@ -6,6 +6,7 @@ import type {
   ToolCall,
 } from '@mariozechner/pi-ai';
 import { splitThinkTagBlocks } from './think-tag-parser';
+import { isContextOverflowError } from './context-budget';
 import { mt } from '../i18n';
 
 type MessageEndContentBlock = TextContent | ThinkingContent | ToolCall;
@@ -41,6 +42,21 @@ export interface AbortDispositionFlags {
 
 export type AbortDisposition = 'timeout' | 'loop_guard' | 'stream_error' | 'user';
 
+function parseContextOverflowDetails(errorText: string): {
+  limit?: string;
+  input?: string;
+  output?: string;
+} {
+  const limitMatch = errorText.match(/maximum context length is (\d+)/i);
+  const inputMatch = errorText.match(/at least (\d+) input tokens/i);
+  const outputMatch = errorText.match(/requested (\d+) output tokens/i);
+  return {
+    limit: limitMatch?.[1],
+    input: inputMatch?.[1],
+    output: outputMatch?.[1],
+  };
+}
+
 export function toUserFacingErrorText(errorText: string): string {
   const lower = errorText.toLowerCase();
   if (lower.includes('first_response_timeout')) {
@@ -48,6 +64,15 @@ export function toUserFacingErrorText(errorText: string): string {
   }
   if (lower.includes('empty_success_result')) {
     return mt('errEmptySuccess');
+  }
+  if (isContextOverflowError(errorText)) {
+    const details = parseContextOverflowDetails(errorText);
+    return mt('errContextOverflow', {
+      limit: details.limit ?? '?',
+      input: details.input ?? '?',
+      output: details.output ?? '?',
+      error: errorText,
+    });
   }
   if (
     /\b400\b/.test(errorText) ||

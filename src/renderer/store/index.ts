@@ -41,6 +41,7 @@ export interface SessionState {
   executionClock: SessionExecutionClock;
   traceSteps: TraceStep[];
   contextWindow: number;
+  maxTokens: number;
 }
 
 const DEFAULT_SESSION_STATE: SessionState = {
@@ -52,6 +53,7 @@ const DEFAULT_SESSION_STATE: SessionState = {
   executionClock: { startAt: null, endAt: null },
   traceSteps: [],
   contextWindow: 0,
+  maxTokens: 0,
 };
 
 // Helper to immutably update a single session's state within the record
@@ -183,7 +185,10 @@ interface AppState {
   setSkillsStorageChangeEvent: (event: SkillsStorageChangeEvent | null) => void;
 
   // Context window actions
-  setSessionContextWindow: (sessionId: string, contextWindow: number) => void;
+  setSessionContextInfo: (
+    sessionId: string,
+    contextInfo: { contextWindow: number; maxTokens: number }
+  ) => void;
 
   // System theme actions
   setSystemDarkMode: (dark: boolean) => void;
@@ -588,9 +593,12 @@ export const useAppStore = create<AppState>((set) => ({
   setSkillsStorageChangeEvent: (event) => set({ skillsStorageChangeEvent: event }),
 
   // Context window actions
-  setSessionContextWindow: (sessionId, contextWindow) =>
+  setSessionContextInfo: (sessionId, contextInfo) =>
     set((state) => ({
-      sessionStates: patchSession(state.sessionStates, sessionId, { contextWindow }),
+      sessionStates: patchSession(state.sessionStates, sessionId, {
+        contextWindow: contextInfo.contextWindow,
+        maxTokens: contextInfo.maxTokens,
+      }),
     })),
 
   // System theme actions

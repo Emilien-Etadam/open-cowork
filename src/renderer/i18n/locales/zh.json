@@ -697,7 +697,8 @@
     "copyPath": "复制路径",
     "openInFileManager": "在文件管理器中打开",
     "contextUsage": "上下文用量",
-    "contextUsageLabel": "{{used}} / {{total}}"
+    "contextUsageLabel": "{{used}} / {{total}}",
+    "contextUsageDetail": "{{input}} 输入 + {{output}} 预留 · 剩余 {{remaining}}"
   },
   "messageCard": {
     "request": "请求",
