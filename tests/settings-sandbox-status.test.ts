@@ -27,7 +27,8 @@ describe('SettingsSandbox status display', () => {
     expect(settingsSandboxContent).toContain("t('sandbox.readyStatus')");
     expect(settingsSandboxContent).toContain("t('sandbox.notReadyStatus')");
     expect(settingsSandboxContent).toContain("t('sandbox.disabledStatus')");
-    expect(settingsSandboxContent).toContain('{sandboxEnabled && (');
+    expect(settingsSandboxContent).toContain('handleToggleSandbox');
+    expect(settingsSandboxContent).toContain('role="switch"');
     expect(settingsSandboxContent).not.toContain('{false && sandboxEnabled && (');
   });
 });
