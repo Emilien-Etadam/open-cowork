@@ -665,6 +665,17 @@
     "noModel": "Немає моделі",
     "connectorCount_one": "{{count}} конектор",
     "connectorCount_other": "{{count}} конекторів",
+    "compactErrors": {
+      "errCompactNoSession": "Немає активної сесії агента для стиснення. Спочатку надішліть принаймні одне повідомлення в цій розмові.",
+      "errCompactNothingToCompact": "Поки що нічого стискати — розмова ще занадто коротка.",
+      "errCompactAlreadyCompacted": "Цю розмову нещодавно вже стиснуто.",
+      "errCompactFailed": "Не вдалося стиснути контекст. Спробуйте ще раз."
+    },
+    "handoffSuccess": "Створено нову сесію з підсумком для продовження.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Поки що нічого підсумовувати — розмова ще занадто коротка.",
+      "errHandoffFailed": "Не вдалося розпочати нову сесію з цієї розмови. Спробуйте ще раз."
+    },
     "scrollToBottom": "Прокрутити вниз"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Немає запитань",
     "question": "Запитання",
     "thinking": "Мислення",
-    "executionTime": "Час виконання: {{time}}"
+    "executionTime": "Час виконання: {{time}}",
+    "compactionTitle": "Контекст стиснуто",
+    "compactionHandoffTitle": "Продовження з «{{sourceTitle}}»",
+    "compactionMeta": "Підсумовано {{tokensBefore}} токенів",
+    "compactionInstructions": "Фокус: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Створити розклад",

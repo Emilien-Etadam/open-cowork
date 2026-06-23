@@ -665,6 +665,17 @@
     "noModel": "Ingen modell",
     "connectorCount_one": "{{count}} anslutning",
     "connectorCount_other": "{{count}} anslutningar",
+    "compactErrors": {
+      "errCompactNoSession": "Ingen aktiv agentsession att komprimera. Skicka minst ett meddelande i den här konversationen först.",
+      "errCompactNothingToCompact": "Inget att komprimera ännu — konversationen är fortfarande för kort.",
+      "errCompactAlreadyCompacted": "Konversationen komprimerades nyligen redan.",
+      "errCompactFailed": "Kontextkomprimering misslyckades. Försök igen."
+    },
+    "handoffSuccess": "Ny session skapad med fortsättningssammanfattning.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Inget att sammanfatta ännu — konversationen är fortfarande för kort.",
+      "errHandoffFailed": "Det gick inte att starta en ny session från den här konversationen. Försök igen."
+    },
     "scrollToBottom": "Scrolla till botten"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Inga frågor",
     "question": "Fråga",
     "thinking": "Tänker",
-    "executionTime": "Körningstid: {{time}}"
+    "executionTime": "Körningstid: {{time}}",
+    "compactionTitle": "Kontext komprimerad",
+    "compactionHandoffTitle": "Fortsättning från «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} tokens sammanfattade",
+    "compactionInstructions": "Fokus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Skapa schema",
