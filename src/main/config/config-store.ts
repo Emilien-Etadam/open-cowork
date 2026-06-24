@@ -247,6 +247,23 @@ function getDefaultSandboxEnabled(): boolean {
   return process.platform === 'win32';
 }
 
+function configHasStoredCredentials(config: Partial<AppConfig>): boolean {
+  if (config.isConfigured) {
+    return true;
+  }
+  const profiles = config.profiles || {};
+  return Object.values(profiles).some(
+    (profile) => typeof profile?.apiKey === 'string' && profile.apiKey.trim().length > 0
+  );
+}
+
+function shouldRecoverWipedConfig(current: AppConfig, recovered: AppConfig): boolean {
+  if (!configHasStoredCredentials(recovered)) {
+    return false;
+  }
+  return !configHasStoredCredentials(current);
+}
+
 const defaultConfig: AppConfig = {
   provider: defaultConfigSet.provider,
   apiKey: defaultProfiles.openrouter.apiKey,
@@ -564,6 +581,8 @@ export class ConfigStore {
       logPrefix: '[ConfigStore]',
       log,
       warn: logWarn,
+      recoverIfReset: (current, recovered) =>
+        shouldRecoverWipedConfig(current as AppConfig, recovered as AppConfig),
     }) as unknown as Store<AppConfig>;
     runConfigMigrations(this.store);
     this.ensureNormalized();
