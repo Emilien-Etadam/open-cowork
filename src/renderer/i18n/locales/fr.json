@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Rien à résumer pour l'instant — la conversation est encore trop courte.",
       "errHandoffFailed": "La reprise dans une nouvelle session a échoué. Veuillez réessayer."
     },
+    "slashCommands": {
+      "menuLabel": "Commandes",
+      "compact": {
+        "description": "Compacter le contexte dans la session courante"
+      },
+      "handoff": {
+        "description": "Créer une nouvelle session avec un résumé de reprise"
+      }
+    },
     "scrollToBottom": "Descendre en bas"
   },
   "context": {

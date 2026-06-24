@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Noch nichts zusammenzufassen — die Unterhaltung ist noch zu kurz.",
       "errHandoffFailed": "Neue Sitzung aus dieser Unterhaltung konnte nicht gestartet werden. Bitte erneut versuchen."
     },
+    "slashCommands": {
+      "menuLabel": "Befehle",
+      "compact": {
+        "description": "Kontext in der aktuellen Sitzung komprimieren"
+      },
+      "handoff": {
+        "description": "Neue Sitzung mit Fortsetzungszusammenfassung starten"
+      }
+    },
     "scrollToBottom": "Nach unten scrollen"
   },
   "context": {

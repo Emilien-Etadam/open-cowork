@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Nog niets samen te vatten — het gesprek is nog te kort.",
       "errHandoffFailed": "Kon geen nieuwe sessie starten vanuit dit gesprek. Probeer het opnieuw."
     },
+    "slashCommands": {
+      "menuLabel": "Opdrachten",
+      "compact": {
+        "description": "Comprimeer de context in de huidige sessie"
+      },
+      "handoff": {
+        "description": "Start een nieuwe sessie met een voortzettingssamenvatting"
+      }
+    },
     "scrollToBottom": "Naar beneden scrollen"
   },
   "context": {

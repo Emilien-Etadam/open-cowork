@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Nada que resumir por ahora — la conversación sigue siendo demasiado corta.",
       "errHandoffFailed": "No se pudo iniciar una nueva sesión desde esta conversación. Inténtalo de nuevo."
     },
+    "slashCommands": {
+      "menuLabel": "Comandos",
+      "compact": {
+        "description": "Compactar el contexto en la sesión actual"
+      },
+      "handoff": {
+        "description": "Iniciar una nueva sesión con un resumen de continuación"
+      }
+    },
     "scrollToBottom": "Ir al final"
   },
   "context": {

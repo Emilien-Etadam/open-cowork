@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Na razie nic do podsumowania — rozmowa jest jeszcze zbyt krótka.",
       "errHandoffFailed": "Nie udało się rozpocząć nowej sesji z tej rozmowy. Spróbuj ponownie."
     },
+    "slashCommands": {
+      "menuLabel": "Polecenia",
+      "compact": {
+        "description": "Skompresuj kontekst w bieżącej sesji"
+      },
+      "handoff": {
+        "description": "Rozpocznij nową sesję z podsumowaniem kontynuacji"
+      }
+    },
     "scrollToBottom": "Przewiń na dół"
   },
   "context": {

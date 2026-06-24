@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "暂无可总结内容——对话仍然太短。",
       "errHandoffFailed": "从此对话创建新会话失败，请重试。"
     },
+    "slashCommands": {
+      "menuLabel": "命令",
+      "compact": {
+        "description": "在当前会话中压缩上下文"
+      },
+      "handoff": {
+        "description": "创建包含续接摘要的新会话"
+      }
+    },
     "scrollToBottom": "滚动到底部"
   },
   "context": {

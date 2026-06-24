@@ -14,7 +14,14 @@ import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
-import { parseSlashCommand } from '../../shared/slash-commands';
+import {
+  parseSlashCommand,
+  filterSlashCommands,
+  getSlashCommandQuery,
+  hasExactSlashCommandQuery,
+  type SlashCommandDefinition,
+} from '../../shared/slash-commands';
+import { SlashCommandMenu } from './SlashCommandMenu';
 import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
 
 type AttachedFile = {
@@ -53,6 +60,8 @@ export function ChatView() {
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
+  const [slashHighlightIndex, setSlashHighlightIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -69,6 +78,37 @@ export function ChatView() {
   const pendingCount = pendingTurns.length;
   const isSessionRunning = activeSession?.status === 'running';
   const canStop = isSessionRunning || hasActiveTurn || pendingCount > 0;
+
+  const slashQuery = useMemo(() => {
+    if (pastedImages.length > 0 || attachedFiles.length > 0) {
+      return null;
+    }
+    return getSlashCommandQuery(prompt);
+  }, [prompt, pastedImages.length, attachedFiles.length]);
+
+  const slashSuggestions = useMemo(
+    () => (slashQuery === null ? [] : filterSlashCommands(slashQuery)),
+    [slashQuery]
+  );
+
+  const showSlashMenu = !slashMenuDismissed && slashQuery !== null && slashSuggestions.length > 0;
+
+  const applySlashCommand = useCallback((definition: SlashCommandDefinition) => {
+    setPrompt(`${definition.command} `);
+    setSlashMenuDismissed(false);
+    setSlashHighlightIndex(0);
+    requestAnimationFrame(() => textareaRef.current?.focus());
+  }, []);
+
+  useEffect(() => {
+    if (!prompt.trimStart().startsWith('/')) {
+      setSlashMenuDismissed(false);
+    }
+  }, [prompt]);
+
+  useEffect(() => {
+    setSlashHighlightIndex(0);
+  }, [slashQuery, slashSuggestions.length]);
 
   const displayedMessages = useMemo(() => {
     if (!activeSessionId) return messages;
@@ -784,6 +824,15 @@ export function ChatView() {
             onDrop={handleDrop}
             className="relative w-full"
           >
+            {showSlashMenu && (
+              <SlashCommandMenu
+                suggestions={slashSuggestions}
+                highlightedIndex={slashHighlightIndex}
+                onSelect={applySlashCommand}
+                onHighlight={setSlashHighlightIndex}
+              />
+            )}
+
             {/* Image previews */}
             {pastedImages.length > 0 && (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 mb-3">
@@ -855,9 +904,49 @@ export function ChatView() {
                 }}
                 onPaste={handlePaste}
                 onKeyDown={(e) => {
+                  if (showSlashMenu) {
+                    if (e.key === 'ArrowDown') {
+                      e.preventDefault();
+                      setSlashHighlightIndex((index) => (index + 1) % slashSuggestions.length);
+                      return;
+                    }
+                    if (e.key === 'ArrowUp') {
+                      e.preventDefault();
+                      setSlashHighlightIndex(
+                        (index) => (index - 1 + slashSuggestions.length) % slashSuggestions.length
+                      );
+                      return;
+                    }
+                    if (e.key === 'Escape') {
+                      e.preventDefault();
+                      setSlashMenuDismissed(true);
+                      return;
+                    }
+                    if (e.key === 'Tab') {
+                      e.preventDefault();
+                      const selected = slashSuggestions[slashHighlightIndex];
+                      if (selected) {
+                        applySlashCommand(selected);
+                      }
+                      return;
+                    }
+                  }
+
                   // Enter to send, Shift+Enter for new line
                   if (e.key === 'Enter' && !e.shiftKey) {
                     if (e.nativeEvent.isComposing || isComposingRef.current || e.keyCode === 229) {
+                      return;
+                    }
+                    if (
+                      showSlashMenu &&
+                      slashQuery !== null &&
+                      !hasExactSlashCommandQuery(slashQuery)
+                    ) {
+                      e.preventDefault();
+                      const selected = slashSuggestions[slashHighlightIndex];
+                      if (selected) {
+                        applySlashCommand(selected);
+                      }
                       return;
                     }
                     e.preventDefault();

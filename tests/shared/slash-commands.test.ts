@@ -1,10 +1,41 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  filterSlashCommands,
+  getSlashCommandQuery,
+  hasExactSlashCommandQuery,
   isCompactSlashCommand,
   isHandoffSlashCommand,
   parseSlashCommand,
+  SLASH_COMMAND_DEFINITIONS,
 } from '../../src/shared/slash-commands';
+
+describe('slash command suggestions', () => {
+  it('returns null when not in slash command context', () => {
+    expect(getSlashCommandQuery('hello')).toBeNull();
+    expect(getSlashCommandQuery('/compact done')).toBeNull();
+    expect(getSlashCommandQuery('/handoff focus on tests')).toBeNull();
+  });
+
+  it('returns the typed command prefix', () => {
+    expect(getSlashCommandQuery('/')).toBe('');
+    expect(getSlashCommandQuery('/com')).toBe('com');
+    expect(getSlashCommandQuery('/COMPACT')).toBe('compact');
+  });
+
+  it('filters command definitions by prefix', () => {
+    expect(filterSlashCommands('')).toEqual([...SLASH_COMMAND_DEFINITIONS]);
+    expect(filterSlashCommands('com').map((item) => item.id)).toEqual(['compact']);
+    expect(filterSlashCommands('hand').map((item) => item.id)).toEqual(['handoff']);
+    expect(filterSlashCommands('xyz')).toEqual([]);
+  });
+
+  it('detects exact command queries', () => {
+    expect(hasExactSlashCommandQuery('compact')).toBe(true);
+    expect(hasExactSlashCommandQuery('handoff')).toBe(true);
+    expect(hasExactSlashCommandQuery('com')).toBe(false);
+  });
+});
 
 describe('parseSlashCommand', () => {
   it('detects bare /compact', () => {
