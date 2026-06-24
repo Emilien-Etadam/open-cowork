@@ -44,7 +44,7 @@ export default defineConfig({
                 'electron-updater',
                 'chokidar',
                 'archiver',
-                'ngrok',
+                '@ngrok/ngrok',
                 'ws',
                 'glob',
                 'dotenv',
