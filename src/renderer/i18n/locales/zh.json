@@ -561,8 +561,6 @@
     "customSkills": "自定义技能",
     "noCustomSkills": "未安装自定义技能",
     "installSkillsDesc": "安装技能以扩展 Claude 的能力",
-    "browsePlugins": "浏览插件",
-    "pluginListTitle": "浏览 Claude 插件市场",
     "pluginSkillCount": "可安装技能数：{{count}}",
     "pluginComponents": "组件：skills {{skills}} · commands {{commands}} · agents {{agents}} · hooks {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "安装后可查看组件详情。",

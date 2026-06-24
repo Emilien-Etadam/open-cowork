@@ -117,18 +117,6 @@ export function registerSkillsPluginsWindowIpc(): void {
     return { success: true, path: storagePath };
   });
 
-  ipcMain.handle('plugins.listCatalog', async (_event, options?: { installableOnly?: boolean }) => {
-    try {
-      if (!mainAppState.pluginRuntimeService) {
-        throw new Error('PluginRuntimeService not initialized');
-      }
-      return await mainAppState.pluginRuntimeService.listCatalog(options);
-    } catch (error) {
-      logError('[Plugins] Error listing catalog:', error);
-      throw error;
-    }
-  });
-
   ipcMain.handle('plugins.listInstalled', async () => {
     try {
       if (!mainAppState.pluginRuntimeService) {
@@ -137,20 +125,6 @@ export function registerSkillsPluginsWindowIpc(): void {
       return mainAppState.pluginRuntimeService.listInstalled();
     } catch (error) {
       logError('[Plugins] Error listing installed plugins:', error);
-      throw error;
-    }
-  });
-
-  ipcMain.handle('plugins.install', async (_event, pluginName: string) => {
-    try {
-      if (!mainAppState.pluginRuntimeService) {
-        throw new Error('PluginRuntimeService not initialized');
-      }
-      const result = await mainAppState.pluginRuntimeService.install(pluginName);
-      mainAppState.sessionManager?.invalidateSkillsSetup();
-      return result;
-    } catch (error) {
-      logError('[Plugins] Error installing plugin:', error);
       throw error;
     }
   });

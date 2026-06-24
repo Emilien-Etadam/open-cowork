@@ -561,8 +561,6 @@
     "customSkills": "Abilități personalizate",
     "noCustomSkills": "Nicio abilitate personalizată instalată",
     "installSkillsDesc": "Instalează abilități pentru a extinde capacitățile lui Claude",
-    "browsePlugins": "Răsfoiește pluginuri",
-    "pluginListTitle": "Răsfoiește Claude Plugin Marketplace",
     "pluginSkillCount": "Abilități instalabile: {{count}}",
     "pluginComponents": "Componente: abilități {{skills}} · comenzi {{commands}} · agenți {{agents}} · hook-uri {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Detaliile componentelor vor fi disponibile după instalare.",

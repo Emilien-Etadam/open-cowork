@@ -561,8 +561,6 @@
     "customSkills": "Egendefinerte ferdigheter",
     "noCustomSkills": "Ingen egendefinerte ferdigheter installert",
     "installSkillsDesc": "Installer ferdigheter for å utvide Claudes evner",
-    "browsePlugins": "Bla gjennom programtillegg",
-    "pluginListTitle": "Bla gjennom Claude-programtilleggsmarkedet",
     "pluginSkillCount": "Installerbare ferdigheter: {{count}}",
     "pluginComponents": "Komponenter: ferdigheter {{skills}} · kommandoer {{commands}} · agenter {{agents}} · hooks {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Komponentdetaljer blir tilgjengelige etter installasjon.",

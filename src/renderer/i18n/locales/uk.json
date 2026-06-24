@@ -561,8 +561,6 @@
     "customSkills": "Користувацькі навички",
     "noCustomSkills": "Користувацьких навичок не встановлено",
     "installSkillsDesc": "Встановіть навички, щоб розширити можливості Claude",
-    "browsePlugins": "Переглянути плагіни",
-    "pluginListTitle": "Переглянути маркетплейс плагінів Claude",
     "pluginSkillCount": "Навичок для встановлення: {{count}}",
     "pluginComponents": "Компоненти: навички {{skills}} · команди {{commands}} · агенти {{agents}} · хуки {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Деталі компонентів будуть доступні після встановлення.",

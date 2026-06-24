@@ -217,25 +217,6 @@ export interface PluginComponentEnabledState {
   mcp: boolean;
 }
 
-export interface PluginCatalogItemV2 {
-  name: string;
-  description?: string;
-  version?: string;
-  authorName?: string;
-  installable: boolean;
-  hasManifest: boolean;
-  componentCounts: PluginComponentCounts;
-  pluginId?: string;
-  installCommand?: string;
-  detailUrl?: string;
-  catalogSource?: 'claude-marketplace';
-}
-
-export interface PluginCatalogItem extends PluginCatalogItemV2 {
-  skillCount: number;
-  hasSkills: boolean;
-}
-
 export type {
   CatalogEntry,
   CatalogEntryType,

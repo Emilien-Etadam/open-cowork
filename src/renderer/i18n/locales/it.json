@@ -561,8 +561,6 @@
     "customSkills": "Skill personalizzate",
     "noCustomSkills": "Nessuna skill personalizzata installata",
     "installSkillsDesc": "Installa skill per estendere le capacità di Claude",
-    "browsePlugins": "Sfoglia plugin",
-    "pluginListTitle": "Sfoglia il marketplace di plugin di Claude",
     "pluginSkillCount": "Skill installabili: {{count}}",
     "pluginComponents": "Componenti: skill {{skills}} · comandi {{commands}} · agent {{agents}} · hook {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "I dettagli dei componenti saranno disponibili dopo l'installazione.",

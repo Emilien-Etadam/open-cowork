@@ -561,8 +561,6 @@
     "customSkills": "Anpassade färdigheter",
     "noCustomSkills": "Inga anpassade färdigheter installerade",
     "installSkillsDesc": "Installera färdigheter för att utöka Claudes förmågor",
-    "browsePlugins": "Bläddra bland plugin-program",
-    "pluginListTitle": "Bläddra på Claudes plugin-marknadsplats",
     "pluginSkillCount": "Installerbara färdigheter: {{count}}",
     "pluginComponents": "Komponenter: färdigheter {{skills}} · kommandon {{commands}} · agenter {{agents}} · hooks {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Komponentinformation blir tillgänglig efter installationen.",

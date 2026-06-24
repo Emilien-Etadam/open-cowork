@@ -561,8 +561,6 @@
     "customSkills": "Aangepaste vaardigheden",
     "noCustomSkills": "Geen aangepaste vaardigheden geïnstalleerd",
     "installSkillsDesc": "Installeer vaardigheden om de mogelijkheden van Claude uit te breiden",
-    "browsePlugins": "Plug-ins bekijken",
-    "pluginListTitle": "Bekijk de Claude Plugin Marketplace",
     "pluginSkillCount": "Installeerbare vaardigheden: {{count}}",
     "pluginComponents": "Componenten: vaardigheden {{skills}} · commando's {{commands}} · agents {{agents}} · hooks {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Componentdetails zijn beschikbaar na installatie.",

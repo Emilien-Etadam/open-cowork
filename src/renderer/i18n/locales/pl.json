@@ -561,8 +561,6 @@
     "customSkills": "Niestandardowe umiejętności",
     "noCustomSkills": "Brak zainstalowanych niestandardowych umiejętności",
     "installSkillsDesc": "Zainstaluj umiejętności, aby rozszerzyć możliwości Claude",
-    "browsePlugins": "Przeglądaj wtyczki",
-    "pluginListTitle": "Przeglądaj Claude Plugin Marketplace",
     "pluginSkillCount": "Umiejętności do zainstalowania: {{count}}",
     "pluginComponents": "Komponenty: umiejętności {{skills}} · polecenia {{commands}} · agenci {{agents}} · haki {{hooks}} · mcp {{mcp}}",
     "pluginComponentsAvailableAfterInstall": "Szczegóły komponentów będą dostępne po instalacji.",
