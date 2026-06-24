@@ -1,11 +1,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
 import { app } from 'electron';
 import type {
   InstalledPlugin,
-  PluginCatalogItemV2,
   PluginComponentCounts,
   PluginComponentEnabledState,
   PluginComponentKind,
@@ -14,12 +11,8 @@ import type {
 } from '../../renderer/types';
 import { log, logError } from '../utils/logger';
 import { isPathWithinRoot } from '../tools/path-containment';
-import { getDefaultShell } from '../utils/shell-resolver';
 import { withRetry } from '../utils/retry';
 import { pluginRegistryStore } from './plugin-registry-store';
-import { PluginCatalogService } from './plugin-catalog-service';
-
-const execFileAsync = promisify(execFile);
 
 interface PluginManifest {
   name?: string;
@@ -31,22 +24,6 @@ interface PluginManifest {
   hooks?: string | Record<string, unknown>;
   mcpServers?: string | Record<string, unknown>;
   [key: string]: unknown;
-}
-
-interface CommandOutput {
-  stdout: string;
-  stderr: string;
-}
-
-type CommandRunner = (command: string, args: string[]) => Promise<CommandOutput>;
-
-interface ClaudeInstalledPluginRecord {
-  id?: string;
-  installPath?: string;
-}
-
-interface ClaudePluginListOutput {
-  installed?: ClaudeInstalledPluginRecord[];
 }
 
 const EMPTY_COUNTS: PluginComponentCounts = {
@@ -86,62 +63,8 @@ function cloneComponentState(state: PluginComponentEnabledState): PluginComponen
 }
 
 export class PluginRuntimeService {
-  private readonly catalogService: PluginCatalogService;
-  private readonly commandRunner: CommandRunner;
-
-  constructor(
-    catalogService: PluginCatalogService = new PluginCatalogService(),
-    commandRunner: CommandRunner = PluginRuntimeService.defaultCommandRunner
-  ) {
-    this.catalogService = catalogService;
-    this.commandRunner = commandRunner;
-  }
-
-  async listCatalog(options?: { installableOnly?: boolean }): Promise<PluginCatalogItemV2[]> {
-    const installableOnly = options?.installableOnly === true;
-    const plugins = await this.catalogService.listAnthropicPlugins(false, installableOnly);
-    return plugins.map((plugin) => ({
-      name: plugin.name,
-      description: plugin.description,
-      version: plugin.version,
-      authorName: plugin.authorName,
-      installable: plugin.installable,
-      hasManifest: plugin.hasManifest,
-      componentCounts: cloneCounts(plugin.componentCounts),
-      pluginId: plugin.pluginId,
-      installCommand: plugin.installCommand,
-      detailUrl: plugin.detailUrl,
-      catalogSource: plugin.catalogSource,
-    }));
-  }
-
   listInstalled(): InstalledPlugin[] {
     return pluginRegistryStore.list().map((plugin) => this.normalizeInstalledPlugin(plugin));
-  }
-
-  async install(pluginRef: string): Promise<PluginInstallResultV2> {
-    log(`[PluginRuntime] Install requested: ${pluginRef}`);
-    const catalog = await this.catalogService.listAnthropicPlugins(false, false);
-    const requested = pluginRef.trim();
-    const loweredRequested = requested.toLowerCase();
-    const targetPlugin = this.resolveCatalogPlugin(catalog, loweredRequested);
-    if (!targetPlugin) {
-      throw new Error(`Plugin not found in marketplace catalog: ${pluginRef}`);
-    }
-
-    const pluginId = this.getCatalogPluginId(targetPlugin);
-    if (!pluginId) {
-      throw new Error(`Unable to resolve plugin id for ${pluginRef}`);
-    }
-    log(`[PluginRuntime] Resolved marketplace plugin id: ${pluginId} (from ${pluginRef})`);
-
-    await this.installWithClaudeCli(pluginId);
-    const pluginRootPath = await this.resolveInstallPathFromCli(pluginId);
-    const result = await this.installFromDirectory(pluginRootPath);
-    log(
-      `[PluginRuntime] Install completed: ${result.plugin.name} (${result.plugin.pluginId}), source=${result.plugin.sourcePath}, runtime=${result.plugin.runtimePath}`
-    );
-    return result;
   }
 
   async installFromDirectory(pluginRootPath: string): Promise<PluginInstallResultV2> {
@@ -291,194 +214,6 @@ export class PluginRuntimeService {
       }
     }
     return ready;
-  }
-
-  private static async defaultCommandRunner(
-    command: string,
-    args: string[]
-  ): Promise<CommandOutput> {
-    // Enrich PATH for packaged app (same strategy as agent-runner)
-    const env = { ...process.env };
-    if (process.platform === 'darwin' || process.platform === 'linux') {
-      try {
-        const userShell = getDefaultShell();
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { execSync } = require('child_process');
-        const shellOutput = execSync(`${userShell} -l -c "echo $PATH"`, {
-          encoding: 'utf-8',
-          timeout: 3000,
-        }).trim();
-        if (shellOutput) env.PATH = shellOutput;
-      } catch {
-        /* use process.env.PATH */
-      }
-    } else if (process.platform === 'win32') {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { execSync } = require('child_process');
-        const winPath = execSync(
-          "powershell.exe -NoProfile -Command \"[Environment]::GetEnvironmentVariable('Path', 'User') + ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine')\"",
-          { encoding: 'utf-8', timeout: 5000 }
-        ).trim();
-        if (winPath) {
-          const winPaths = winPath.split(';').filter((p: string) => p.trim());
-          const currentPaths = (env.PATH || '').split(';').filter((p: string) => p.trim());
-          const allPaths = [...winPaths];
-          for (const p of currentPaths) {
-            if (!allPaths.some((ep) => ep.toLowerCase() === p.toLowerCase())) {
-              allPaths.push(p);
-            }
-          }
-          env.PATH = allPaths.join(';');
-        }
-      } catch {
-        /* use process.env.PATH */
-      }
-    }
-    const result = await execFileAsync(command, args, {
-      env,
-      encoding: 'utf8',
-      maxBuffer: 20 * 1024 * 1024,
-    });
-    return {
-      stdout: result.stdout ?? '',
-      stderr: result.stderr ?? '',
-    };
-  }
-
-  private async installWithClaudeCli(pluginId: string): Promise<void> {
-    log(`[PluginRuntime] Running Claude CLI install: ${pluginId}`);
-    try {
-      await this.commandRunner('claude', ['plugin', 'install', pluginId]);
-      log(`[PluginRuntime] Claude CLI install succeeded: ${pluginId}`);
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'ENOENT') {
-        throw new Error(
-          'Failed to install plugin: claude command not found. Please install Claude Code CLI first.'
-        );
-      }
-
-      const stderr = (error as { stderr?: string }).stderr?.trim();
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to install plugin via Claude CLI: ${stderr || message}`);
-    }
-  }
-
-  private async resolveInstallPathFromCli(pluginId: string): Promise<string> {
-    const installed = await this.listInstalledPluginsFromCli();
-    log(`[PluginRuntime] Installed plugins reported by Claude CLI: ${installed.length}`);
-    const record =
-      installed.find((plugin) => plugin.id === pluginId) ??
-      installed.find((plugin) => plugin.id?.toLowerCase() === pluginId.toLowerCase());
-
-    if (!record?.installPath) {
-      const availableIds = installed
-        .map((plugin) => plugin.id)
-        .filter((id): id is string => Boolean(id));
-      log(
-        `[PluginRuntime] installPath resolution failed for ${pluginId}, availableIds=${JSON.stringify(availableIds)}`
-      );
-      throw new Error(`Failed to install plugin: installPath not found for ${pluginId}`);
-    }
-
-    const pluginRootPath = record.installPath;
-    log(`[PluginRuntime] Resolved installPath from Claude CLI: ${pluginId} -> ${pluginRootPath}`);
-    if (!fs.existsSync(pluginRootPath) || !fs.statSync(pluginRootPath).isDirectory()) {
-      throw new Error(
-        `Failed to install plugin: installPath is not a directory (${pluginRootPath})`
-      );
-    }
-
-    return pluginRootPath;
-  }
-
-  private async listInstalledPluginsFromCli(): Promise<ClaudeInstalledPluginRecord[]> {
-    let commandOutput: CommandOutput;
-    try {
-      commandOutput = await this.commandRunner('claude', ['plugin', 'list', '--json']);
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code === 'ENOENT') {
-        throw new Error('Failed to read installed plugins: claude command not found.');
-      }
-
-      const stderr = (error as { stderr?: string }).stderr?.trim();
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to read installed plugins from Claude CLI: ${stderr || message}`);
-    }
-
-    let parsed: ClaudePluginListOutput | ClaudeInstalledPluginRecord[];
-    try {
-      parsed = JSON.parse(commandOutput.stdout) as
-        | ClaudePluginListOutput
-        | ClaudeInstalledPluginRecord[];
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      throw new Error(`Failed to parse Claude plugin list JSON: ${message}`);
-    }
-
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-
-    return Array.isArray(parsed.installed) ? parsed.installed : [];
-  }
-
-  private extractPluginId(installCommand: string | undefined): string | undefined {
-    if (!installCommand) {
-      return undefined;
-    }
-
-    const match = installCommand.match(/^claude plugin (?:install|add)\s+([^\s"'`]+)/i);
-    return match?.[1];
-  }
-
-  private getCatalogPluginId(plugin: PluginCatalogItemV2): string | undefined {
-    return plugin.pluginId ?? this.extractPluginId(plugin.installCommand);
-  }
-
-  private resolveCatalogPlugin(
-    catalog: PluginCatalogItemV2[],
-    loweredRequested: string
-  ): PluginCatalogItemV2 | null {
-    const byExactPluginId = catalog.find(
-      (plugin) => this.getCatalogPluginId(plugin)?.toLowerCase() === loweredRequested
-    );
-    if (byExactPluginId) {
-      return byExactPluginId;
-    }
-
-    const byBarePluginId = catalog.filter((plugin) => {
-      const pluginId = this.getCatalogPluginId(plugin);
-      return pluginId?.split('@')[0]?.toLowerCase() === loweredRequested;
-    });
-    if (byBarePluginId.length === 1) {
-      return byBarePluginId[0];
-    }
-    if (byBarePluginId.length > 1) {
-      const candidates = byBarePluginId
-        .map((plugin) => this.getCatalogPluginId(plugin))
-        .filter((value): value is string => Boolean(value));
-      throw new Error(
-        `Multiple plugins matched this id prefix. Please install using full plugin id: ${candidates.join(', ')}`
-      );
-    }
-
-    const byName = catalog.filter((plugin) => plugin.name.toLowerCase() === loweredRequested);
-    if (byName.length === 1) {
-      return byName[0];
-    }
-    if (byName.length > 1) {
-      const candidates = byName
-        .map((plugin) => this.getCatalogPluginId(plugin))
-        .filter((value): value is string => Boolean(value));
-      throw new Error(
-        `Multiple plugins share this name. Please install by plugin id: ${candidates.join(', ')}`
-      );
-    }
-
-    return null;
   }
 
   private async materializeRuntime(pluginId: string): Promise<void> {

@@ -15,7 +15,6 @@ import { config } from 'dotenv';
 import { initDatabase } from './db/database';
 import { SessionManager } from './session/session-manager';
 import { SkillsManager } from './skills/skills-manager';
-import { PluginCatalogService } from './skills/plugin-catalog-service';
 import { PluginRuntimeService } from './skills/plugin-runtime-service';
 import { MarketplaceService } from './catalog/marketplace-service';
 import { MemoryService } from './memory/memory-service';
@@ -107,7 +106,7 @@ app
 
     const db = initDatabase();
 
-    mainAppState.pluginRuntimeService = new PluginRuntimeService(new PluginCatalogService());
+    mainAppState.pluginRuntimeService = new PluginRuntimeService();
     mainAppState.memoryService = new MemoryService(db);
     const extensionManager = new AgentRuntimeExtensionManager([
       new MemoryExtension(mainAppState.memoryService),
