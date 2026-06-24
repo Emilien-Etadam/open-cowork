@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Nothing to summarize yet — the conversation is still too short.",
       "errHandoffFailed": "Starting a new session from this conversation failed. Please try again."
     },
+    "slashCommands": {
+      "menuLabel": "Commands",
+      "compact": {
+        "description": "Compact context in the current session"
+      },
+      "handoff": {
+        "description": "Start a new session with a continuation summary"
+      }
+    },
     "scrollToBottom": "Scroll to bottom"
   },
   "context": {

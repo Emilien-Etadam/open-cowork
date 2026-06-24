@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Поки що нічого підсумовувати — розмова ще занадто коротка.",
       "errHandoffFailed": "Не вдалося розпочати нову сесію з цієї розмови. Спробуйте ще раз."
     },
+    "slashCommands": {
+      "menuLabel": "Команди",
+      "compact": {
+        "description": "Стиснути контекст у поточній сесії"
+      },
+      "handoff": {
+        "description": "Розпочати нову сесію з підсумком для продовження"
+      }
+    },
     "scrollToBottom": "Прокрутити вниз"
   },
   "context": {

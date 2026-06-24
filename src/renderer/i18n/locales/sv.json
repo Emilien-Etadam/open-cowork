@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Inget att sammanfatta ännu — konversationen är fortfarande för kort.",
       "errHandoffFailed": "Det gick inte att starta en ny session från den här konversationen. Försök igen."
     },
+    "slashCommands": {
+      "menuLabel": "Kommandon",
+      "compact": {
+        "description": "Komprimera kontexten i den aktuella sessionen"
+      },
+      "handoff": {
+        "description": "Starta en ny session med en fortsättningssammanfattning"
+      }
+    },
     "scrollToBottom": "Scrolla till botten"
   },
   "context": {
