@@ -170,13 +170,27 @@ module.exports = async function afterPack(context) {
     if (removed > 0) console.log(`  ✓ ${pkg}: kept ${keepDir}, removed ${removed} other prebuild dirs`);
   }
 
-  // --- 4. ngrok: remove binary (~28MB, it downloads on-demand anyway) ---
-  const ngrokPkg = path.join(nmUnpacked, 'ngrok');
-  if (fs.existsSync(ngrokPkg)) {
-    const ngrokBin = path.join(ngrokPkg, 'bin');
-    if (fs.existsSync(ngrokBin)) {
-      fs.rmSync(ngrokBin, { recursive: true, force: true });
-      console.log(`  ✓ ngrok: removed bin/ (~28MB)`);
+  // --- 4. @ngrok/ngrok: keep only the current platform optional native package ---
+  const ngrokRoot = path.join(nmUnpacked, '@ngrok');
+  if (fs.existsSync(ngrokRoot)) {
+    const platformToken =
+      platform === 'darwin' ? 'darwin' : platform === 'win32' ? 'win32' : 'linux';
+    const archToken = archName === 'arm64' ? 'arm64' : archName === 'ia32' ? 'ia32' : 'x64';
+    const keepPrefixes = [
+      'ngrok',
+      `ngrok-${platformToken}-${archToken}`,
+      `ngrok-${platformToken}-universal`,
+    ];
+    let removedNgrok = 0;
+    for (const entry of fs.readdirSync(ngrokRoot)) {
+      if (keepPrefixes.some((prefix) => entry === prefix || entry.startsWith(`${prefix}-`))) {
+        continue;
+      }
+      fs.rmSync(path.join(ngrokRoot, entry), { recursive: true, force: true });
+      removedNgrok++;
+    }
+    if (removedNgrok > 0) {
+      console.log(`  ✓ @ngrok: removed ${removedNgrok} non-target platform packages`);
     }
   }
 
