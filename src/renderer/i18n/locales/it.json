@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Niente da riassumere per ora — la conversazione è ancora troppo breve.",
       "errHandoffFailed": "Impossibile avviare una nuova sessione da questa conversazione. Riprova."
     },
+    "slashCommands": {
+      "menuLabel": "Comandi",
+      "compact": {
+        "description": "Compatta il contesto nella sessione corrente"
+      },
+      "handoff": {
+        "description": "Avvia una nuova sessione con un riepilogo di continuazione"
+      }
+    },
     "scrollToBottom": "Scorri in basso"
   },
   "context": {

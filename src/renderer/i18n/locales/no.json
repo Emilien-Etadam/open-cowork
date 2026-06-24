@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Ingenting å oppsummere ennå — samtalen er fortsatt for kort.",
       "errHandoffFailed": "Kunne ikke starte ny økt fra denne samtalen. Prøv igjen."
     },
+    "slashCommands": {
+      "menuLabel": "Kommandoer",
+      "compact": {
+        "description": "Komprimer konteksten i gjeldende økt"
+      },
+      "handoff": {
+        "description": "Start en ny økt med et fortsettelsessammendrag"
+      }
+    },
     "scrollToBottom": "Rull til bunnen"
   },
   "context": {

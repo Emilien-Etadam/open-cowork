@@ -676,6 +676,15 @@
       "errHandoffNothingToSummarize": "Nimic de rezumat deocamdată — conversația este încă prea scurtă.",
       "errHandoffFailed": "Nu s-a putut porni o sesiune nouă din această conversație. Încearcă din nou."
     },
+    "slashCommands": {
+      "menuLabel": "Comenzi",
+      "compact": {
+        "description": "Compactează contextul în sesiunea curentă"
+      },
+      "handoff": {
+        "description": "Pornește o sesiune nouă cu un rezumat de continuare"
+      }
+    },
     "scrollToBottom": "Derulează la final"
   },
   "context": {
