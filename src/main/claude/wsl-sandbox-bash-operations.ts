@@ -22,7 +22,10 @@ export function createWslSandboxBashOperations(
   return {
     exec: (command, cwd, execOptions) =>
       session.exec(command, cwd, {
-        onData: execOptions.onData,
+        onData: (chunk) => {
+          const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk);
+          execOptions.onData(buffer);
+        },
         signal: execOptions.signal,
         timeout: execOptions.timeout,
         env: execOptions.env,

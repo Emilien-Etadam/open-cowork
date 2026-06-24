@@ -7,14 +7,11 @@ import {
 } from '../../main/claude/wsl-sandbox-bash-operations';
 
 class FakeChildProcess extends EventEmitter {
-  stdin = new EventEmitter();
   stdout = new EventEmitter();
   stderr = new EventEmitter();
   kill = vi.fn();
-
-  constructor(readonly pid = 4242) {
-    super();
-    this.stdin.write = vi.fn((script: string, cb?: (error?: Error | null) => void) => {
+  stdin = {
+    write: vi.fn((script: string, cb?: (error?: Error | null) => void) => {
       const markerDone = '__OCOWORK_BASH_DONE__';
       const markerExit = '__OCOWORK_BASH_EXIT:';
       if (script.includes('pwd')) {
@@ -27,7 +24,11 @@ class FakeChildProcess extends EventEmitter {
       }
       cb?.(null);
       return true;
-    }) as unknown as ChildProcess['stdin']['write'];
+    }),
+  };
+
+  constructor(readonly pid = 4242) {
+    super();
   }
 }
 
