@@ -218,6 +218,8 @@ jobs:
 
       - name: Electron Builder
         run: npx electron-builder --win nsis --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       # Verify critical resources are present in the packaged app
       - name: Smoke test - verify packaged resources

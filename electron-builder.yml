@@ -68,7 +68,6 @@ win:
       arch:
         - x64
   artifactName: ${productName}-${version}-win-${arch}.${ext}
-  sign: null
   extraResources:
     - from: resources/icon.ico
       to: icon.ico
