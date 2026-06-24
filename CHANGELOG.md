@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.3] - 2026-06-24
+
+### Changed
+
+- Refactor (god-file cleanup phases 2–6, sans changement de comportement prévu) :
+  - **Phase 2** : `session-manager`, `agent-runner-run`, `vision.ts`, `mcp-manager`
+  - **Phase 3** : facade `mcp-manager`, `vision-workflows`, `agent-runner-pi-setup`, `stream-handler`, `session-manager-facade-support`
+  - **Phase 4** : `agent-runner-stream-events`, `vision-workflows-plan`, `mcp-tool-registry`, `useApiConfigState`
+  - **Phase 5** : `use-api-config-state-hook`, `memory-service`, `software-dev-server-example` (+ modules `mcp/software-dev/*`, `memory-service-*`, `api-config-*`)
+  - **Phase 6** : `gui-runtime`, `mcp-server` software-dev, `api-config-persist-actions`
+
+### Tests
+
+- Suite CI : **1043** tests unitaires/intégration
+- Mocks MCP reconnect et inspections mémoire alignés sur les nouveaux modules
+
 ## [3.3.1-EE4.2] - 2026-06-24
 
 ### Changed

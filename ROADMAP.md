@@ -21,7 +21,7 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.2`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.3`)
 
 - **EE4**: Slash command autocomplete, `README_en.md`, logo, first `agent-runner` module split
 - **EE4.1**: Incremental WSL/Lima sandbox sync, `config-store` split, session handoff + `/handsoff`, unified Windows branding, 30 `agent-runner` unit tests
@@ -29,6 +29,7 @@
   - `index.ts` → ~230 lines (`main-app-*`, `ipc/*`)
   - `gui-operate-server.ts` → entry + `mcp/gui-operate/*` (11 modules)
   - `agent-runner.ts` → ~265 lines (`agent-runner-run`, skills, MCP bridge, PATH, events)
+- **EE4.3**: God-file cleanup phases 2–6 — `session-manager`, `mcp-manager`, `memory-service`, software-dev MCP, API config hooks (1043 tests)
 - **God-file cleanup (phase 1)**: `index.ts`, `gui-operate-server.ts`, `agent-runner.ts`, `config-store.ts` — done
 - **God-file cleanup (phase 2)**: `agent-runner-run.ts`, `gui-operate/vision.ts`, `mcp-manager.ts`, `session-manager.ts` — done (2026-06-24)
 - **God-file cleanup (phase 3)**: `mcp-manager` facade (~363), `vision-workflows`, `agent-runner-pi-setup`, `stream-handler`, `session-manager-facade-support` — done (2026-06-24)
@@ -41,16 +42,17 @@
 
 | Tag            | Date       | Highlights                                              |
 | -------------- | ---------- | ------------------------------------------------------- |
+| `v3.3.1-EE4.3` | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                 |
 | `v3.3.1-EE4.2` | 2026-06-24 | Refactor `index.ts`, `gui-operate`, `agent-runner`      |
 | `v3.3.1-EE4.1` | 2026-06-23 | Sandbox sync, config-store, handoff, branding           |
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)        |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration |
 
-Current stable fork baseline: **`3.3.1-EE4.2`** — see [CHANGELOG.md](CHANGELOG.md).
+Current stable fork baseline: **`3.3.1-EE4.3`** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## 🚧 In Progress
 
-- **Post-EE4.2 validation**: Windows smoke test (sandbox, GUI MCP, handoff, encrypted config)
+- **Post-EE4.3 validation**: Windows smoke test (sandbox, GUI MCP, handoff, encrypted config)
 
 ## 📋 Planned
 
