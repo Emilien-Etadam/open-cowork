@@ -8,9 +8,7 @@ import type {
   Skill,
   ApiTestInput,
   ApiTestResult,
-  PluginCatalogItemV2,
   InstalledPlugin,
-  PluginInstallResultV2,
   PluginToggleResult,
   PluginComponentKind,
   MarketplaceEntry,
@@ -241,11 +239,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   plugins: {
-    listCatalog: (options?: { installableOnly?: boolean }): Promise<PluginCatalogItemV2[]> =>
-      ipcRenderer.invoke('plugins.listCatalog', options),
     listInstalled: (): Promise<InstalledPlugin[]> => ipcRenderer.invoke('plugins.listInstalled'),
-    install: (pluginName: string): Promise<PluginInstallResultV2> =>
-      ipcRenderer.invoke('plugins.install', pluginName),
     setEnabled: (pluginId: string, enabled: boolean): Promise<PluginToggleResult> =>
       ipcRenderer.invoke('plugins.setEnabled', pluginId, enabled),
     setComponentEnabled: (
@@ -532,9 +526,7 @@ declare global {
         openStoragePath: () => Promise<{ success: boolean; path: string; error?: string }>;
       };
       plugins: {
-        listCatalog: (options?: { installableOnly?: boolean }) => Promise<PluginCatalogItemV2[]>;
         listInstalled: () => Promise<InstalledPlugin[]>;
-        install: (pluginName: string) => Promise<PluginInstallResultV2>;
         setEnabled: (pluginId: string, enabled: boolean) => Promise<PluginToggleResult>;
         setComponentEnabled: (
           pluginId: string,
