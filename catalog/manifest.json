@@ -1,5 +1,5 @@
 {
-  "version": "1",
+  "version": "2",
   "updatedAt": "2026-06-24",
   "policy": "curated-strict",
   "entries": [
@@ -85,15 +85,80 @@
       }
     },
     {
-      "id": "context7-plugin",
+      "id": "code-review-plugin",
       "type": "plugin",
-      "name": "Context7",
-      "description": "Up-to-date documentation context for libraries and frameworks.",
+      "name": "Code Review",
+      "description": "Automated pull request review with specialized agents and confidence-based scoring.",
       "verified": true,
       "resolve": {
         "via": "github",
         "repo": "anthropics/claude-plugins-official",
-        "subdir": "plugins/context7",
+        "subdir": "plugins/code-review",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "feature-dev-plugin",
+      "type": "plugin",
+      "name": "Feature Dev",
+      "description": "End-to-end feature development workflow with exploration, architecture, and implementation agents.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/feature-dev",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "pr-review-toolkit-plugin",
+      "type": "plugin",
+      "name": "PR Review Toolkit",
+      "description": "PR review agents for comments, tests, error handling, types, and code quality.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/pr-review-toolkit",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "commit-commands-plugin",
+      "type": "plugin",
+      "name": "Commit Commands",
+      "description": "Slash commands to commit, push, and open pull requests from the agent.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/commit-commands",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "hookify-plugin",
+      "type": "plugin",
+      "name": "Hookify",
+      "description": "Create hooks from conversation patterns to block unwanted agent behaviors.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/hookify",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "agent-sdk-dev-plugin",
+      "type": "plugin",
+      "name": "Agent SDK Dev",
+      "description": "Official Claude Agent SDK development helpers, commands, and agents.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/agent-sdk-dev",
         "ref": "main"
       }
     },
@@ -107,6 +172,75 @@
         "via": "github",
         "repo": "anthropics/claude-plugins-official",
         "subdir": "plugins/frontend-design",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "context7-plugin",
+      "type": "plugin",
+      "name": "Context7",
+      "description": "Up-to-date documentation context for libraries and frameworks via Upstash Context7.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "external_plugins/context7",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "github-plugin",
+      "type": "plugin",
+      "name": "GitHub",
+      "description": "Official GitHub MCP integration for issues, pull requests, and repository management.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "external_plugins/github",
+        "ref": "main"
+      },
+      "requiresEnv": ["GITHUB_PERSONAL_ACCESS_TOKEN"],
+      "envDescription": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "GitHub personal access token with repo scope (github.com/settings/tokens)"
+      }
+    },
+    {
+      "id": "playwright-plugin",
+      "type": "plugin",
+      "name": "Playwright",
+      "description": "Microsoft Playwright MCP for browser automation and end-to-end testing.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "external_plugins/playwright",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "linear-plugin",
+      "type": "plugin",
+      "name": "Linear",
+      "description": "Linear issue tracking: create issues, manage projects, and search workspaces.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "external_plugins/linear",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "gitlab-plugin",
+      "type": "plugin",
+      "name": "GitLab",
+      "description": "GitLab DevOps integration for repositories, merge requests, CI/CD, and issues.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "external_plugins/gitlab",
         "ref": "main"
       }
     }
