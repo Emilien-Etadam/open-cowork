@@ -9,6 +9,11 @@
 </p>
 
 <p align="center">
+  <a href="./README_en.md">English</a> ·
+  <a href="./README_zh.md">中文</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
@@ -43,10 +48,10 @@
 
 Téléchargez la dernière version sur la page [Releases](https://github.com/emilien-etadam/open-cowork/releases) :
 
-| Plateforme | Fichier |
-| ---------- | ------- |
-| Windows    | `.exe`  |
-| macOS (Apple Silicon) | `.dmg` |
+| Plateforme            | Fichier |
+| --------------------- | ------- |
+| Windows               | `.exe`  |
+| macOS (Apple Silicon) | `.dmg`  |
 
 ### Depuis les sources
 
@@ -66,7 +71,7 @@ Pour construire un installeur local : `npm run build`
 1. Ouvrez l'app et allez dans **Réglages** (icône ⚙️ en bas à gauche).
 2. Collez votre **clé API** et configurez l'**URL de base** selon votre fournisseur (OpenRouter, Anthropic, GLM, MiniMax, Kimi…).
 3. Choisissez un **dossier workspace** — l'agent ne travaillera que dans ce répertoire.
-4. Envoyez un prompt, par exemple : *« Lis le fichier rapport.csv et crée un PowerPoint de synthèse en 5 slides. »*
+4. Envoyez un prompt, par exemple : _« Lis le fichier rapport.csv et crée un PowerPoint de synthèse en 5 slides. »_
 
 Pour la documentation complète (fournisseurs API, configuration sandbox, skills, MCP), consultez le [README upstream](https://github.com/OpenCoworkAI/open-cowork/blob/main/readme.md).
 
