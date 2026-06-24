@@ -68,7 +68,9 @@
     "logsDesc": "Applicatielogboeken bekijken en exporteren",
     "panelDesc": "Configureer je werkruimte, tools en accountgedrag.",
     "general": "Algemeen",
-    "generalDesc": "Weergave, taal en voorkeuren"
+    "generalDesc": "Weergave, taal en voorkeuren",
+    "extensions": "Extensions",
+    "extensionsDesc": "Curated marketplace for skills, MCP connectors, and plugins"
   },
   "general": {
     "appearance": "Weergave",
@@ -979,5 +981,35 @@
     "description": "Er is een onverwachte fout opgetreden in de applicatie. Je kunt proberen te herstellen door op de onderstaande knop te klikken.",
     "details": "Foutdetails",
     "retry": "Opnieuw proberen"
+  },
+  "marketplace": {
+    "filterAll": "All",
+    "filterSkills": "Skills",
+    "filterMcp": "MCP",
+    "filterPlugins": "Plugins",
+    "viewMarketplace": "Marketplace",
+    "viewInstalled": "Installed",
+    "viewStorage": "Storage",
+    "refresh": "Refresh catalog",
+    "verifiedBadge": "Verified",
+    "install": "Install",
+    "enable": "Enable",
+    "disable": "Disable",
+    "uninstall": "Uninstall",
+    "deprecated": "Deprecated",
+    "empty": "No extensions match the current filters.",
+    "failedToLoad": "Failed to load marketplace catalog",
+    "installSuccess": "\"{{name}}\" installed successfully",
+    "installFailed": "Failed to install extension",
+    "toggleFailed": "Failed to update extension state",
+    "uninstallConfirm": "Uninstall \"{{name}}\"?",
+    "uninstallSuccess": "\"{{name}}\" was uninstalled",
+    "uninstallFailed": "Failed to uninstall extension",
+    "manualTitle": "Manual install (advanced)",
+    "manualDesc": "Install a custom skill folder outside the curated marketplace.",
+    "manualWarning": "Manual installs are not reviewed by Open Cowork. Only install folders you trust.",
+    "manualSkillInstall": "Install skill from folder",
+    "manualSkillSuccess": "Custom skill installed successfully",
+    "envTitle": "Configure {{name}}"
   }
 }

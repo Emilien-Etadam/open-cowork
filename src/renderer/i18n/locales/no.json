@@ -68,7 +68,9 @@
     "logsDesc": "Vis og eksporter applikasjonslogger",
     "panelDesc": "Konfigurer arbeidsområdet, verktøyene og kontooppførselen din.",
     "general": "Generelt",
-    "generalDesc": "Utseende, språk og preferanser"
+    "generalDesc": "Utseende, språk og preferanser",
+    "extensions": "Extensions",
+    "extensionsDesc": "Curated marketplace for skills, MCP connectors, and plugins"
   },
   "general": {
     "appearance": "Utseende",
@@ -979,5 +981,35 @@
     "description": "En uventet feil oppstod i applikasjonen. Du kan prøve å gjenopprette ved å klikke på knappen nedenfor.",
     "details": "Feildetaljer",
     "retry": "Prøv igjen"
+  },
+  "marketplace": {
+    "filterAll": "All",
+    "filterSkills": "Skills",
+    "filterMcp": "MCP",
+    "filterPlugins": "Plugins",
+    "viewMarketplace": "Marketplace",
+    "viewInstalled": "Installed",
+    "viewStorage": "Storage",
+    "refresh": "Refresh catalog",
+    "verifiedBadge": "Verified",
+    "install": "Install",
+    "enable": "Enable",
+    "disable": "Disable",
+    "uninstall": "Uninstall",
+    "deprecated": "Deprecated",
+    "empty": "No extensions match the current filters.",
+    "failedToLoad": "Failed to load marketplace catalog",
+    "installSuccess": "\"{{name}}\" installed successfully",
+    "installFailed": "Failed to install extension",
+    "toggleFailed": "Failed to update extension state",
+    "uninstallConfirm": "Uninstall \"{{name}}\"?",
+    "uninstallSuccess": "\"{{name}}\" was uninstalled",
+    "uninstallFailed": "Failed to uninstall extension",
+    "manualTitle": "Manual install (advanced)",
+    "manualDesc": "Install a custom skill folder outside the curated marketplace.",
+    "manualWarning": "Manual installs are not reviewed by Open Cowork. Only install folders you trust.",
+    "manualSkillInstall": "Install skill from folder",
+    "manualSkillSuccess": "Custom skill installed successfully",
+    "envTitle": "Configure {{name}}"
   }
 }

@@ -68,7 +68,9 @@
     "logsDesc": "Перегляд та експорт журналів застосунку",
     "panelDesc": "Налаштуйте свій робочий простір, інструменти та поведінку облікового запису.",
     "general": "Загальні",
-    "generalDesc": "Вигляд, мова та налаштування"
+    "generalDesc": "Вигляд, мова та налаштування",
+    "extensions": "Extensions",
+    "extensionsDesc": "Curated marketplace for skills, MCP connectors, and plugins"
   },
   "general": {
     "appearance": "Вигляд",
@@ -979,5 +981,35 @@
     "description": "У застосунку сталася неочікувана помилка. Ви можете спробувати відновити роботу, натиснувши кнопку нижче.",
     "details": "Деталі помилки",
     "retry": "Спробувати ще раз"
+  },
+  "marketplace": {
+    "filterAll": "All",
+    "filterSkills": "Skills",
+    "filterMcp": "MCP",
+    "filterPlugins": "Plugins",
+    "viewMarketplace": "Marketplace",
+    "viewInstalled": "Installed",
+    "viewStorage": "Storage",
+    "refresh": "Refresh catalog",
+    "verifiedBadge": "Verified",
+    "install": "Install",
+    "enable": "Enable",
+    "disable": "Disable",
+    "uninstall": "Uninstall",
+    "deprecated": "Deprecated",
+    "empty": "No extensions match the current filters.",
+    "failedToLoad": "Failed to load marketplace catalog",
+    "installSuccess": "\"{{name}}\" installed successfully",
+    "installFailed": "Failed to install extension",
+    "toggleFailed": "Failed to update extension state",
+    "uninstallConfirm": "Uninstall \"{{name}}\"?",
+    "uninstallSuccess": "\"{{name}}\" was uninstalled",
+    "uninstallFailed": "Failed to uninstall extension",
+    "manualTitle": "Manual install (advanced)",
+    "manualDesc": "Install a custom skill folder outside the curated marketplace.",
+    "manualWarning": "Manual installs are not reviewed by Open Cowork. Only install folders you trust.",
+    "manualSkillInstall": "Install skill from folder",
+    "manualSkillSuccess": "Custom skill installed successfully",
+    "envTitle": "Configure {{name}}"
   }
 }
