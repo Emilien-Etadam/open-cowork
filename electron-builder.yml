@@ -68,8 +68,14 @@ win:
       arch:
         - x64
   artifactName: ${productName}-${version}-win-${arch}.${ext}
-  signAndEditExecutable: false
+  sign: null
   extraResources:
+    - from: resources/icon.ico
+      to: icon.ico
+    - from: resources/tray-icon.png
+      to: tray-icon.png
+    - from: resources/tray-icon.ico
+      to: tray-icon.ico
     - from: .bundle-resources/mcp
       to: mcp
     - from: resources/node/win32-x64
@@ -98,6 +104,10 @@ mac:
     NSScreenCaptureUsageDescription: 'Open Cowork needs screen recording access for GUI automation.'
     NSAccessibilityUsageDescription: 'Open Cowork needs accessibility access for GUI automation.'
   extraResources:
+    - from: resources/icon.icns
+      to: icon.icns
+    - from: resources/tray-iconTemplate.png
+      to: tray-iconTemplate.png
     - from: .bundle-resources/mcp
       to: mcp
     - from: resources/node/darwin-${arch}
@@ -123,6 +133,10 @@ linux:
         - x64
   artifactName: ${productName}-${version}-linux-${arch}.${ext}
   extraResources:
+    - from: resources/icon.png
+      to: icon.png
+    - from: resources/tray-icon.png
+      to: tray-icon.png
     - from: .bundle-resources/mcp
       to: mcp
     - from: resources/node/linux-x64
@@ -138,6 +152,7 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+  shortcutName: Open Cowork
   include: installer.nsh
   warningsAsErrors: false
   # Preserve user config/history by default; offer explicit cleanup tooling instead of destructive uninstall.

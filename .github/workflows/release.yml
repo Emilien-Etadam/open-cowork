@@ -84,6 +84,12 @@ jobs:
       - name: Vite build
         run: npx vite build
 
+      - name: Generate app icons
+        run: npm run generate:icons
+
+      - name: Pre-build check
+        run: node scripts/pre-build-check.js
+
       - name: Electron Builder (unsigned)
         run: npx electron-builder --mac dmg dir --publish never
         env:
@@ -108,7 +114,9 @@ jobs:
             "mcp/software-dev-server-example.js" \
             "node/bin/node" \
             "lima-agent/index.js" \
-            "skills"; do
+            "skills" \
+            "icon.icns" \
+            "tray-iconTemplate.png"; do
             if [ -e "$RESOURCES/$check" ]; then
               echo "  OK: $check"
             else
@@ -202,6 +210,12 @@ jobs:
       - name: Vite build
         run: npx vite build
 
+      - name: Generate app icons
+        run: npm run generate:icons
+
+      - name: Pre-build check
+        run: node scripts/pre-build-check.js
+
       - name: Electron Builder
         run: npx electron-builder --win nsis --publish never
 
@@ -223,7 +237,10 @@ jobs:
             "mcp\software-dev-server-example.js",
             "node\node.exe",
             "wsl-agent\index.js",
-            "skills"
+            "skills",
+            "icon.ico",
+            "tray-icon.png",
+            "tray-icon.ico"
           )
 
           $failed = $false
@@ -242,6 +259,18 @@ jobs:
             exit 1
           }
           Write-Host "All packaged resources verified."
+
+          $exe = Get-ChildItem -Path $unpackedDir -Filter "*.exe" | Where-Object { $_.Name -notmatch 'Uninstall' } | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host "::error::No exe found in win-unpacked for branding check"
+            exit 1
+          }
+          $productName = [System.Diagnostics.FileVersionInfo]::GetVersionInfo($exe.FullName).ProductName
+          Write-Host "Executable ProductName: $productName"
+          if ($productName -eq 'Electron') {
+            Write-Host "::error::Executable still branded as Electron (rcedit metadata missing)"
+            exit 1
+          }
 
       - name: Smoke test - launch app
         shell: pwsh
