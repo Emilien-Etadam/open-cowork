@@ -1,5 +1,6 @@
 import type {
   CatalogEntry,
+  CatalogManifestMeta,
   MarketplaceEntry,
   MarketplaceInstallResult,
 } from '../../shared/catalog-types';
@@ -56,6 +57,10 @@ export class MarketplaceService {
     }
     await this.installResolver.setEnabled(entry, enabled);
     return { success: true };
+  }
+
+  async getMeta(forceRefresh = false): Promise<CatalogManifestMeta> {
+    return catalogAggregator.getMeta(forceRefresh);
   }
 
   private toMarketplaceEntry(

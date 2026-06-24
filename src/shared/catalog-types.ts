@@ -52,6 +52,17 @@ export interface CatalogManifest {
   entries: CatalogEntry[];
 }
 
+export type CatalogManifestSource = 'remote' | 'bundled';
+
+export interface CatalogManifestMeta {
+  source: CatalogManifestSource;
+  version: string;
+  updatedAt: string;
+  entryCount: number;
+  fetchedAt: number;
+  remoteUrl: string;
+}
+
 export type MarketplaceInstallState = 'not_installed' | 'installed' | 'builtin';
 
 export interface MarketplaceEntry extends CatalogEntry {

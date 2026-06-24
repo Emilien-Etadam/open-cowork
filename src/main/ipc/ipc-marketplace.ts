@@ -32,6 +32,13 @@ export function registerMarketplaceIpc(): void {
     return mainAppState.marketplaceService.list(forceRefresh === true);
   });
 
+  ipcMain.handle('marketplace.getMeta', async (_event, forceRefresh = false) => {
+    if (!mainAppState.marketplaceService) {
+      throw new Error('MarketplaceService not initialized');
+    }
+    return mainAppState.marketplaceService.getMeta(forceRefresh === true);
+  });
+
   ipcMain.handle(
     'marketplace.install',
     async (_event, catalogId: string, envValues?: Record<string, string>) => {

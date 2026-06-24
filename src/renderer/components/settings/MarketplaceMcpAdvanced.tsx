@@ -18,7 +18,7 @@ import type { MCPServerConfig, MCPServerStatus, MCPToolInfo, MCPPreset } from '.
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
-export function SettingsConnectors({ isActive }: { isActive: boolean }) {
+export function MarketplaceMcpAdvanced({ isActive }: { isActive: boolean }) {
   const { t } = useTranslation();
   const tRef = useRef(t);
   useEffect(() => {
