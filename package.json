@@ -1,6 +1,6 @@
 {
   "name": "open-cowork",
-  "version": "3.3.1-EE3.2",
+  "version": "3.3.1-EE3.3",
   "description": "Open-source AI agent desktop app for Windows & macOS — one-click install Claude Code, MCP tools, and Skills with sandbox isolation and multi-model support",
   "keywords": [
     "ai-agent",
@@ -58,6 +58,7 @@
     "test:coverage": "vitest run --coverage",
     "bench": "vitest bench",
     "bench:api": "node scripts/bench-api.mjs",
+    "audit:runtime": "node scripts/audit-runtime.mjs",
     "rebuild": "node -e \"const {execSync}=require('node:child_process'); const v=require('electron/package.json').version; execSync('npm rebuild better-sqlite3 --runtime=electron --target='+v+' --disturl=https://electronjs.org/headers',{stdio:'inherit'})\"",
     "typecheck": "tsc --noEmit",
     "pre-build-check": "node scripts/pre-build-check.js",
@@ -73,7 +74,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@opentelemetry/api": "1.9.1",
     "@slack/bolt": "4.7.0",
-    "@slack/web-api": "7.16.0",
+    "@slack/web-api": "7.17.0",
     "archiver": "^7.0.1",
     "better-sqlite3": "^12.10.0",
     "chokidar": "^4.0.1",
@@ -86,7 +87,7 @@
     "i18next-browser-languagedetector": "^8.2.1",
     "katex": "^0.17.0",
     "lucide-react": "^1.17.0",
-    "ngrok": "^5.0.0-beta.2",
+    "@ngrok/ngrok": "^1.7.0",
     "openai": "^6.42.0",
     "patch-package": "8.0.1",
     "react": "^18.3.1",
@@ -131,6 +132,7 @@
     "vitest": "^4.1.0"
   },
   "overrides": {
+    "axios": "^1.18.1",
     "fast-xml-parser": "^5.5.6",
     "tar": "^7.5.11"
   },

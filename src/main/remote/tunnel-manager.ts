@@ -2,7 +2,7 @@
  * Tunnel Manager - Manages ngrok/cloudflare tunnels for remote access
  */
 
-import ngrok from 'ngrok';
+import * as ngrok from '@ngrok/ngrok';
 import { log, logError } from '../utils/logger';
 import { remoteConfigStore } from './remote-config-store';
 
@@ -22,6 +22,7 @@ class TunnelManager {
   private isConnected: boolean = false;
   private provider: 'ngrok' | 'cloudflare' | 'none' = 'none';
   private statusCallback: ((status: TunnelStatus) => void) | null = null;
+  private ngrokListener: ngrok.Listener | null = null;
 
   private constructor() {}
 
@@ -71,7 +72,7 @@ class TunnelManager {
   }
 
   /**
-   * Start ngrok tunnel
+   * Start ngrok tunnel via the official @ngrok/ngrok SDK (no shell wrapper).
    */
   private async startNgrok(
     localPort: number,
@@ -84,26 +85,21 @@ class TunnelManager {
     log('[TunnelManager] Starting ngrok tunnel...');
 
     try {
-      // Set authtoken
-      await ngrok.authtoken(config.authToken);
-
-      // Connect
-      const url = await ngrok.connect({
+      const listener = await ngrok.forward({
         addr: localPort,
-        region: (config.region as ngrok.Ngrok.Region) || 'us',
-        onStatusChange: (status) => {
-          log('[TunnelManager] Ngrok status:', status);
-          if (status === 'closed') {
-            this.isConnected = false;
-            this.currentUrl = null;
-            this.emitStatus();
-          }
-        },
+        authtoken: config.authToken,
+        region: config.region || 'us',
       });
 
+      const url = listener.url();
+      if (!url) {
+        throw new Error('Ngrok listener started without a public URL');
+      }
+
+      this.ngrokListener = listener;
       this.currentUrl = url;
       this.isConnected = true;
-      
+
       log('[TunnelManager] Ngrok tunnel established:', url);
       this.emitStatus();
 
@@ -121,8 +117,12 @@ class TunnelManager {
     if (this.provider === 'ngrok' && this.isConnected) {
       log('[TunnelManager] Stopping ngrok tunnel...');
       try {
-        await ngrok.disconnect();
-        await ngrok.kill();
+        if (this.ngrokListener) {
+          await this.ngrokListener.close();
+          this.ngrokListener = null;
+        } else if (this.currentUrl) {
+          await ngrok.disconnect(this.currentUrl);
+        }
       } catch (error) {
         logError('[TunnelManager] Error stopping ngrok:', error);
       }
