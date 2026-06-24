@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.2] - 2026-06-24
+
+### Changed
+
+- Refactor : découpage de `index.ts` en modules (window, IPC, lifecycle) — 2914 → ~230 lignes
+- Refactor : découpage de `gui-operate-server.ts` en 11 modules sous `mcp/gui-operate/` — 6884 → ~24 lignes (entry)
+- Refactor : suite du découpage `agent-runner.ts` — 2520 → ~265 lignes (`run`, skills, MCP bridge, PATH, events)
+
 ## [3.3.1-EE4.1] - 2026-06-23
 
 ### Added
