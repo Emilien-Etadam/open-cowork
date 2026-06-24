@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.1] - 2026-06-23
+
+### Added
+
+- Tests unitaires pour les modules `agent-runner` extraits (30 tests : `pi-session`, `sandbox-bootstrap`, `history`)
+- Sync sandbox incrémental WSL/Lima : pull host→sandbox à la réutilisation de session, skip export si fichier inchangé
+- Découpage de `config-store` en modules (`config-schema`, `config-normalizer`, `config-provider-runtime`)
+
+### Changed
+
+- Branding : logo unifié et identité Electron corrigée sur Windows (icônes tray, génération automatique)
+
+### Fixed
+
+- Handoff de session : bootstrap UI corrigé, alias `/handsoff` accepté
+- Test flaky `recent-workspace-files` : timestamps explicites via `fs.utimes` au lieu de `setTimeout`
+
 ## [3.3.1-EE4] - 2026-06-23
 
 ### Added
