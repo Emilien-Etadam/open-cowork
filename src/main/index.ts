@@ -17,6 +17,7 @@ import { SessionManager } from './session/session-manager';
 import { SkillsManager } from './skills/skills-manager';
 import { PluginCatalogService } from './skills/plugin-catalog-service';
 import { PluginRuntimeService } from './skills/plugin-runtime-service';
+import { MarketplaceService } from './catalog/marketplace-service';
 import { MemoryService } from './memory/memory-service';
 import { MemoryExtension } from './memory/memory-extension';
 import { AgentRuntimeExtensionManager } from './extensions/agent-runtime-extension-manager';
@@ -125,6 +126,10 @@ app
       },
       watchStorage: true,
     });
+    mainAppState.marketplaceService = new MarketplaceService(
+      mainAppState.skillsManager,
+      mainAppState.pluginRuntimeService
+    );
     mainAppState.skillsManager.onStorageChanged((event) => {
       sendToRenderer({
         type: 'skills.storageChanged',

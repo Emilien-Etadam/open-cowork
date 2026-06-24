@@ -23,6 +23,8 @@ const VALID_TABS = new Set([
   'sandbox',
   'connectors',
   'skills',
+  'extensions',
+  'memory',
   'schedule',
   'remote',
   'logs',

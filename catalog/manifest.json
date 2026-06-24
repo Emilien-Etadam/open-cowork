@@ -1,0 +1,114 @@
+{
+  "version": "1",
+  "updatedAt": "2026-06-24",
+  "policy": "curated-strict",
+  "entries": [
+    {
+      "id": "docx-skill",
+      "type": "skill",
+      "name": "DOCX",
+      "description": "Generate and edit Microsoft Word documents (.docx).",
+      "verified": true,
+      "resolve": { "via": "builtin", "path": "docx" }
+    },
+    {
+      "id": "pdf-skill",
+      "type": "skill",
+      "name": "PDF",
+      "description": "Extract, merge, split, and create PDF documents.",
+      "verified": true,
+      "resolve": { "via": "builtin", "path": "pdf" }
+    },
+    {
+      "id": "pptx-skill",
+      "type": "skill",
+      "name": "PPTX",
+      "description": "Create and edit PowerPoint presentations (.pptx).",
+      "verified": true,
+      "resolve": { "via": "builtin", "path": "pptx" }
+    },
+    {
+      "id": "xlsx-skill",
+      "type": "skill",
+      "name": "XLSX",
+      "description": "Create and analyze Excel spreadsheets (.xlsx).",
+      "verified": true,
+      "resolve": { "via": "builtin", "path": "xlsx" }
+    },
+    {
+      "id": "skill-creator",
+      "type": "skill",
+      "name": "Skill Creator",
+      "description": "Toolkit for creating and packaging custom skills.",
+      "verified": true,
+      "resolve": { "via": "builtin", "path": "skill-creator" }
+    },
+    {
+      "id": "gui-operate-mcp",
+      "type": "mcp",
+      "name": "GUI Operate",
+      "description": "Desktop GUI automation via screen capture and input control.",
+      "verified": true,
+      "resolve": { "via": "preset", "presetKey": "gui-operate" }
+    },
+    {
+      "id": "software-dev-mcp",
+      "type": "mcp",
+      "name": "Software Development",
+      "description": "Built-in software development tools for code workspaces.",
+      "verified": true,
+      "resolve": { "via": "preset", "presetKey": "software-development" }
+    },
+    {
+      "id": "chrome-mcp",
+      "type": "mcp",
+      "name": "Chrome",
+      "description": "Browser automation via Chrome DevTools Protocol.",
+      "verified": true,
+      "resolve": { "via": "preset", "presetKey": "chrome" }
+    },
+    {
+      "id": "notion-mcp",
+      "type": "mcp",
+      "name": "Notion",
+      "description": "Official Notion MCP connector for pages and databases.",
+      "verified": true,
+      "resolve": {
+        "via": "mcp-registry",
+        "mcpServerName": "io.github.notionhq/notion-mcp-server",
+        "pinVersion": "latest",
+        "presetFallback": "notion"
+      },
+      "requiresEnv": ["NOTION_TOKEN"],
+      "envDescription": {
+        "NOTION_TOKEN": "Notion Internal Integration Token (notion.so/profile/integrations)"
+      }
+    },
+    {
+      "id": "context7-plugin",
+      "type": "plugin",
+      "name": "Context7",
+      "description": "Up-to-date documentation context for libraries and frameworks.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/context7",
+        "ref": "main"
+      }
+    },
+    {
+      "id": "frontend-design-plugin",
+      "type": "plugin",
+      "name": "Frontend Design",
+      "description": "Anthropic official plugin for frontend design workflows.",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "anthropics/claude-plugins-official",
+        "subdir": "plugins/frontend-design",
+        "ref": "main"
+      }
+    }
+  ]
+}
