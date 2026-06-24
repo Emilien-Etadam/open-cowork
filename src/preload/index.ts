@@ -240,6 +240,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   plugins: {
     listInstalled: (): Promise<InstalledPlugin[]> => ipcRenderer.invoke('plugins.listInstalled'),
+    listCommands: (): Promise<import('../shared/plugin-slash-commands').PluginSlashCommandInfo[]> =>
+      ipcRenderer.invoke('plugins.listCommands'),
     setEnabled: (pluginId: string, enabled: boolean): Promise<PluginToggleResult> =>
       ipcRenderer.invoke('plugins.setEnabled', pluginId, enabled),
     setComponentEnabled: (
@@ -527,6 +529,9 @@ declare global {
       };
       plugins: {
         listInstalled: () => Promise<InstalledPlugin[]>;
+        listCommands: () => Promise<
+          import('../shared/plugin-slash-commands').PluginSlashCommandInfo[]
+        >;
         setEnabled: (pluginId: string, enabled: boolean) => Promise<PluginToggleResult>;
         setComponentEnabled: (
           pluginId: string,

@@ -5,6 +5,7 @@ import { ipcMain } from 'electron';
 import { logError } from '../utils/logger';
 import { mainAppState } from '../main-app-state';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
+import { notifyPluginCommandsChanged } from './plugin-commands-notify';
 
 async function syncMcpAfterMarketplaceChange(serverId?: string): Promise<void> {
   if (!mainAppState.sessionManager) {
@@ -59,6 +60,9 @@ export function registerMarketplaceIpc(): void {
       if (result.type === 'skill' || result.type === 'plugin') {
         mainAppState.sessionManager?.invalidateSkillsSetup();
       }
+      if (result.type === 'plugin') {
+        notifyPluginCommandsChanged();
+      }
       return result;
     }
   );
@@ -83,6 +87,9 @@ export function registerMarketplaceIpc(): void {
     if (record?.type === 'skill' || record?.type === 'plugin') {
       mainAppState.sessionManager?.invalidateSkillsSetup();
     }
+    if (record?.type === 'plugin') {
+      notifyPluginCommandsChanged();
+    }
     return result;
   });
 
@@ -99,6 +106,9 @@ export function registerMarketplaceIpc(): void {
     }
     if (entry?.type === 'skill' || entry?.type === 'plugin') {
       mainAppState.sessionManager?.invalidateSkillsSetup();
+    }
+    if (entry?.type === 'plugin') {
+      notifyPluginCommandsChanged();
     }
     return result;
   });

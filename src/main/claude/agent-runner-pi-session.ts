@@ -366,6 +366,7 @@ interface CreatePiSessionOptions {
   authStorage: PiAuthStorage;
   customTools: ToolDefinition[];
   skillPaths: string[];
+  promptTemplatePaths: string[];
   coworkAppendPrompt: string[];
   effectiveCwd: string;
   sessionRuntimeSignature: string;
@@ -384,6 +385,7 @@ export async function createPiSession({
   authStorage,
   customTools,
   skillPaths,
+  promptTemplatePaths,
   coworkAppendPrompt,
   effectiveCwd,
   sessionRuntimeSignature,
@@ -396,6 +398,7 @@ export async function createPiSession({
     cwd: effectiveCwd,
     agentDir: getAgentDir(),
     additionalSkillPaths: skillPaths,
+    additionalPromptTemplatePaths: promptTemplatePaths,
     appendSystemPrompt: coworkAppendPrompt,
   });
   await resourceLoader.reload();

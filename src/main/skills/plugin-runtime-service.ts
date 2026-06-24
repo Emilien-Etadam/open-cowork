@@ -12,6 +12,8 @@ import type {
 import { log, logError } from '../utils/logger';
 import { isPathWithinRoot } from '../tools/path-containment';
 import { withRetry } from '../utils/retry';
+import type { PluginSlashCommandInfo } from '../../shared/plugin-slash-commands';
+import { discoverPluginSlashCommands } from './plugin-command-catalog';
 import { pluginRegistryStore } from './plugin-registry-store';
 
 interface PluginManifest {
@@ -195,6 +197,31 @@ export class PluginRuntimeService {
     const success = pluginRegistryStore.delete(pluginId);
     log(`[PluginRuntime] Uninstall completed: ${plugin.name} (${pluginId}) success=${success}`);
     return { success };
+  }
+
+  listAvailableCommands(): PluginSlashCommandInfo[] {
+    const commands: PluginSlashCommandInfo[] = [];
+
+    for (const plugin of this.listInstalled()) {
+      if (
+        !plugin.enabled ||
+        !plugin.componentsEnabled.commands ||
+        plugin.componentCounts.commands <= 0
+      ) {
+        continue;
+      }
+
+      if (!fs.existsSync(plugin.runtimePath)) {
+        continue;
+      }
+
+      const manifest = this.readManifest(plugin.sourcePath);
+      commands.push(
+        ...discoverPluginSlashCommands(plugin.runtimePath, plugin.pluginId, plugin.name, manifest)
+      );
+    }
+
+    return commands.sort((a, b) => a.command.localeCompare(b.command));
   }
 
   async getEnabledRuntimePlugins(): Promise<InstalledPlugin[]> {

@@ -558,6 +558,7 @@ export type ServerEvent =
       type: 'plugins.runtimeApplied';
       payload: { sessionId: string; plugins: Array<{ name: string; path: string }> };
     }
+  | { type: 'plugins.commandsChanged'; payload: Record<string, never> }
   | { type: 'workdir.changed'; payload: { path: string } }
   | {
       type: 'session.contextInfo';

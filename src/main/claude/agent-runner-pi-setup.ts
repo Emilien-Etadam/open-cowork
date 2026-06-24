@@ -236,8 +236,10 @@ export async function preparePiSessionRun({
     apiKey,
   });
   const skillPaths = await ctx.skillsPaths.resolveSkillPaths(session.id);
-  const skillsSignature = JSON.stringify(skillPaths);
+  const promptTemplatePaths = await ctx.skillsPaths.resolvePluginPromptTemplatePaths();
+  const skillsSignature = JSON.stringify({ skillPaths, promptTemplatePaths });
   log('[ClaudeAgentRunner] Skill paths for pi ResourceLoader:', skillPaths);
+  log('[ClaudeAgentRunner] Prompt template paths for pi ResourceLoader:', promptTemplatePaths);
 
   let cachedSession = ctx.piSessions.get(session.id);
   const invalidateCachedSession = (reason: string, warningLabel: string) => {
@@ -405,6 +407,7 @@ export async function preparePiSessionRun({
     authStorage,
     customTools: allCustomTools,
     skillPaths,
+    promptTemplatePaths,
     coworkAppendPrompt,
     effectiveCwd,
     sessionRuntimeSignature,
