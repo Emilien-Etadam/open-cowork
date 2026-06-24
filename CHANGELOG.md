@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4] - 2026-06-23
+
+### Added
+
+- Autocomplétion des commandes slash (`/`) dans le champ de prompt
+- `README_en.md` et logo Open Cowork
+
+### Changed
+
+- Refactor : découpage de `agent-runner.ts` en 3 modules (`history`, `sandbox-bootstrap`, `pi-session`)
+- Documentation : suppression de `README_zh.md`
+
+### Fixed
+
+- CI : Codex PR Review ignoré si aucune clé API n'est configurée
+
 ## [3.3.0] - 2026-04-18
 
 First stable release of the 3.3.x series. Graduated from 9 beta releases with 30+ commits since beta.9.
