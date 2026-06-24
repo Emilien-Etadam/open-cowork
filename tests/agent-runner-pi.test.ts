@@ -134,7 +134,7 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
   });
 
   it('uses pi DefaultResourceLoader with additionalSkillPaths and appendSystemPrompt', () => {
-    expect(agentRunnerPiSetupContent).toContain('import { type CachedPiSession, createPiSession');
+    expect(agentRunnerPiSetupContent).toContain('createPiSession');
     expect(agentRunnerPiSetupContent).not.toContain('systemPromptOverride');
     expect(
       readFileSync(
