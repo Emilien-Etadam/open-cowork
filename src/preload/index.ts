@@ -13,6 +13,8 @@ import type {
   PluginInstallResultV2,
   PluginToggleResult,
   PluginComponentKind,
+  MarketplaceEntry,
+  MarketplaceInstallResult,
   ScheduleTask,
   ScheduleCreateInput,
   ScheduleUpdateInput,
@@ -253,6 +255,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('plugins.setComponentEnabled', pluginId, component, enabled),
     uninstall: (pluginId: string): Promise<{ success: boolean }> =>
       ipcRenderer.invoke('plugins.uninstall', pluginId),
+  },
+
+  marketplace: {
+    list: (forceRefresh = false) => ipcRenderer.invoke('marketplace.list', forceRefresh),
+    install: (catalogId: string, envValues?: Record<string, string>) =>
+      ipcRenderer.invoke('marketplace.install', catalogId, envValues),
+    uninstall: (catalogId: string) => ipcRenderer.invoke('marketplace.uninstall', catalogId),
+    setEnabled: (catalogId: string, enabled: boolean) =>
+      ipcRenderer.invoke('marketplace.setEnabled', catalogId, enabled),
   },
 
   // Sandbox methods
@@ -529,6 +540,15 @@ declare global {
           enabled: boolean
         ) => Promise<PluginToggleResult>;
         uninstall: (pluginId: string) => Promise<{ success: boolean }>;
+      };
+      marketplace: {
+        list: (forceRefresh?: boolean) => Promise<MarketplaceEntry[]>;
+        install: (
+          catalogId: string,
+          envValues?: Record<string, string>
+        ) => Promise<MarketplaceInstallResult>;
+        uninstall: (catalogId: string) => Promise<{ success: boolean }>;
+        setEnabled: (catalogId: string, enabled: boolean) => Promise<{ success: boolean }>;
       };
       sandbox: {
         getStatus: () => Promise<{

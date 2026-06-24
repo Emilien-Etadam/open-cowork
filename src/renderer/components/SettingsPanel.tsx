@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   X,
   Settings,
-  Plug,
   Shield,
   Package,
   Clock3,
@@ -18,8 +17,7 @@ import { RemoteControlPanel } from './RemoteControlPanel';
 import { useAppStore } from '../store';
 import { SettingsAPI } from './settings/SettingsAPI';
 import { SettingsSandbox } from './settings/SettingsSandbox';
-import { SettingsConnectors } from './settings/SettingsConnectors';
-import { SettingsSkills } from './settings/SettingsSkills';
+import { SettingsMarketplace } from './settings/SettingsMarketplace';
 import { SettingsSchedule } from './settings/SettingsSchedule';
 import { SettingsGeneral } from './settings/SettingsGeneral';
 import { SettingsLogs } from './settings/SettingsLogs';
@@ -30,6 +28,7 @@ interface SettingsPanelProps {
   initialTab?:
     | 'api'
     | 'sandbox'
+    | 'extensions'
     | 'connectors'
     | 'skills'
     | 'memory'
@@ -42,6 +41,7 @@ interface SettingsPanelProps {
 type TabId =
   | 'api'
   | 'sandbox'
+  | 'extensions'
   | 'connectors'
   | 'skills'
   | 'memory'
@@ -53,6 +53,7 @@ type TabId =
 const VALID_TABS = new Set<TabId>([
   'api',
   'sandbox',
+  'extensions',
   'connectors',
   'skills',
   'memory',
@@ -62,6 +63,11 @@ const VALID_TABS = new Set<TabId>([
   'general',
 ]);
 
+const LEGACY_TAB_ALIASES: Record<string, TabId> = {
+  connectors: 'extensions',
+  skills: 'extensions',
+};
+
 export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProps) {
   const { t } = useTranslation();
   const { width } = useWindowSize();
@@ -70,8 +76,9 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
   // takes effect even before this component mounts.
   const storeTab = useAppStore((s) => s.settingsTab);
   const setSettingsTab = useAppStore((s) => s.setSettingsTab);
-  const resolvedInitial =
+  const resolvedInitialRaw =
     storeTab && VALID_TABS.has(storeTab as TabId) ? (storeTab as TabId) : initialTab;
+  const resolvedInitial = LEGACY_TAB_ALIASES[resolvedInitialRaw] || resolvedInitialRaw;
 
   const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
   // Track which tabs have been viewed at least once (for lazy loading)
@@ -90,7 +97,8 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
   // Consume the store signal and apply tab in one effect
   useEffect(() => {
     if (storeTab && VALID_TABS.has(storeTab as TabId)) {
-      setActiveTab(storeTab as TabId);
+      const mapped = LEGACY_TAB_ALIASES[storeTab] || (storeTab as TabId);
+      setActiveTab(mapped);
       setSettingsTab(null);
     }
   }, [storeTab, setSettingsTab]);
@@ -116,16 +124,10 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
       description: t('settings.sandboxDesc'),
     },
     {
-      id: 'connectors' as TabId,
-      label: t('settings.connectors'),
-      icon: Plug,
-      description: t('settings.connectorsDesc'),
-    },
-    {
-      id: 'skills' as TabId,
-      label: t('settings.skills'),
+      id: 'extensions' as TabId,
+      label: t('settings.extensions'),
       icon: Package,
-      description: t('settings.skillsDesc'),
+      description: t('settings.extensionsDesc'),
     },
     {
       id: 'memory' as TabId,
@@ -256,13 +258,10 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
               <div className={activeTab === 'sandbox' ? '' : 'hidden'}>
                 {viewedTabs.has('sandbox') && <SettingsSandbox />}
               </div>
-              <div className={activeTab === 'connectors' ? '' : 'hidden'}>
-                {viewedTabs.has('connectors') && (
-                  <SettingsConnectors isActive={activeTab === 'connectors'} />
+              <div className={activeTab === 'extensions' ? '' : 'hidden'}>
+                {viewedTabs.has('extensions') && (
+                  <SettingsMarketplace isActive={activeTab === 'extensions'} />
                 )}
-              </div>
-              <div className={activeTab === 'skills' ? '' : 'hidden'}>
-                {viewedTabs.has('skills') && <SettingsSkills isActive={activeTab === 'skills'} />}
               </div>
               <div className={activeTab === 'memory' ? '' : 'hidden'}>
                 {viewedTabs.has('memory') && <SettingsMemory />}

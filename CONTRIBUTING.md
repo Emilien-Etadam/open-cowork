@@ -46,6 +46,7 @@ src/
 │   ├── db/                  # SQLite schema and migrations
 │   ├── sandbox/             # Lima (macOS) / WSL2 (Windows) isolation
 │   ├── skills/              # Skill discovery and hot-reload
+│   ├── catalog/             # Curated marketplace manifest + install resolver
 │   ├── remote/              # Feishu/Lark bot integration
 │   └── schedule/            # Cron-like scheduled tasks
 └── renderer/                # React frontend
@@ -199,6 +200,32 @@ return <button>Save</button>;
 ```
 
 Translation files live in `src/renderer/i18n/`. Add keys to both `en` and `zh` locales when introducing new UI text.
+
+---
+
+## Curated Marketplace Catalog
+
+Open Cowork exposes a **curated-strict** extensions marketplace backed by [`catalog/manifest.json`](catalog/manifest.json).
+
+### Adding a new extension
+
+1. Open a PR that adds an entry to `catalog/manifest.json`.
+2. Every entry must include `"verified": true` and a `resolve` block (`builtin`, `preset`, `mcp-registry`, or `github`).
+3. Prefer pinned versions for MCP registry entries (`pinVersion`) instead of uncontrolled `@latest`.
+4. Document required environment variables in `requiresEnv` and `envDescription`.
+
+### Security review checklist
+
+- Source code or package has been reviewed by a maintainer.
+- No hardcoded secrets, tokens, or credentials in the manifest.
+- MCP stdio servers are treated as **local code execution** — review npm/GitHub sources carefully.
+- Plugins installed from GitHub must come from a trusted repository and subdirectory.
+- Community packages are **not** accepted via open self-service publishing; curation is mandatory.
+
+### Validation
+
+- Run `npm run test -- tests/catalog-aggregator.test.ts tests/mcp-registry-resolver.test.ts`.
+- Verify the new entry installs from **Settings → Extensions** in the desktop app.
 
 ---
 

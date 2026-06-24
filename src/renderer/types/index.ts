@@ -236,6 +236,16 @@ export interface PluginCatalogItem extends PluginCatalogItemV2 {
   hasSkills: boolean;
 }
 
+export type {
+  CatalogEntry,
+  CatalogEntryType,
+  CatalogManifest,
+  MarketplaceEntry,
+  MarketplaceInstallResult,
+  MarketplaceInstallState,
+  MarketplaceInstalledRecord,
+} from '../../shared/catalog-types';
+
 export interface InstalledPlugin {
   pluginId: string;
   name: string;

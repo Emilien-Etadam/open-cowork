@@ -85,6 +85,8 @@ win:
       to: wsl-agent
     - from: .claude/skills
       to: skills
+    - from: catalog
+      to: catalog
 
 mac:
   icon: resources/icon.icns
@@ -123,6 +125,8 @@ mac:
       to: lima-agent
     - from: .claude/skills
       to: skills
+    - from: catalog
+      to: catalog
 
 linux:
   icon: resources/icon.png
@@ -146,6 +150,8 @@ linux:
       to: python
     - from: .claude/skills
       to: skills
+    - from: catalog
+      to: catalog
 
 nsis:
   oneClick: false
