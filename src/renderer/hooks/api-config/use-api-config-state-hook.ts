@@ -3,26 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { API_PROVIDER_PRESETS } from '../../../shared/api-model-presets';
 import { COMMON_PROVIDER_SETUPS } from '../../../shared/api-provider-guidance';
 import { useAppStore } from '../../store';
-import type { AppConfig, CustomProtocolType, ProviderPresets, ProviderType } from '../../types';
+import type { CustomProtocolType, ProviderPresets, ProviderType } from '../../types';
 import {
   buildApiConfigBootstrap,
-  buildLoadedApiConfigStatePayload,
   buildInitialApiConfigState,
   buildSetupModelState,
 } from './api-config-builders';
+import { useApiConfigActions } from './api-config-actions';
 import { useApiConfigDerivedState } from './api-config-derived-state';
+import { useApiConfigLoading } from './api-config-loading';
 import { useApiConfigMessages } from './api-config-messages';
-import { useApiConfigOllamaActions } from './api-config-ollama-actions';
-import { API_CONFIG_SET_LIMIT, useApiConfigPersistActions } from './api-config-persist-actions';
+import { API_CONFIG_SET_LIMIT } from './api-config-persist-actions';
 import { profileKeyFromProvider } from './api-config-profile-utils';
 import { apiConfigReducer } from './api-config-reducer';
+import { buildApiConfigStateResult } from './api-config-state-result';
 import type {
   ApiConfigBootstrap,
   UIProviderProfile,
   UseApiConfigStateOptions,
 } from './api-config-types';
 
-const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 const FALLBACK_PROVIDER_PRESETS: ProviderPresets = API_PROVIDER_PRESETS;
 
 export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
@@ -121,23 +121,13 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     testDetails: testResult?.details,
   });
 
-  const applyLoadedState = useCallback(
-    (config: AppConfig | null | undefined, loadedPresets: ProviderPresets) => {
-      dispatch({
-        type: 'APPLY_LOADED_STATE',
-        payload: buildLoadedApiConfigStatePayload(config, loadedPresets),
-      });
-    },
-    []
-  );
-  const applyPersistedConfigToStore = useCallback(
-    (config: AppConfig, loadedPresets: ProviderPresets) => {
-      applyLoadedState(config, loadedPresets);
-      setAppConfig(config);
-      setIsConfigured(Boolean(config.isConfigured));
-    },
-    [applyLoadedState, setAppConfig, setIsConfigured]
-  );
+  const { applyPersistedConfigToStore } = useApiConfigLoading({
+    dispatch,
+    enabled,
+    initialConfig,
+    setAppConfig,
+    setIsConfigured,
+  });
   const updateActiveProfile = useCallback(
     (updater: (prev: UIProviderProfile) => UIProviderProfile) => {
       dispatch({ type: 'UPDATE_PROFILE_FN', profileKey: activeProfileKey, updater });
@@ -223,41 +213,6 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
   );
 
   useEffect(() => {
-    if (!enabled) {
-      dispatch({ type: 'SET_LAST_SAVE_COMPLETED_AT', payload: 0 });
-      return;
-    }
-
-    let cancelled = false;
-    async function load() {
-      dispatch({ type: 'SET_IS_LOADING_CONFIG', payload: true });
-      try {
-        const loadedPresets = isElectron
-          ? await window.electronAPI.config.getPresets()
-          : FALLBACK_PROVIDER_PRESETS;
-        const config = initialConfig || (isElectron ? await window.electronAPI.config.get() : null);
-        if (!cancelled) {
-          applyLoadedState(config, loadedPresets);
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          console.error('Failed to load API config:', loadError);
-          applyLoadedState(initialConfig, FALLBACK_PROVIDER_PRESETS);
-        }
-      } finally {
-        if (!cancelled) {
-          dispatch({ type: 'SET_IS_LOADING_CONFIG', payload: false });
-        }
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, [applyLoadedState, enabled, initialConfig]);
-
-  useEffect(() => {
     clearError();
     dispatch({ type: 'SET_TEST_RESULT', payload: null });
     dispatch({ type: 'SET_DIAGNOSTIC_RESULT', payload: null });
@@ -272,33 +227,22 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     useCustomModel,
   ]);
 
-  const { refreshModelOptions, discoverLocalOllama } = useApiConfigOllamaActions({
-    activeProfileKey,
-    apiKey,
-    baseUrl,
-    clearError,
-    clearSuccessMessage,
-    dispatch,
-    presets,
-    provider,
-    showErrorKey,
-    showErrorText,
-    showSuccessKey,
-  });
   const {
-    handleTest,
-    handleDiagnose,
-    handleDeepDiagnose,
-    handleSave,
     createConfigSet,
-    renameConfigSet,
+    cancelPendingConfigSetAction,
     deleteConfigSet,
+    discardAndContinuePendingConfigSetAction,
+    discoverLocalOllama,
+    handleDeepDiagnose,
+    handleDiagnose,
+    handleSave,
+    handleTest,
+    refreshModelOptions,
+    renameConfigSet,
     requestConfigSetSwitch,
     requestCreateBlankConfigSet,
-    cancelPendingConfigSetAction,
     saveAndContinuePendingConfigSetAction,
-    discardAndContinuePendingConfigSetAction,
-  } = useApiConfigPersistActions({
+  } = useApiConfigActions({
     activeConfigSetId,
     activeProfileKey,
     apiKey,
@@ -328,79 +272,74 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     useCustomModel,
   });
 
-  return {
-    isLoadingConfig,
-    presets,
-    provider,
-    customProtocol,
-    modelOptions,
-    currentPreset,
-    apiKey,
-    baseUrl,
-    model,
-    customModel,
-    useCustomModel,
-    contextWindow,
-    maxTokens,
-    modelInputPlaceholder: modelInputGuidance.placeholder,
-    modelInputHint: modelInputGuidance.hint,
-    enableThinking,
-    isSaving,
-    isTesting,
-    isRefreshingModels,
-    isDiscoveringLocalOllama,
-    error,
-    successMessage,
-    lastSaveCompletedAt,
-    testResult,
-    friendlyTestDetails,
-    diagnosticResult,
-    isDiagnosing,
-    handleDiagnose,
-    handleDeepDiagnose,
-    isOllamaMode: provider === 'ollama',
-    shouldShowOllamaManualModelToggle,
-    requiresApiKey,
-    detectedProviderSetup,
-    protocolGuidanceText,
-    protocolGuidanceTone,
-    baseUrlGuidanceText,
-    commonProviderSetups,
-    configSets,
+  return buildApiConfigStateResult({
     activeConfigSetId,
-    currentConfigSet,
-    pendingConfigSetAction,
-    pendingConfigSet,
-    hasUnsavedChanges,
-    isMutatingConfigSet,
-    canDeleteCurrentConfigSet: Boolean(
-      currentConfigSet && !currentConfigSet.isSystem && configSets.length > 1
-    ),
-    configSetLimit: API_CONFIG_SET_LIMIT,
-    setApiKey,
-    setBaseUrl,
-    setModel,
-    setCustomModel,
-    setContextWindow,
-    setMaxTokens,
-    toggleCustomModel,
-    setEnableThinking,
+    apiKey,
     applyCommonProviderSetup,
-    changeProvider,
-    changeProtocol,
-    requestConfigSetSwitch,
-    requestCreateBlankConfigSet,
+    baseUrl,
+    baseUrlGuidanceText,
     cancelPendingConfigSetAction,
-    saveAndContinuePendingConfigSetAction,
-    discardAndContinuePendingConfigSetAction,
+    changeProtocol,
+    changeProvider,
+    commonProviderSetups,
+    configSetLimit: API_CONFIG_SET_LIMIT,
+    configSets,
+    contextWindow,
     createConfigSet,
-    renameConfigSet,
+    currentConfigSet,
+    currentPreset,
+    customModel,
+    customProtocol,
     deleteConfigSet,
+    detectedProviderSetup,
+    diagnosticResult,
+    discoverLocalOllama,
+    discardAndContinuePendingConfigSetAction,
+    enableThinking,
+    error,
+    friendlyTestDetails,
+    handleDeepDiagnose,
+    handleDiagnose,
     handleSave,
     handleTest,
+    hasUnsavedChanges,
+    isDiagnosing,
+    isDiscoveringLocalOllama,
+    isLoadingConfig,
+    isMutatingConfigSet,
+    isRefreshingModels,
+    isSaving,
+    isTesting,
+    lastSaveCompletedAt,
+    maxTokens,
+    model,
+    modelInputGuidance,
+    modelOptions,
+    pendingConfigSet,
+    pendingConfigSetAction,
+    presets,
+    protocolGuidanceText,
+    protocolGuidanceTone,
+    provider,
     refreshModelOptions,
-    discoverLocalOllama,
+    renameConfigSet,
+    requestConfigSetSwitch,
+    requestCreateBlankConfigSet,
+    requiresApiKey,
+    saveAndContinuePendingConfigSetAction,
+    setApiKey,
+    setBaseUrl,
+    setContextWindow,
+    setCustomModel,
+    setEnableThinking,
     setError: showErrorText,
+    setMaxTokens,
+    setModel,
     setSuccessMessage: showSuccessText,
-  };
+    shouldShowOllamaManualModelToggle,
+    successMessage,
+    testResult,
+    toggleCustomModel,
+    useCustomModel,
+  });
 }
