@@ -665,6 +665,17 @@
     "noModel": "Brak modelu",
     "connectorCount_one": "{{count}} łącznik",
     "connectorCount_other": "{{count}} łączników",
+    "compactErrors": {
+      "errCompactNoSession": "Brak aktywnej sesji agenta do kompresji. Najpierw wyślij co najmniej jedną wiadomość w tej rozmowie.",
+      "errCompactNothingToCompact": "Na razie nic do skompresowania — rozmowa jest jeszcze zbyt krótka.",
+      "errCompactAlreadyCompacted": "Rozmowa została niedawno już skompresowana.",
+      "errCompactFailed": "Kompresja kontekstu nie powiodła się. Spróbuj ponownie."
+    },
+    "handoffSuccess": "Utworzono nową sesję z podsumowaniem kontynuacji.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Na razie nic do podsumowania — rozmowa jest jeszcze zbyt krótka.",
+      "errHandoffFailed": "Nie udało się rozpocząć nowej sesji z tej rozmowy. Spróbuj ponownie."
+    },
     "scrollToBottom": "Przewiń na dół"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Brak pytań",
     "question": "Pytanie",
     "thinking": "Myślenie",
-    "executionTime": "Czas wykonania: {{time}}"
+    "executionTime": "Czas wykonania: {{time}}",
+    "compactionTitle": "Kontekst skompresowany",
+    "compactionHandoffTitle": "Kontynuacja z «{{sourceTitle}}»",
+    "compactionMeta": "Podsumowano {{tokensBefore}} tokenów",
+    "compactionInstructions": "Fokus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Utwórz harmonogram",

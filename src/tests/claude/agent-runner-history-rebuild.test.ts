@@ -101,6 +101,18 @@ describe('serializeMessageContentForHistory', () => {
     expect(serializeMessageContentForHistory(blocks)).toBe('before\nafter');
   });
 
+  it('skips compaction_summary blocks in history serialization', () => {
+    const blocks: ContentBlock[] = [
+      { type: 'text', text: 'visible' },
+      {
+        type: 'compaction_summary',
+        summary: 'older context',
+        tokensBefore: 120000,
+      },
+    ];
+    expect(serializeMessageContentForHistory(blocks)).toBe('visible');
+  });
+
   it('preserves block ordering for a typical assistant turn (thinking → text → tool_use)', () => {
     // This is the exact shape that fails on DeepSeek V4 Flash without the fix:
     // an assistant turn with reasoning, followed by a textual answer fragment,

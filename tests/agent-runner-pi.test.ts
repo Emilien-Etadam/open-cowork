@@ -30,9 +30,10 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
   });
 
   it('avoids duplicating the current user prompt in contextual history assembly', () => {
-    expect(agentRunnerContent).toContain('const conversationMessages = existingMessages');
+    expect(agentRunnerContent).toContain('messagesAfterCompactionAnchor(existingMessages)');
+    expect(agentRunnerContent).toContain('const conversationMessages = anchoredMessages.filter');
     // Image-containing messages are filtered out individually (not skipping entire history)
-    expect(agentRunnerContent).toContain('const textOnlyMessages = conversationMessages');
+    expect(agentRunnerContent).toContain('const textOnlyMessages = conversationMessages.filter');
     expect(agentRunnerContent).toContain('textOnlyMessages.slice(0, -1)');
     expect(agentRunnerContent).toContain(
       "textOnlyMessages[textOnlyMessages.length - 1]?.role === 'user'"

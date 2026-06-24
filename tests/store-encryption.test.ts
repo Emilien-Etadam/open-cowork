@@ -25,11 +25,13 @@ function registerStoreMocks(userDataPath: string): void {
 
       constructor(options: {
         name?: string;
+        cwd?: string;
         defaults?: Record<string, unknown>;
         encryptionKey?: string;
       }) {
         const name = options.name || 'config';
-        this.path = path.join(userDataPath, `${name}.json`);
+        const baseDir = options.cwd ? path.resolve(options.cwd) : userDataPath;
+        this.path = path.join(baseDir, `${name}.json`);
         this.defaults = { ...(options.defaults || {}) };
         this.encryptionKey = options.encryptionKey;
 
@@ -132,6 +134,118 @@ describe('createEncryptedStoreWithKeyRotation', () => {
     expect(backups).toHaveLength(1);
     expect(fs.existsSync(path.join(tempDir, backups[0]))).toBe(true);
     expect(fs.existsSync(storePath)).toBe(false);
+  });
+
+  it('migrates legacy encrypted stores to the stable key without wiping data', async () => {
+    registerStoreMocks(tempDir);
+
+    const storePath = path.join(tempDir, 'config.json');
+    fs.writeFileSync(
+      storePath,
+      JSON.stringify({
+        key: 'legacy-key',
+        payload: {
+          provider: 'openrouter',
+          apiKey: 'legacy-secret',
+          isConfigured: true,
+        },
+      })
+    );
+
+    const { createEncryptedStoreWithKeyRotation } =
+      await import('../src/main/utils/store-encryption');
+    const store = createEncryptedStoreWithKeyRotation<Record<string, unknown>>({
+      stableKey: 'stable-key',
+      legacyKeys: ['legacy-key'],
+      storeOptions: {
+        name: 'config',
+        defaults: {
+          provider: 'anthropic',
+          apiKey: '',
+          isConfigured: false,
+        },
+      },
+      logPrefix: '[TestStore]',
+    });
+
+    expect(store.store).toEqual({
+      provider: 'openrouter',
+      apiKey: 'legacy-secret',
+      isConfigured: true,
+    });
+
+    const onDisk = JSON.parse(fs.readFileSync(storePath, 'utf8')) as {
+      key?: string;
+      payload?: Record<string, unknown>;
+    };
+    expect(onDisk.key).toBe('stable-key');
+    expect(onDisk.payload).toEqual({
+      provider: 'openrouter',
+      apiKey: 'legacy-secret',
+      isConfigured: true,
+    });
+
+    const unreadableBackups = fs
+      .readdirSync(tempDir)
+      .filter((file) => file.startsWith('config.json.unreadable-recovery-'));
+    expect(unreadableBackups).toHaveLength(0);
+  });
+
+  it('restores wiped stores from unreadable-recovery backups on startup', async () => {
+    registerStoreMocks(tempDir);
+
+    const storePath = path.join(tempDir, 'config.json');
+    const backupPath = path.join(
+      tempDir,
+      'config.json.unreadable-recovery-2026-01-01T00-00-00-000Z.bak'
+    );
+
+    fs.writeFileSync(
+      backupPath,
+      JSON.stringify({
+        key: 'legacy-key',
+        payload: {
+          provider: 'openrouter',
+          apiKey: 'legacy-secret',
+          isConfigured: true,
+        },
+      })
+    );
+    fs.writeFileSync(
+      storePath,
+      JSON.stringify({
+        key: 'stable-key',
+        payload: {
+          provider: 'anthropic',
+          apiKey: '',
+          isConfigured: false,
+        },
+      })
+    );
+
+    const { createEncryptedStoreWithKeyRotation } =
+      await import('../src/main/utils/store-encryption');
+    const store = createEncryptedStoreWithKeyRotation<Record<string, unknown>>({
+      stableKey: 'stable-key',
+      legacyKeys: ['legacy-key'],
+      storeOptions: {
+        name: 'config',
+        defaults: {
+          provider: 'anthropic',
+          apiKey: '',
+          isConfigured: false,
+        },
+      },
+      logPrefix: '[TestStore]',
+      recoverIfReset: (current, recovered) =>
+        current.isConfigured !== true && recovered.isConfigured === true,
+    });
+
+    expect(store.store).toEqual({
+      provider: 'openrouter',
+      apiKey: 'legacy-secret',
+      isConfigured: true,
+    });
   });
 
   it('sets maxmem high enough for secure scrypt derivation', async () => {

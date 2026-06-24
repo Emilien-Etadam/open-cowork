@@ -665,6 +665,17 @@
     "noModel": "Nessun modello",
     "connectorCount_one": "{{count}} connettore",
     "connectorCount_other": "{{count}} connettori",
+    "compactErrors": {
+      "errCompactNoSession": "Nessuna sessione agente attiva da compattare. Invia prima almeno un messaggio in questa conversazione.",
+      "errCompactNothingToCompact": "Niente da compattare per ora — la conversazione è ancora troppo breve.",
+      "errCompactAlreadyCompacted": "La conversazione è già stata compattata di recente.",
+      "errCompactFailed": "Compattazione del contesto non riuscita. Riprova."
+    },
+    "handoffSuccess": "Nuova sessione creata con riepilogo di continuazione.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Niente da riassumere per ora — la conversazione è ancora troppo breve.",
+      "errHandoffFailed": "Impossibile avviare una nuova sessione da questa conversazione. Riprova."
+    },
     "scrollToBottom": "Scorri in basso"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Nessuna domanda",
     "question": "Domanda",
     "thinking": "Ragionamento",
-    "executionTime": "Tempo di esecuzione: {{time}}"
+    "executionTime": "Tempo di esecuzione: {{time}}",
+    "compactionTitle": "Contesto compattato",
+    "compactionHandoffTitle": "Continuazione da «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} token riassunti",
+    "compactionInstructions": "Focus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Crea pianificazione",

@@ -14,6 +14,7 @@ import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
+import { parseSlashCommand } from '../../shared/slash-commands';
 import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
 
 type AttachedFile = {
@@ -36,7 +37,7 @@ export function ChatView() {
   const executionClock = useActiveExecutionClock();
   const appConfig = useAppConfig();
   const setGlobalNotice = useAppStore((s) => s.setGlobalNotice);
-  const { continueSession, stopSession, isElectron } = useIPC();
+  const { continueSession, compactSession, handoffSession, stopSession, isElectron } = useIPC();
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<
@@ -135,49 +136,48 @@ export function ChatView() {
   // Debounced scroll function to prevent scroll conflicts
   const scrollToBottom = useRef(
     (behavior: ScrollBehavior = 'auto', immediate: boolean = false, force: boolean = false) => {
-    // Cancel any pending scroll requests
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current);
-      scrollTimeoutRef.current = null;
+      // Cancel any pending scroll requests
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
+      if (scrollRequestRef.current) {
+        cancelAnimationFrame(scrollRequestRef.current);
+        scrollRequestRef.current = null;
+      }
+
+      const performScroll = () => {
+        if (!force && !isUserAtBottomRef.current) return;
+
+        // Mark as scrolling to prevent concurrent scrolls
+        isScrollingRef.current = true;
+
+        messagesEndRef.current?.scrollIntoView({ behavior });
+
+        // Reset scrolling flag after a short delay
+        setTimeout(
+          () => {
+            isScrollingRef.current = false;
+          },
+          behavior === 'smooth' ? 300 : 50
+        );
+      };
+
+      if (immediate) {
+        performScroll();
+      } else {
+        // Use RAF + timeout for debouncing
+        scrollRequestRef.current = requestAnimationFrame(() => {
+          scrollTimeoutRef.current = setTimeout(performScroll, 16); // ~1 frame delay
+        });
+      }
     }
-    if (scrollRequestRef.current) {
-      cancelAnimationFrame(scrollRequestRef.current);
-      scrollRequestRef.current = null;
-    }
-
-    const performScroll = () => {
-      if (!force && !isUserAtBottomRef.current) return;
-
-      // Mark as scrolling to prevent concurrent scrolls
-      isScrollingRef.current = true;
-
-      messagesEndRef.current?.scrollIntoView({ behavior });
-
-      // Reset scrolling flag after a short delay
-      setTimeout(
-        () => {
-          isScrollingRef.current = false;
-        },
-        behavior === 'smooth' ? 300 : 50
-      );
-    };
-
-    if (immediate) {
-      performScroll();
-    } else {
-      // Use RAF + timeout for debouncing
-      scrollRequestRef.current = requestAnimationFrame(() => {
-        scrollTimeoutRef.current = setTimeout(performScroll, 16); // ~1 frame delay
-      });
-    }
-  }
   ).current;
 
   const updateScrollState = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const distanceToBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
     const atBottom = distanceToBottom <= 80;
     isUserAtBottomRef.current = atBottom;
     setShowScrollToBottom(!atBottom);
@@ -580,6 +580,31 @@ export function ChatView() {
 
     setIsSubmitting(true);
     try {
+      const textOnly =
+        currentPrompt.trim() &&
+        pastedImages.length === 0 &&
+        attachedFiles.length === 0 &&
+        currentPrompt.trim();
+      if (textOnly) {
+        const command = parseSlashCommand(textOnly);
+        if (command.kind === 'compact') {
+          await compactSession(activeSessionId, command.instructions);
+          setPrompt('');
+          if (textareaRef.current) {
+            textareaRef.current.value = '';
+          }
+          return;
+        }
+        if (command.kind === 'handoff') {
+          await handoffSession(activeSessionId, command.instructions);
+          setPrompt('');
+          if (textareaRef.current) {
+            textareaRef.current.value = '';
+          }
+          return;
+        }
+      }
+
       // Build content blocks
       const contentBlocks: ContentBlock[] = [];
 
