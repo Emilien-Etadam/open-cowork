@@ -33,6 +33,7 @@
 - **God-file cleanup (phase 2)**: `agent-runner-run.ts`, `gui-operate/vision.ts`, `mcp-manager.ts`, `session-manager.ts` — done (2026-06-24)
 - **God-file cleanup (phase 3)**: `mcp-manager` facade (~363), `vision-workflows`, `agent-runner-pi-setup`, `stream-handler`, `session-manager-facade-support` — done (2026-06-24)
 - **God-file cleanup (phase 4)**: `agent-runner-stream-events`, `vision-workflows-plan`, `mcp-tool-registry`, `useApiConfigState` — done (2026-06-24)
+- **God-file cleanup (phase 5)**: `use-api-config-state-hook` (~345), `software-dev-server-example` (entry ~24 + `mcp/software-dev/*`), `memory-service` (~201) — done (2026-06-24)
 - **Test coverage**: 1043+ unit/integration tests in CI
 
 ## 📦 EE releases
@@ -49,7 +50,7 @@ Current stable fork baseline: **`3.3.1-EE4.2`** — see [CHANGELOG.md](CHANGELOG
 ## 🚧 In Progress
 
 - **Post-EE4.2 validation**: Windows smoke test (sandbox, GUI MCP, handoff, encrypted config)
-- **God-file cleanup (phase 5, optional)**: `use-api-config-state-hook.ts` (~1.4k), `software-dev-server-example.ts` (~3.3k), `memory-service.ts` (~1.1k)
+- **God-file cleanup (phase 6, optional)**: `gui-runtime.ts` (~1.6k), `mcp-server.ts` (software-dev, ~928), `api-config-persist-actions.ts` (~562)
 
 ## 📋 Planned
 
