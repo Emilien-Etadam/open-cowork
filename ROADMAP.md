@@ -30,6 +30,7 @@
   - `gui-operate-server.ts` → entry + `mcp/gui-operate/*` (11 modules)
   - `agent-runner.ts` → ~265 lines (`agent-runner-run`, skills, MCP bridge, PATH, events)
 - **God-file cleanup (phase 1)**: `index.ts`, `gui-operate-server.ts`, `agent-runner.ts`, `config-store.ts` — done
+- **God-file cleanup (phase 2)**: `agent-runner-run.ts`, `gui-operate/vision.ts`, `mcp-manager.ts`, `session-manager.ts` — done (2026-06-24)
 - **Test coverage**: 1043+ unit/integration tests in CI
 
 ## 📦 EE releases
@@ -46,7 +47,7 @@ Current stable fork baseline: **`3.3.1-EE4.2`** — see [CHANGELOG.md](CHANGELOG
 ## 🚧 In Progress
 
 - **Post-EE4.2 validation**: Windows smoke test (sandbox, GUI MCP, handoff, encrypted config)
-- **God-file cleanup (phase 2)**: Remaining large modules — `agent-runner-run.ts` (~1.5k), `gui-operate/vision.ts` (~1.8k), `mcp-manager.ts` (~1.9k), `session-manager.ts` (~1.4k)
+- **God-file cleanup (phase 3)**: Remaining large modules — `mcp-manager.ts` (~1.1k), `gui-operate/vision-workflows.ts` (~936), `agent-runner-pi-setup.ts` / `stream-handler.ts` (~700 each), `session-manager-facade-support.ts` (~535)
 
 ## 📋 Planned
 
@@ -76,5 +77,5 @@ Current stable fork baseline: **`3.3.1-EE4.2`** — see [CHANGELOG.md](CHANGELOG
 
 ---
 
-_Last updated: 2026-06-24 (EE4.2)_  
+_Last updated: 2026-06-24 (phase 2 god-file cleanup)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

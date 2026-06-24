@@ -19,13 +19,13 @@ describe('memory integration wiring', () => {
   });
 
   it('injects runtime plugin skill paths and extension hooks into the agent runner', () => {
-    const runner = readProjectFile('src/main/claude/agent-runner-run.ts');
+    const piSetup = readProjectFile('src/main/claude/agent-runner-pi-setup.ts');
     const skillPaths = readProjectFile('src/main/claude/agent-runner-skills-paths.ts');
     const memoryExtension = readProjectFile('src/main/memory/memory-extension.ts');
-    expect(runner).toContain('resolveSkillPaths(session.id)');
+    expect(piSetup).toContain('resolveSkillPaths(session.id)');
     expect(skillPaths).toContain("path.join(plugin.runtimePath, 'skills')");
-    expect(runner).toContain('ctx.extensionManager.beforeSessionRun');
-    expect(runner).toContain('skillsSignature');
+    expect(piSetup).toContain('ctx.extensionManager.beforeSessionRun');
+    expect(piSetup).toContain('skillsSignature');
     expect(memoryExtension).not.toContain('customTools: this.memoryService.getTools()');
   });
 
@@ -48,10 +48,11 @@ describe('memory integration wiring', () => {
   });
 
   it('defaults new sessions to the global memory toggle', () => {
-    const sessionManager = readProjectFile('src/main/session/session-manager.ts');
-    expect(sessionManager).toContain("configStore.get('memoryEnabled') !== false");
-    expect(sessionManager).toContain('memoryEnabled?: boolean');
-    expect(sessionManager).toContain('afterSessionRun');
+    const sessionFacade = readProjectFile('src/main/session/session-manager-facade-support.ts');
+    const sessionQueue = readProjectFile('src/main/session/session-manager-queue.ts');
+    expect(sessionFacade).toContain("configStore.get('memoryEnabled') !== false");
+    expect(sessionFacade).toContain('memoryEnabled?: boolean');
+    expect(sessionQueue).toContain('afterSessionRun');
   });
 
   it('removes unused SQLite memory tables from schema initialization', () => {
