@@ -93,7 +93,7 @@
       "resolve": {
         "via": "github",
         "repo": "anthropics/claude-plugins-official",
-        "subdir": "plugins/context7",
+        "subdir": "external_plugins/context7",
         "ref": "main"
       }
     },
