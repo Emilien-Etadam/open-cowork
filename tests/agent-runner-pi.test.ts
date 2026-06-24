@@ -3,7 +3,12 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const agentRunnerPath = path.resolve(process.cwd(), 'src/main/claude/agent-runner.ts');
+const agentRunnerHistoryPath = path.resolve(
+  process.cwd(),
+  'src/main/claude/agent-runner-history.ts'
+);
 const agentRunnerContent = readFileSync(agentRunnerPath, 'utf8');
+const agentRunnerHistoryContent = readFileSync(agentRunnerHistoryPath, 'utf8');
 
 describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
   it('avoids dynamic re-import shadowing for config store singletons', () => {
@@ -30,12 +35,19 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
   });
 
   it('avoids duplicating the current user prompt in contextual history assembly', () => {
-    expect(agentRunnerContent).toContain('messagesAfterCompactionAnchor(existingMessages)');
-    expect(agentRunnerContent).toContain('const conversationMessages = anchoredMessages.filter');
+    expect(agentRunnerContent).toContain('buildColdStartContextualPrompt');
+    expect(agentRunnerHistoryContent).toContain(
+      'messagesAfterCompactionAnchor(options.existingMessages)'
+    );
+    expect(agentRunnerHistoryContent).toContain(
+      'const conversationMessages = anchoredMessages.filter'
+    );
     // Image-containing messages are filtered out individually (not skipping entire history)
-    expect(agentRunnerContent).toContain('const textOnlyMessages = conversationMessages.filter');
-    expect(agentRunnerContent).toContain('textOnlyMessages.slice(0, -1)');
-    expect(agentRunnerContent).toContain(
+    expect(agentRunnerHistoryContent).toContain(
+      'const textOnlyMessages = conversationMessages.filter'
+    );
+    expect(agentRunnerHistoryContent).toContain('textOnlyMessages.slice(0, -1)');
+    expect(agentRunnerHistoryContent).toContain(
       "textOnlyMessages[textOnlyMessages.length - 1]?.role === 'user'"
     );
   });
