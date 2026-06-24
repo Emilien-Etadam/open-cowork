@@ -7,8 +7,13 @@ const agentRunnerStreamHandlerPath = path.resolve(
   process.cwd(),
   'src/main/claude/agent-runner-stream-handler.ts'
 );
+const agentRunnerStreamEventsPath = path.resolve(
+  process.cwd(),
+  'src/main/claude/agent-runner-stream-events.ts'
+);
 const agentRunnerRunContent = readFileSync(agentRunnerRunPath, 'utf8');
 const agentRunnerStreamHandlerContent = readFileSync(agentRunnerStreamHandlerPath, 'utf8');
+const agentRunnerStreamEventsContent = readFileSync(agentRunnerStreamEventsPath, 'utf8');
 
 /**
  * These tests pin the split-module disposition for loop-guard aborts. The bug
@@ -21,19 +26,19 @@ describe('agent-runner loop-guard abort preserves error trace status', () => {
     expect(agentRunnerStreamHandlerContent).toContain('let abortedByLoopGuard = false;');
   });
 
-  it('sets the flag immediately before controller.abort() in handleLoopGuardDecision', () => {
+  it('wires the loop-guard abort flag before the delegated abort call', () => {
     const setIdx = agentRunnerStreamHandlerContent.indexOf('abortedByLoopGuard = true;');
     expect(setIdx).toBeGreaterThan(-1);
+    expect(agentRunnerStreamHandlerContent).toContain('onLoopGuardAbort: () => {');
+    expect(agentRunnerStreamEventsContent).toContain('deps.onLoopGuardAbort();');
 
-    const abortIdx = agentRunnerStreamHandlerContent.indexOf('controller.abort();', setIdx);
-    expect(abortIdx).toBeGreaterThan(setIdx);
-
-    const between = agentRunnerStreamHandlerContent.slice(setIdx, abortIdx);
-    const nonTrivialLines = between
-      .split('\n')
-      .map((l) => l.trim())
-      .filter((l) => l.length > 0 && !l.startsWith('//'));
-    expect(nonTrivialLines.length).toBeLessThanOrEqual(2);
+    const callbackIdx = agentRunnerStreamEventsContent.indexOf('deps.onLoopGuardAbort();');
+    const abortIdx = agentRunnerStreamEventsContent.indexOf(
+      'deps.controller.abort();',
+      callbackIdx
+    );
+    expect(callbackIdx).toBeGreaterThan(-1);
+    expect(abortIdx).toBeGreaterThan(callbackIdx);
   });
 
   it('the orchestration short-circuit checks preserve-existing-trace before the user-cancel branch', () => {
@@ -57,25 +62,22 @@ describe('agent-runner loop-guard abort preserves error trace status', () => {
   });
 
   it('the loop-guard decision handler still publishes the error trace step before aborting', () => {
-    expect(agentRunnerStreamHandlerContent).toContain("title: 'Stopped: tool-call loop detected'");
-    const titleIdx = agentRunnerStreamHandlerContent.indexOf(
+    expect(agentRunnerStreamEventsContent).toContain("title: 'Stopped: tool-call loop detected'");
+    const titleIdx = agentRunnerStreamEventsContent.indexOf(
       "title: 'Stopped: tool-call loop detected'"
     );
-    const localStart = agentRunnerStreamHandlerContent.lastIndexOf('sendTraceUpdate', titleIdx);
-    const localBlock = agentRunnerStreamHandlerContent.slice(localStart, titleIdx);
+    const localStart = agentRunnerStreamEventsContent.lastIndexOf('sendTraceUpdate', titleIdx);
+    const localBlock = agentRunnerStreamEventsContent.slice(localStart, titleIdx);
     expect(localBlock).toContain("status: 'error'");
   });
 
   it('always emits the buildAbortUserMessage explanation, even if a prior error set hasEmittedError', () => {
-    const sendIdx = agentRunnerStreamHandlerContent.indexOf(
-      'text: buildAbortUserMessage(decision)'
-    );
+    const sendIdx = agentRunnerStreamEventsContent.indexOf('text: buildAbortUserMessage(decision)');
     expect(sendIdx).toBeGreaterThan(-1);
 
-    const preamble = agentRunnerStreamHandlerContent.slice(Math.max(0, sendIdx - 400), sendIdx);
+    const preamble = agentRunnerStreamEventsContent.slice(Math.max(0, sendIdx - 400), sendIdx);
     expect(preamble).not.toMatch(/if\s*\(\s*!hasEmittedError\s*\)\s*\{/);
 
-    const trailing = agentRunnerStreamHandlerContent.slice(sendIdx, sendIdx + 400);
-    expect(trailing).toContain('hasEmittedError = true');
+    expect(agentRunnerStreamHandlerContent).toContain('state.hasEmittedError = true;');
   });
 });

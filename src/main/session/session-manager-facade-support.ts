@@ -1,24 +1,22 @@
-import { v4 as uuidv4 } from 'uuid';
 import type { ContentBlock, Message, ServerEvent, Session } from '../../renderer/types';
-import type { DatabaseInstance } from '../db/database';
+import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
 import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
 import { configStore } from '../config/config-store';
-import { forgetSessionPermissions } from '../config/permission-rules-store';
+import type { DatabaseInstance } from '../db/database';
 import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
-import {
-  SandboxAdapter,
-  getSandboxAdapter,
-  initializeSandbox,
-  reinitializeSandbox,
-} from '../sandbox/sandbox-adapter';
-import { SandboxSync } from '../sandbox/sandbox-sync';
-import { log, logError, logWarn } from '../utils/logger';
-import {
-  buildCompactionHandoffPrompt,
-  buildCompactionSessionTitle,
-} from '../../shared/compaction-handoff';
-import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
+import type { SandboxAdapter } from '../sandbox/sandbox-adapter';
+import { log, logError } from '../utils/logger';
+import { compactSession, handoffSession } from './session-manager-compaction';
 import type { PromptQueues, SessionManagerAgentRunner } from './session-manager-queue';
+import {
+  batchDeleteSessions,
+  createSession,
+  deleteSession,
+  ensureSandboxInitialized,
+  reloadSandbox,
+  stopSession,
+  updateSessionCwd,
+} from './session-manager-session-lifecycle';
 import { SessionManagerStore } from './session-manager-store';
 import { maybeGenerateSessionTitle } from './session-title-flow';
 import {
@@ -44,7 +42,7 @@ export interface SessionManagerFacadeAgentRunner extends SessionManagerAgentRunn
   clearAllSdkSessions?(): void;
 }
 
-interface SessionManagerFacadeSupportDeps {
+export interface SessionManagerFacadeSupportDeps {
   db: DatabaseInstance;
   store: SessionManagerStore;
   sendToRenderer: (event: ServerEvent) => void;
@@ -79,308 +77,33 @@ export class SessionManagerFacadeSupport {
   constructor(private readonly deps: SessionManagerFacadeSupportDeps) {}
 
   async reloadSandbox(): Promise<void> {
-    try {
-      log('[SessionManager] Reinitializing sandbox adapter...');
-      await reinitializeSandbox();
-      this.deps.setSandboxAdapter(getSandboxAdapter());
-      log(
-        '[SessionManager] Sandbox adapter reinitialized, mode:',
-        this.deps.getSandboxAdapter().mode
-      );
-    } catch (error) {
-      logError('[SessionManager] Failed to reinitialize sandbox:', error);
-    }
+    await reloadSandbox(this.deps);
   }
-
   createSession(
     title: string,
     cwd?: string,
     allowedTools?: string[],
     memoryEnabled?: boolean
   ): Session {
-    const now = Date.now();
-    const envCwd = process.env.COWORK_WORKDIR || process.env.WORKDIR || process.env.DEFAULT_CWD;
-    const effectiveCwd = cwd || envCwd;
-    const resolvedMemoryEnabled =
-      typeof memoryEnabled === 'boolean'
-        ? memoryEnabled
-        : configStore.get('memoryEnabled') !== false;
-
-    return {
-      id: uuidv4(),
-      title,
-      status: 'idle',
-      cwd: effectiveCwd,
-      mountedPaths: effectiveCwd
-        ? [{ virtual: this.deps.workspaceMountVirtualPath, real: effectiveCwd }]
-        : [],
-      allowedTools: allowedTools || [
-        'askuserquestion',
-        'todowrite',
-        'todoread',
-        'webfetch',
-        'websearch',
-        'read',
-        'write',
-        'edit',
-        'list_directory',
-        'glob',
-        'grep',
-      ],
-      memoryEnabled: resolvedMemoryEnabled,
-      model: configStore.get('model') || undefined,
-      createdAt: now,
-      updatedAt: now,
-    };
+    return createSession(this.deps, title, cwd, allowedTools, memoryEnabled);
   }
-
-  async compactSession(
-    sessionId: string,
-    customInstructions?: string
-  ): Promise<{ success: boolean; errorKey?: string; error?: string }> {
-    log('[SessionManager] Manual compaction requested for session:', sessionId);
-    const session = this.deps.loadSession(sessionId);
-    if (!session) {
-      throw new Error(`Session not found: ${sessionId}`);
-    }
-    if (this.deps.activeSessions.has(sessionId)) {
-      this.stopSession(sessionId);
-    }
-
-    const agentRunner = this.deps.getAgentRunner();
-    if (!agentRunner.compactSession) {
-      return { success: false, errorKey: 'errCompactFailed' };
-    }
-
-    try {
-      const result = await agentRunner.compactSession(session, customInstructions);
-      const compactionMessage: Message = {
-        id: uuidv4(),
-        sessionId,
-        role: 'system',
-        content: [
-          {
-            type: 'compaction_summary',
-            summary: result.summary,
-            tokensBefore: result.tokensBefore,
-            customInstructions,
-          },
-        ],
-        timestamp: Date.now(),
-      };
-      this.deps.saveMessage(compactionMessage);
-      this.deps.sendToRenderer({
-        type: 'stream.message',
-        payload: { sessionId, message: compactionMessage },
-      });
-      return { success: true };
-    } catch (error) {
-      const errorKey =
-        error instanceof Error && error.message.startsWith('errCompact')
-          ? error.message
-          : undefined;
-      logError('[SessionManager] Manual compaction failed:', error);
-      return {
-        success: false,
-        errorKey,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+  async compactSession(sessionId: string, customInstructions?: string) {
+    return compactSession(this.deps, (id) => this.stopSession(id), sessionId, customInstructions);
   }
-
-  async handoffSession(
-    sessionId: string,
-    customInstructions?: string
-  ): Promise<{
-    success: boolean;
-    newSession?: Session;
-    initialContent?: ContentBlock[];
-    errorKey?: string;
-    error?: string;
-  }> {
-    log('[SessionManager] Handoff to new session requested for:', sessionId);
-    const session = this.deps.loadSession(sessionId);
-    if (!session) {
-      throw new Error(`Session not found: ${sessionId}`);
-    }
-    if (this.deps.activeSessions.has(sessionId)) {
-      this.stopSession(sessionId);
-    }
-
-    const messages = this.deps.getMessages(sessionId);
-    if (!messages.some((message) => message.role === 'user' || message.role === 'assistant')) {
-      return { success: false, errorKey: 'errHandoffNothingToSummarize' };
-    }
-
-    const agentRunner = this.deps.getAgentRunner();
-    if (!agentRunner.summarizeForHandoff) {
-      return { success: false, errorKey: 'errHandoffFailed' };
-    }
-
-    try {
-      const result = await agentRunner.summarizeForHandoff(session, messages, customInstructions);
-      const handoffPrompt = buildCompactionHandoffPrompt({
-        summary: result.summary,
-        sourceTitle: session.title,
-        tokensBefore: result.tokensBefore,
-        customInstructions,
-      });
-      const initialContent: ContentBlock[] = [
-        {
-          type: 'compaction_summary',
-          summary: result.summary,
-          tokensBefore: result.tokensBefore,
-          customInstructions,
-          sourceTitle: session.title,
-        },
-        { type: 'text', text: handoffPrompt },
-      ];
-      const newSession = await this.deps.startSession(
-        buildCompactionSessionTitle(session.title),
-        handoffPrompt,
-        session.cwd,
-        session.allowedTools,
-        initialContent,
-        session.memoryEnabled
-      );
-      return { success: true, newSession, initialContent };
-    } catch (error) {
-      const errorKey =
-        error instanceof Error && error.message.startsWith('errHandoff')
-          ? error.message
-          : 'errHandoffFailed';
-      logError('[SessionManager] Handoff failed:', error);
-      return {
-        success: false,
-        errorKey,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+  async handoffSession(sessionId: string, customInstructions?: string) {
+    return handoffSession(this.deps, (id) => this.stopSession(id), sessionId, customInstructions);
   }
-
-  async generateSessionTitleFromPrompt(prompt: string): Promise<string> {
-    const normalizedPrompt = prompt.trim();
-    if (!normalizedPrompt) {
-      return 'New Session';
-    }
-    const generated = await this.withTimeout(
-      this.generateTitleWithConfig(buildTitlePrompt(normalizedPrompt)),
-      TITLE_GENERATION_TIMEOUT_MS,
-      'session-title-preview'
-    );
-    return normalizeGeneratedTitle(generated) ?? getDefaultTitleFromPrompt(normalizedPrompt);
-  }
-
-  async generateScheduledTaskTitle(prompt: string): Promise<string> {
-    return buildScheduledTaskTitle(await this.generateSessionTitleFromPrompt(prompt));
-  }
-
   stopSession(sessionId: string): void {
-    log('[SessionManager] Stopping session:', sessionId);
-    this.deps.titleGenerationTokens.delete(sessionId);
-    this.deps.getAgentRunner().cancel(sessionId);
-
-    for (const [toolUseId, entry] of this.deps.pendingSudoPasswords) {
-      if (entry.sessionId === sessionId) {
-        entry.resolve(null);
-        this.deps.pendingSudoPasswords.delete(toolUseId);
-        this.deps.sendToRenderer({ type: 'sudo.password.dismiss', payload: { toolUseId } });
-      }
-    }
-
-    this.deps.activeSessions.get(sessionId)?.abort();
-    this.deps.promptQueues.delete(sessionId);
-    this.deps.store.clearMessageCache(sessionId);
-    this.updateSessionStatus(sessionId, 'idle');
+    stopSession(this.deps, sessionId, (id, status) => this.updateSessionStatus(id, status));
   }
-
   async deleteSession(sessionId: string): Promise<void> {
-    const existingSession = this.deps.loadSession(sessionId);
-    this.stopSession(sessionId);
-
-    if (SandboxSync.hasSession(sessionId)) {
-      log('[SessionManager] Cleaning up sandbox for session:', sessionId);
-      try {
-        await SandboxSync.syncAndCleanup(sessionId);
-        log('[SessionManager] Sandbox cleanup complete for session:', sessionId);
-      } catch (error) {
-        logError('[SessionManager] Failed to cleanup sandbox:', error);
-      }
-    }
-
-    this.deps.db.sessions.delete(sessionId);
-    this.deps.store.clearMessageCache(sessionId);
-    this.deps.sessionTitleAttempts.delete(sessionId);
-    this.deps.titleGenerationTokens.delete(sessionId);
-
-    if (this.deps.extensionManager) {
-      await this.deps.extensionManager.onSessionDeleted({ sessionId, session: existingSession });
-    }
-    forgetSessionPermissions(sessionId);
-    log('[SessionManager] Session deleted:', sessionId);
+    await deleteSession(this.deps, (id) => this.stopSession(id), sessionId);
   }
-
   async batchDeleteSessions(sessionIds: string[]): Promise<void> {
-    const sessionsById = new Map(
-      sessionIds.map((sessionId) => [sessionId, this.deps.loadSession(sessionId)] as const)
-    );
-
-    for (const sessionId of sessionIds) {
-      this.stopSession(sessionId);
-      if (SandboxSync.hasSession(sessionId)) {
-        try {
-          await SandboxSync.syncAndCleanup(sessionId);
-        } catch (error) {
-          logError('[SessionManager] Failed to cleanup sandbox during batch delete:', error);
-        }
-      }
-    }
-
-    this.deps.db.raw.transaction(() => {
-      for (const sessionId of sessionIds) {
-        this.deps.db.sessions.delete(sessionId);
-        this.deps.store.clearMessageCache(sessionId);
-        this.deps.sessionTitleAttempts.delete(sessionId);
-        this.deps.titleGenerationTokens.delete(sessionId);
-        forgetSessionPermissions(sessionId);
-      }
-    })();
-
-    if (this.deps.extensionManager) {
-      for (const sessionId of sessionIds) {
-        await this.deps.extensionManager.onSessionDeleted({
-          sessionId,
-          session: sessionsById.get(sessionId) || null,
-        });
-      }
-    }
-
-    log('[SessionManager] Batch deleted sessions:', sessionIds.length);
+    await batchDeleteSessions(this.deps, (id) => this.stopSession(id), sessionIds);
   }
-
   updateSessionCwd(sessionId: string, cwd: string): void {
-    if (this.deps.activeSessions.has(sessionId)) {
-      logWarn(
-        '[SessionManager] CWD change requested while session running; stopping active run first',
-        { sessionId, cwd }
-      );
-      this.stopSession(sessionId);
-    }
-
-    const mountedPaths = cwd ? [{ virtual: this.deps.workspaceMountVirtualPath, real: cwd }] : [];
-    this.deps.db.sessions.update(sessionId, {
-      cwd,
-      mounted_paths: JSON.stringify(mountedPaths),
-      claude_session_id: null,
-      openai_thread_id: null,
-      updated_at: Date.now(),
-    });
-    this.deps.getAgentRunner().clearSdkSession?.(sessionId);
-    this.deps.sendToRenderer({
-      type: 'session.update',
-      payload: { sessionId, updates: { cwd, mountedPaths } },
-    });
-    log('[SessionManager] Session cwd updated:', sessionId, '->', cwd, '(SDK session cleared)');
+    updateSessionCwd(this.deps, (id) => this.stopSession(id), sessionId, cwd);
   }
 
   updateSessionStatus(sessionId: string, status: Session['status']): void {
@@ -398,41 +121,24 @@ export class SessionManagerFacadeSupport {
   }
 
   async ensureSandboxInitialized(session: Session): Promise<void> {
-    if (!session.cwd) {
-      log('[SessionManager] No workspace directory, skipping sandbox init');
-      return;
-    }
-    const sandboxAdapter = this.deps.getSandboxAdapter();
-    if (sandboxAdapter.initialized && sandboxAdapter.workspacePath === session.cwd) {
-      return;
-    }
+    await ensureSandboxInitialized(this.deps, session);
+  }
 
-    const existingPromise = this.deps.sandboxInitPromises.get(session.cwd);
-    if (existingPromise) {
-      await existingPromise;
-      return;
+  async generateSessionTitleFromPrompt(prompt: string): Promise<string> {
+    const normalizedPrompt = prompt.trim();
+    if (!normalizedPrompt) {
+      return 'New Session';
     }
-
-    const initPromise = initializeSandbox({ workspacePath: session.cwd, mainWindow: null }).then(
-      () => undefined
+    const generated = await this.withTimeout(
+      this.generateTitleWithConfig(buildTitlePrompt(normalizedPrompt)),
+      TITLE_GENERATION_TIMEOUT_MS,
+      'session-title-preview'
     );
-    this.deps.sandboxInitPromises.set(session.cwd, initPromise);
+    return normalizeGeneratedTitle(generated) ?? getDefaultTitleFromPrompt(normalizedPrompt);
+  }
 
-    try {
-      await initPromise;
-      log('[SessionManager] Sandbox initialized for workspace:', session.cwd);
-      log('[SessionManager] Sandbox mode:', this.deps.getSandboxAdapter().mode);
-    } catch (error) {
-      logError('[SessionManager] Failed to initialize sandbox:', error);
-      this.deps.sendToRenderer({
-        type: 'error',
-        payload: {
-          message: `Failed to initialize sandbox: ${error instanceof Error ? error.message : String(error)}`,
-        },
-      });
-    } finally {
-      this.deps.sandboxInitPromises.delete(session.cwd);
-    }
+  async generateScheduledTaskTitle(prompt: string): Promise<string> {
+    return buildScheduledTaskTitle(await this.generateSessionTitleFromPrompt(prompt));
   }
 
   async runSessionTitleGeneration(
@@ -465,9 +171,7 @@ export class SessionManagerFacadeSupport {
           return normalizeGeneratedTitle(title);
         },
         getLatestTitle: () => this.deps.db.sessions.get(session.id)?.title ?? null,
-        markAttempt: () => {
-          this.deps.sessionTitleAttempts.add(session.id);
-        },
+        markAttempt: () => this.deps.sessionTitleAttempts.add(session.id),
         updateTitle: async (title) => {
           if (shouldAbort()) {
             log('[SessionTitle] Skip update: session no longer active', session.id);

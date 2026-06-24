@@ -3,10 +3,22 @@
  */
 import { spawn } from 'child_process';
 import { v4 as uuidv4 } from 'uuid';
-import type { AgentSession as PiAgentSession, ToolDefinition } from '@mariozechner/pi-coding-agent';
+import {
+  createAgentSession,
+  DefaultResourceLoader,
+  getAgentDir,
+  SessionManager as PiSessionManager,
+  SettingsManager as PiSettingsManager,
+  type AgentSession as PiAgentSession,
+  type ToolDefinition,
+} from '@mariozechner/pi-coding-agent';
 import { decidePermission, rememberAlwaysAllow } from '../config/permission-rules-store';
 import type { MCPManager } from '../mcp/mcp-manager';
+import { logCtx } from '../utils/logger';
 import { log, logError, logWarn } from '../utils/logger';
+import { buildCompactionSettings, estimateTokensFromText } from './context-budget';
+import type { AgentRunnerRunContext } from './agent-runner-run-context';
+import { ModelRegistry } from './shared-auth';
 
 export interface CachedPiSession {
   session: PiAgentSession;
@@ -285,4 +297,177 @@ export function wrapBashToolWithDefaultTimeout(tools: ToolDefinition[]): ToolDef
       },
     } as ToolDefinition;
   });
+}
+
+type PiSessionModel = Parameters<PiAgentSession['setModel']>[0];
+type PiThinkingLevel = NonNullable<Parameters<PiAgentSession['setThinkingLevel']>[0]>;
+type PiAuthStorage = Parameters<typeof ModelRegistry.create>[0];
+
+interface ReuseCachedPiSessionOptions {
+  cachedSession?: CachedPiSession;
+  piModel: PiSessionModel;
+  thinkingLevel: PiThinkingLevel;
+  sessionId: string;
+}
+
+export async function reuseCachedPiSession({
+  cachedSession,
+  piModel,
+  thinkingLevel,
+  sessionId,
+}: ReuseCachedPiSessionOptions): Promise<{
+  piSession: PiAgentSession;
+  cachedSession: CachedPiSession;
+  compactionEnabled: boolean;
+} | null> {
+  if (!cachedSession) {
+    return null;
+  }
+
+  const piSession = cachedSession.session;
+  if (cachedSession.modelId !== piModel.id) {
+    logCtx(
+      '[ClaudeAgentRunner] Model changed, hot-swapping:',
+      cachedSession.modelId,
+      '→',
+      piModel.id
+    );
+    await piSession.setModel(piModel);
+    cachedSession.modelId = piModel.id;
+    if (cachedSession.ollamaNumCtx) {
+      cachedSession.ollamaNumCtx.value = piModel.contextWindow || 128000;
+      log(
+        '[ClaudeAgentRunner] Updated Ollama num_ctx on hot-swap:',
+        cachedSession.ollamaNumCtx.value
+      );
+    }
+  }
+  if (cachedSession.thinkingLevel !== thinkingLevel) {
+    logCtx(
+      '[ClaudeAgentRunner] Thinking level changed, hot-swapping:',
+      cachedSession.thinkingLevel,
+      '→',
+      thinkingLevel
+    );
+    cachedSession.session.setThinkingLevel(thinkingLevel);
+    cachedSession.thinkingLevel = thinkingLevel;
+  }
+
+  logCtx('[ClaudeAgentRunner] Reusing cached pi session for:', sessionId);
+  return { piSession, cachedSession, compactionEnabled: cachedSession.compactionEnabled ?? true };
+}
+
+interface CreatePiSessionOptions {
+  ctx: AgentRunnerRunContext;
+  sessionId: string;
+  provider: string;
+  piModel: PiSessionModel;
+  thinkingLevel: PiThinkingLevel;
+  authStorage: PiAuthStorage;
+  customTools: ToolDefinition[];
+  skillPaths: string[];
+  coworkAppendPrompt: string[];
+  effectiveCwd: string;
+  sessionRuntimeSignature: string;
+  skillsSignature: string;
+  promptPrefix?: string;
+  modelContextWindow: number;
+  modelMaxTokens: number;
+}
+
+export async function createPiSession({
+  ctx,
+  sessionId,
+  provider,
+  piModel,
+  thinkingLevel,
+  authStorage,
+  customTools,
+  skillPaths,
+  coworkAppendPrompt,
+  effectiveCwd,
+  sessionRuntimeSignature,
+  skillsSignature,
+  promptPrefix,
+  modelContextWindow,
+  modelMaxTokens,
+}: CreatePiSessionOptions): Promise<{ piSession: PiAgentSession; compactionEnabled: boolean }> {
+  const resourceLoader = new DefaultResourceLoader({
+    cwd: effectiveCwd,
+    agentDir: getAgentDir(),
+    additionalSkillPaths: skillPaths,
+    appendSystemPrompt: coworkAppendPrompt,
+  });
+  await resourceLoader.reload();
+
+  const compactionSettings = buildCompactionSettings(
+    provider,
+    modelContextWindow,
+    modelMaxTokens,
+    estimateTokensFromText(promptPrefix || '')
+  );
+  if (!compactionSettings.enabled) {
+    log('[ClaudeAgentRunner] Auto-compaction disabled (contextWindow:', modelContextWindow, ')');
+  } else {
+    log('[ClaudeAgentRunner] Compaction settings:', JSON.stringify(compactionSettings));
+  }
+
+  const { session: piSession } = await createAgentSession({
+    model: piModel,
+    thinkingLevel,
+    authStorage,
+    modelRegistry: ModelRegistry.create(authStorage),
+    customTools,
+    sessionManager: PiSessionManager.inMemory(),
+    settingsManager: PiSettingsManager.inMemory({
+      compaction: compactionSettings,
+      retry: { enabled: true, maxRetries: 2 },
+    }),
+    resourceLoader,
+    cwd: effectiveCwd,
+  });
+
+  installPermissionHook(piSession, sessionId, ctx.requestPermission, (toolName) =>
+    ctx.getToolDisplayName(toolName)
+  );
+  evictOldestPiSession(ctx.piSessions);
+  ctx.piSessions.set(sessionId, {
+    session: piSession,
+    modelId: piModel.id,
+    thinkingLevel,
+    runtimeSignature: sessionRuntimeSignature,
+    skillsSignature,
+    compactionEnabled: compactionSettings.enabled,
+  });
+
+  if (provider === 'ollama') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const agent = piSession.agent as any;
+    if (!('_onPayload' in agent)) {
+      logWarn(
+        '[ClaudeAgentRunner] SDK agent does not expose _onPayload — skipping Ollama num_ctx patch'
+      );
+    } else {
+      const originalOnPayload = agent._onPayload as
+        | ((
+            payload: Record<string, unknown>,
+            modelArg: unknown
+          ) => Promise<Record<string, unknown>>)
+        | undefined;
+      const ollamaNumCtx = { value: piModel.contextWindow || 128000 };
+      agent._onPayload = async (payload: Record<string, unknown>, modelArg: unknown) => {
+        let result = originalOnPayload
+          ? await originalOnPayload.call(agent, payload, modelArg)
+          : payload;
+        if (result === undefined) {
+          result = payload;
+        }
+        return { ...result, num_ctx: ollamaNumCtx.value };
+      };
+      ctx.piSessions.get(sessionId)!.ollamaNumCtx = ollamaNumCtx;
+      log('[ClaudeAgentRunner] Ollama _onPayload wrapper installed, num_ctx:', ollamaNumCtx.value);
+    }
+  }
+
+  return { piSession, compactionEnabled: compactionSettings.enabled };
 }
