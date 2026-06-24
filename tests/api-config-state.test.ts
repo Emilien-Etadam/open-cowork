@@ -18,6 +18,10 @@ const hookPath = path.resolve(
   process.cwd(),
   'src/renderer/hooks/api-config/use-api-config-state-hook.ts'
 );
+const ollamaActionsPath = path.resolve(
+  process.cwd(),
+  'src/renderer/hooks/api-config/api-config-ollama-actions.ts'
+);
 
 describe('api config state helpers', () => {
   it('maps provider/protocol to profile key and back', () => {
@@ -282,20 +286,21 @@ describe('api config state helpers', () => {
   });
 
   it('wires local Ollama discovery through the shared config hook', () => {
-    const source = fs.readFileSync(hookPath, 'utf8');
-    expect(source).toContain('window.electronAPI.config.discoverLocal({');
-    expect(source).toContain('baseUrl: requestedBaseUrl || undefined');
-    expect(source).toContain("showErrorKey('api.localOllamaNotFound')");
-    expect(source).toContain("showSuccessKey('api.localOllamaDiscovered'");
-    expect(source).toContain("showErrorKey('api.localOllamaNoModels')");
-    expect(source).toContain('ollamaDiscoverRequestIdRef');
-    // useReducer refactor: cleared via dispatch action instead of direct setter
-    expect(source).toContain(
+    const hookSource = fs.readFileSync(hookPath, 'utf8');
+    const ollamaSource = fs.readFileSync(ollamaActionsPath, 'utf8');
+    expect(hookSource).toContain('useApiConfigOllamaActions');
+    expect(ollamaSource).toContain('window.electronAPI.config.discoverLocal({');
+    expect(ollamaSource).toContain('baseUrl: requestedBaseUrl || undefined');
+    expect(ollamaSource).toContain("showErrorKey('api.localOllamaNotFound')");
+    expect(ollamaSource).toContain("showSuccessKey('api.localOllamaDiscovered'");
+    expect(ollamaSource).toContain("showErrorKey('api.localOllamaNoModels')");
+    expect(ollamaSource).toContain('ollamaDiscoverRequestIdRef');
+    expect(ollamaSource).toContain(
       "dispatch({ type: 'CLEAR_DISCOVERED_MODELS', profileKey: requestedProfileKey })"
     );
-    expect(source).toContain('autoSelectModelId: models[0]?.id');
-    expect(source).not.toContain("showErrorKey('api.localOllamaModelUnavailable'");
-    expect(source).not.toContain('shouldAutoDiscoverLocalOllamaBaseUrl(baseUrl)');
+    expect(ollamaSource).toContain('autoSelectModelId: models[0]?.id');
+    expect(ollamaSource).not.toContain("showErrorKey('api.localOllamaModelUnavailable'");
+    expect(ollamaSource).not.toContain('shouldAutoDiscoverLocalOllamaBaseUrl(baseUrl)');
   });
 
   it('keeps the shared auto-discovery helper constrained to the default local endpoint', () => {

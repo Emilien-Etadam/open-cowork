@@ -10,6 +10,7 @@ import type { CommonProviderSetup } from '../../../shared/api-provider-guidance'
 import {
   PROFILE_KEYS,
   type ApiConfigBootstrap,
+  type ApiConfigState,
   type ConfigStateSnapshot,
   type UIProviderProfile,
 } from './api-config-types';
@@ -234,6 +235,88 @@ export function buildApiConfigBootstrap(
     snapshot,
     configSets,
     activeConfigSetId,
+  };
+}
+
+export function buildInitialApiConfigState(
+  config: AppConfig | null | undefined,
+  bootstrap: ApiConfigBootstrap,
+  presets: ProviderPresets
+): ApiConfigState {
+  const initialLastCustomProtocol: CustomProtocolType =
+    config?.customProtocol === 'openai'
+      ? 'openai'
+      : config?.customProtocol === 'gemini'
+        ? 'gemini'
+        : 'anthropic';
+
+  return {
+    presets,
+    profiles: bootstrap.snapshot.profiles,
+    activeProfileKey: bootstrap.snapshot.activeProfileKey,
+    configSets: bootstrap.configSets,
+    activeConfigSetId: bootstrap.activeConfigSetId,
+    pendingConfigSetAction: null,
+    isMutatingConfigSet: false,
+    lastCustomProtocol: initialLastCustomProtocol,
+    enableThinking: Boolean(config?.enableThinking),
+    discoveredModels: {},
+    isLoadingConfig: true,
+    savedDraftSignature: '',
+    isSaving: false,
+    isTesting: false,
+    isRefreshingModels: false,
+    isDiscoveringLocalOllama: false,
+    errorText: '',
+    errorKey: null,
+    errorValues: undefined,
+    successText: '',
+    successKey: null,
+    successValues: undefined,
+    lastSaveCompletedAt: 0,
+    testResult: null,
+    diagnosticResult: null,
+    isDiagnosing: false,
+  };
+}
+
+export function buildLoadedApiConfigStatePayload(
+  config: AppConfig | null | undefined,
+  presets: ProviderPresets
+): {
+  presets: ProviderPresets;
+  profiles: Record<ProviderProfileKey, UIProviderProfile>;
+  activeProfileKey: ProviderProfileKey;
+  enableThinking: boolean;
+  configSets: ApiConfigSet[];
+  activeConfigSetId: string;
+  lastCustomProtocol: CustomProtocolType;
+  savedDraftSignature: string;
+} {
+  const bootstrap = buildApiConfigBootstrap(config, presets);
+  const activeMeta = profileKeyToProvider(bootstrap.snapshot.activeProfileKey);
+  const lastCustomProtocol: CustomProtocolType =
+    activeMeta.provider === 'custom'
+      ? activeMeta.customProtocol
+      : config?.customProtocol === 'openai'
+        ? 'openai'
+        : config?.customProtocol === 'gemini'
+          ? 'gemini'
+          : 'anthropic';
+
+  return {
+    presets,
+    profiles: bootstrap.snapshot.profiles,
+    activeProfileKey: bootstrap.snapshot.activeProfileKey,
+    enableThinking: bootstrap.snapshot.enableThinking,
+    configSets: bootstrap.configSets,
+    activeConfigSetId: bootstrap.activeConfigSetId,
+    lastCustomProtocol,
+    savedDraftSignature: buildApiConfigDraftSignature(
+      bootstrap.snapshot.activeProfileKey,
+      bootstrap.snapshot.profiles,
+      bootstrap.snapshot.enableThinking
+    ),
   };
 }
 
