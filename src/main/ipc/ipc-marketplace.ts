@@ -7,20 +7,27 @@ import { mainAppState } from '../main-app-state';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
 
 async function syncMcpAfterMarketplaceChange(serverId?: string): Promise<void> {
-  if (!mainAppState.sessionManager || !serverId) {
+  if (!mainAppState.sessionManager) {
     return;
   }
+
+  mainAppState.sessionManager.invalidateMcpServersCache();
+
+  if (!serverId) {
+    return;
+  }
+
   const mcpManager = mainAppState.sessionManager.getMCPManager();
   const config = mcpConfigStore.getServer(serverId);
   if (!config) {
     return;
   }
+
   try {
     await mcpManager.updateServer(config);
-    mainAppState.sessionManager.invalidateMcpServersCache();
   } catch (error) {
-    logError('[Marketplace] Failed to sync MCP server:', error);
-    throw error;
+    // Installation must succeed even when Chrome (or another MCP) is not ready yet.
+    logError('[Marketplace] MCP server saved; live connection deferred:', error);
   }
 }
 

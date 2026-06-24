@@ -319,7 +319,14 @@ export async function connectServerInternal(
   log(`[MCPManager] Connected to ${config.name}`);
 
   if (config.name.toLowerCase().includes('chrome')) {
-    await deps.ensureChromeReady(config.name, client);
+    try {
+      await deps.ensureChromeReady(config.name, client);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logWarn(
+        `[MCPManager] Chrome readiness check failed for ${config.name}; MCP server connected but browser tools may be unavailable until Chrome debug port is ready: ${message}`
+      );
+    }
   }
 
   return { client, transport };
