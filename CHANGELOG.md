@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.4.1] - 2026-06-24
+
+### Added
+
+- Catalogue marketplace enrichi : **21 entrées** (manifest v2) — plugins workflow Anthropic + intégrations GitHub, Playwright, Linear, GitLab
+- Test CI `catalog-github-paths` : validation des chemins GitHub du manifest
+
+### Fixed
+
+- **Context7** : chemin d’installation corrigé (`external_plugins/context7`)
+- **Chrome MCP** : `marketplace.install` ne bloque plus si le port debug 9222 n’est pas prêt
+- Démarrage Chrome : détection Linux améliorée (`google-chrome-stable`, `chromium`) + erreurs spawn async
+
+### Tests
+
+- Suite CI : **1048** tests unitaires/intégration
+
 ## [3.3.1-EE4.4] - 2026-06-24
 
 ### Added
