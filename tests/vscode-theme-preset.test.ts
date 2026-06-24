@@ -5,6 +5,7 @@ import path from 'node:path';
 const stylesPath = path.resolve(process.cwd(), 'src/renderer/styles/globals.css');
 const typesPath = path.resolve(process.cwd(), 'src/renderer/types/index.ts');
 const configStorePath = path.resolve(process.cwd(), 'src/main/config/config-store.ts');
+const configSchemaPath = path.resolve(process.cwd(), 'src/main/config/config-schema.ts');
 const appPath = path.resolve(process.cwd(), 'src/renderer/App.tsx');
 const highlightHookPath = path.resolve(process.cwd(), 'src/renderer/hooks/useHighlightTheme.ts');
 
@@ -31,11 +32,13 @@ describe('vscode theme preset', () => {
   it('exposes themePreset in shared types and config store', () => {
     const typesSource = fs.readFileSync(typesPath, 'utf8');
     const configSource = fs.readFileSync(configStorePath, 'utf8');
+    const schemaSource = fs.readFileSync(configSchemaPath, 'utf8');
 
     expect(typesSource).toContain("export type ThemePreset = 'default' | 'vscode';");
     expect(typesSource).toContain('themePreset: ThemePreset;');
-    expect(configSource).toContain("themePreset: 'default'");
-    expect(configSource).toContain('isThemePreset');
+    expect(schemaSource).toContain("themePreset: 'default'");
+    expect(schemaSource).toContain('isThemePreset');
+    expect(configSource).toContain("export * from './config-schema'");
   });
 
   it('applies data-preset on the document root and loads hljs by preset', () => {

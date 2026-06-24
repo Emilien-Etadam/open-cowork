@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import type Store from 'electron-store';
-import type { AppConfig } from './config-store';
+import type { AppConfig } from './config-schema';
 
 interface ConfigMigrationState {
   win32SandboxDefault?: boolean;
