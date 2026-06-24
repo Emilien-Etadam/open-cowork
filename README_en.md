@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="./readme.md">Français</a> ·
-  <a href="./README_zh.md">中文</a>
+  <a href="./readme.md">Français</a>
 </p>
 
 <p align="center">
