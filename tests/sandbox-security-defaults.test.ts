@@ -4,13 +4,13 @@ import { describe, expect, it } from 'vitest';
 
 const adapterPath = path.resolve('src/main/sandbox/sandbox-adapter.ts');
 const adapterSource = fs.readFileSync(adapterPath, 'utf8');
-const configStorePath = path.resolve('src/main/config/config-store.ts');
-const configStoreSource = fs.readFileSync(configStorePath, 'utf8');
+const configSchemaPath = path.resolve('src/main/config/config-schema.ts');
+const configSchemaSource = fs.readFileSync(configSchemaPath, 'utf8');
 
 describe('sandbox security defaults', () => {
   it('defaults sandbox to enabled on Windows', () => {
-    expect(configStoreSource).toContain('getDefaultSandboxEnabled');
-    expect(configStoreSource).toContain("process.platform === 'win32'");
+    expect(configSchemaSource).toContain('getDefaultSandboxEnabled');
+    expect(configSchemaSource).toContain("process.platform === 'win32'");
   });
 
   it('blocks instead of falling back to native when WSL is unavailable', () => {

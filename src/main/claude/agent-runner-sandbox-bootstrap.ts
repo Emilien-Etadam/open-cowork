@@ -257,84 +257,90 @@ async function bootstrapLimaSandbox(
       });
     }
 
-    const builtinSkillsPath = deps.getBuiltinSkillsPath();
-    try {
-      const sandboxSkillsPath = `${result.sandboxPath}/.claude/skills`;
-
-      execFileSync('limactl', ['shell', 'claude-sandbox', '--', 'mkdir', '-p', sandboxSkillsPath], {
-        encoding: 'utf-8',
-        timeout: 10000,
-      });
-
-      if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
-        log(
-          `[ClaudeAgentRunner] Copying skills with rsync: ${builtinSkillsPath}/ -> ${sandboxSkillsPath}/`
-        );
+    if (isNewLimaSession) {
+      const builtinSkillsPath = deps.getBuiltinSkillsPath();
+      try {
+        const sandboxSkillsPath = `${result.sandboxPath}/.claude/skills`;
 
         execFileSync(
           'limactl',
-          [
-            'shell',
-            'claude-sandbox',
-            '--',
-            'rsync',
-            '-av',
-            builtinSkillsPath + '/',
-            sandboxSkillsPath + '/',
-          ],
+          ['shell', 'claude-sandbox', '--', 'mkdir', '-p', sandboxSkillsPath],
           {
             encoding: 'utf-8',
-            timeout: 120000,
+            timeout: 10000,
           }
         );
-      }
 
-      const appSkillsDir = deps.getRuntimeSkillsDir();
-      if (!fs.existsSync(appSkillsDir)) {
-        fs.mkdirSync(appSkillsDir, { recursive: true });
-      }
-      deps.syncUserSkillsToAppDir(appSkillsDir);
-      deps.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
+        if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
+          log(
+            `[ClaudeAgentRunner] Copying skills with rsync: ${builtinSkillsPath}/ -> ${sandboxSkillsPath}/`
+          );
 
-      if (fs.existsSync(appSkillsDir)) {
-        log(
-          `[ClaudeAgentRunner] Copying app skills with rsync: ${appSkillsDir}/ -> ${sandboxSkillsPath}/`
-        );
-
-        execFileSync(
-          'limactl',
-          [
-            'shell',
-            'claude-sandbox',
-            '--',
-            'rsync',
-            '-avL',
-            appSkillsDir + '/',
-            sandboxSkillsPath + '/',
-          ],
-          {
-            encoding: 'utf-8',
-            timeout: 120000,
-          }
-        );
-      }
-
-      const copiedSkills = execFileSync(
-        'limactl',
-        ['shell', 'claude-sandbox', '--', 'ls', sandboxSkillsPath],
-        {
-          encoding: 'utf-8',
-          timeout: 10000,
+          execFileSync(
+            'limactl',
+            [
+              'shell',
+              'claude-sandbox',
+              '--',
+              'rsync',
+              '-av',
+              builtinSkillsPath + '/',
+              sandboxSkillsPath + '/',
+            ],
+            {
+              encoding: 'utf-8',
+              timeout: 120000,
+            }
+          );
         }
-      )
-        .trim()
-        .split(/\r?\n/)
-        .filter(Boolean);
 
-      log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-      log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
-    } catch (error) {
-      logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+        const appSkillsDir = deps.getRuntimeSkillsDir();
+        if (!fs.existsSync(appSkillsDir)) {
+          fs.mkdirSync(appSkillsDir, { recursive: true });
+        }
+        deps.syncUserSkillsToAppDir(appSkillsDir);
+        deps.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
+
+        if (fs.existsSync(appSkillsDir)) {
+          log(
+            `[ClaudeAgentRunner] Copying app skills with rsync: ${appSkillsDir}/ -> ${sandboxSkillsPath}/`
+          );
+
+          execFileSync(
+            'limactl',
+            [
+              'shell',
+              'claude-sandbox',
+              '--',
+              'rsync',
+              '-avL',
+              appSkillsDir + '/',
+              sandboxSkillsPath + '/',
+            ],
+            {
+              encoding: 'utf-8',
+              timeout: 120000,
+            }
+          );
+        }
+
+        const copiedSkills = execFileSync(
+          'limactl',
+          ['shell', 'claude-sandbox', '--', 'ls', sandboxSkillsPath],
+          {
+            encoding: 'utf-8',
+            timeout: 10000,
+          }
+        )
+          .trim()
+          .split(/\r?\n/)
+          .filter(Boolean);
+
+        log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
+        log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
+      } catch (error) {
+        logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+      }
     }
 
     if (isNewLimaSession) {

@@ -16,6 +16,13 @@
 
 import { log, logError } from '../utils/logger';
 import { isPathWithinRoot } from '../tools/path-containment';
+import {
+  SYNC_MANIFEST_FILE,
+  buildWorkspaceFingerprint,
+  parseSandboxSyncManifest,
+  serializeSandboxSyncManifest,
+  type SandboxSyncManifest,
+} from './sandbox-sync-manifest';
 
 const LIMA_INSTANCE_NAME = 'claude-sandbox';
 
@@ -34,6 +41,8 @@ export interface LimaSyncSession {
   fileCount?: number;
   totalSize?: number;
   lastSyncTime?: number; // Last sync timestamp
+  lastExportAt?: number;
+  lastHostPullAt?: number;
 }
 
 export interface LimaSyncResult {
@@ -98,6 +107,7 @@ export class LimaSync {
       try {
         // Verify sandbox still exists (single-quote escaped to prevent shell injection)
         await this.limaExec(`test -d '${LimaSync.shellEscapePath(existingSession.sandboxPath)}'`);
+        await this.syncFromHost(existingSession);
         return {
           success: true,
           sandboxPath: existingSession.sandboxPath,
@@ -122,6 +132,11 @@ export class LimaSync {
     log(`[LimaSync]   Sandbox path: ${sandboxPath}`);
 
     try {
+      const restored = await this.tryRestorePersistedSandbox(macPath, sessionId, sandboxPath);
+      if (restored) {
+        return restored;
+      }
+
       // Create sandbox directory (single-quote escaping prevents shell injection)
       await this.limaExec(`mkdir -p '${this.shellEscapePath(sandboxPath)}'`);
 
@@ -130,7 +145,7 @@ export class LimaSync {
       log(`[LimaSync]   Lima source path: ${limaSourcePath}`);
 
       // Build rsync exclude arguments
-      const excludeArgs = SYNC_EXCLUDES.map((e) => `--exclude="${e}"`).join(' ');
+      const excludeArgs = this.buildExcludeArgs();
 
       // Sync files from macOS to sandbox (within Lima VM)
       // Paths are single-quote escaped to prevent shell injection
@@ -149,6 +164,8 @@ export class LimaSync {
 
       const fileCount = parseInt(countResult.stdout.trim()) || 0;
       const totalSize = parseInt(sizeResult.stdout.trim()) || 0;
+
+      await this.writeManifest(sandboxPath, macPath);
 
       // Store session info
       const session: LimaSyncSession = {
@@ -186,7 +203,10 @@ export class LimaSync {
    * Sync changes from sandbox back to macOS (without cleanup)
    * Called after each message to persist changes while keeping sandbox alive
    */
-  static async syncToMac(sessionId: string): Promise<LimaSyncResult> {
+  static async syncToMac(
+    sessionId: string,
+    options?: { force?: boolean }
+  ): Promise<LimaSyncResult> {
     const session = sessions.get(sessionId);
     if (!session) {
       logError(`[LimaSync] Session not found: ${sessionId}`);
@@ -204,10 +224,29 @@ export class LimaSync {
     log(`[LimaSync]   macOS: ${session.macPath}`);
 
     try {
+      if (!options?.force) {
+        const latestSandboxMtime = await this.getLatestSandboxMtimeMs(session);
+        if (
+          session.lastExportAt &&
+          latestSandboxMtime > 0 &&
+          latestSandboxMtime <= session.lastExportAt
+        ) {
+          log(
+            `[LimaSync] Skipping export for session ${sessionId} — no sandbox changes since last sync`
+          );
+          return {
+            success: true,
+            sandboxPath: session.sandboxPath,
+            fileCount: session.fileCount || 0,
+            totalSize: session.totalSize || 0,
+          };
+        }
+      }
+
       const limaDestPath = session.macPath;
 
       // Build rsync exclude arguments
-      const excludeArgs = SYNC_EXCLUDES.map((e) => `--exclude="${e}"`).join(' ');
+      const excludeArgs = this.buildExcludeArgs();
 
       // Sync back to macOS (Lima mounts /Users directly)
       // NOTE: We use --delete to ensure files deleted/moved in sandbox are also deleted locally
@@ -218,8 +257,12 @@ export class LimaSync {
 
       await this.limaExec(rsyncCmd, 300000); // 5 min timeout
 
-      // Update sync time
-      session.lastSyncTime = Date.now();
+      const exportedAt = Date.now();
+      session.lastSyncTime = exportedAt;
+      session.lastExportAt = exportedAt;
+      await this.writeManifest(session.sandboxPath, session.macPath, {
+        lastExportAt: exportedAt,
+      });
 
       log(`[LimaSync] Sync to macOS complete`);
 
@@ -255,7 +298,7 @@ export class LimaSync {
 
     try {
       // First sync back to macOS
-      await this.syncToMac(sessionId);
+      await this.syncToMac(sessionId, { force: true });
 
       // Verify the sandbox path resolves to a location within the sandbox root
       // to prevent rm -rf from following symlinks outside the sandbox
@@ -511,5 +554,110 @@ export class LimaSync {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${units[i]}`;
+  }
+
+  private static buildExcludeArgs(extraExcludes: string[] = []): string {
+    return [...SYNC_EXCLUDES, ...extraExcludes].map((entry) => `--exclude="${entry}"`).join(' ');
+  }
+
+  private static async tryRestorePersistedSandbox(
+    macPath: string,
+    sessionId: string,
+    sandboxPath: string
+  ): Promise<LimaSyncResult | null> {
+    try {
+      await this.limaExec(`test -d '${this.shellEscapePath(sandboxPath)}'`);
+    } catch {
+      return null;
+    }
+
+    const manifest = await this.readManifest(sandboxPath);
+    const fingerprint = buildWorkspaceFingerprint(macPath);
+    if (!manifest || manifest.workspaceFingerprint !== fingerprint) {
+      return null;
+    }
+
+    const countResult = await this.limaExec(
+      `find '${this.shellEscapePath(sandboxPath)}' -type f | wc -l`
+    );
+    const sizeResult = await this.limaExec(
+      `du -sb '${this.shellEscapePath(sandboxPath)}' | cut -f1`
+    );
+    const fileCount = parseInt(countResult.stdout.trim()) || 0;
+    const totalSize = parseInt(sizeResult.stdout.trim()) || 0;
+
+    const session: LimaSyncSession = {
+      sessionId,
+      macPath,
+      sandboxPath,
+      initialized: true,
+      fileCount,
+      totalSize,
+      lastSyncTime: manifest.syncedAt,
+      lastExportAt: manifest.lastExportAt,
+    };
+    sessions.set(sessionId, session);
+    log(
+      `[LimaSync] Reused persisted sandbox for session ${sessionId} (${fileCount} files, ${this.formatSize(totalSize)})`
+    );
+
+    await this.syncFromHost(session);
+
+    return {
+      success: true,
+      sandboxPath,
+      fileCount,
+      totalSize,
+    };
+  }
+
+  private static async readManifest(sandboxPath: string): Promise<SandboxSyncManifest | null> {
+    try {
+      const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
+      const result = await this.limaExec(`cat '${this.shellEscapePath(manifestPath)}'`);
+      return parseSandboxSyncManifest(result.stdout.trim());
+    } catch {
+      return null;
+    }
+  }
+
+  private static async writeManifest(
+    sandboxPath: string,
+    macPath: string,
+    updates?: Partial<Pick<SandboxSyncManifest, 'lastExportAt' | 'syncedAt'>>
+  ): Promise<void> {
+    const existing = await this.readManifest(sandboxPath);
+    const manifest: SandboxSyncManifest = {
+      workspacePath: macPath,
+      workspaceFingerprint: buildWorkspaceFingerprint(macPath),
+      syncedAt: updates?.syncedAt ?? existing?.syncedAt ?? Date.now(),
+      lastExportAt: updates?.lastExportAt ?? existing?.lastExportAt,
+    };
+    const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
+    const payload = serializeSandboxSyncManifest(manifest);
+    await this.limaExec(
+      `printf '%s' '${payload.replace(/'/g, `'\\''`)}' > '${this.shellEscapePath(manifestPath)}'`
+    );
+  }
+
+  private static async getLatestSandboxMtimeMs(session: LimaSyncSession): Promise<number> {
+    const findCmd = `find '${this.shellEscapePath(session.sandboxPath)}' -type f ! -name '${SYNC_MANIFEST_FILE}' -printf '%T@\\n' 2>/dev/null | sort -rn | head -1`;
+    try {
+      const result = await this.limaExec(findCmd, 120000);
+      const latest = Number.parseFloat(result.stdout.trim());
+      return Number.isFinite(latest) ? Math.floor(latest * 1000) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private static async syncFromHost(session: LimaSyncSession): Promise<void> {
+    const excludeArgs = this.buildExcludeArgs([SYNC_MANIFEST_FILE, '.claude/skills']);
+    const rsyncCmd = `rsync -a --update ${excludeArgs} '${this.shellEscapePath(session.macPath)}/' '${this.shellEscapePath(session.sandboxPath)}/'`;
+    log(`[LimaSync] Pulling host changes into sandbox: ${rsyncCmd}`);
+    await this.limaExec(rsyncCmd, 300000);
+    const pulledAt = Date.now();
+    session.lastHostPullAt = pulledAt;
+    await this.writeManifest(session.sandboxPath, session.macPath, { syncedAt: pulledAt });
   }
 }

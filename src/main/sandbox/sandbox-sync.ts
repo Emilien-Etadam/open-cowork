@@ -15,39 +15,17 @@
  */
 
 import { execFile } from 'child_process';
-import { createHash } from 'crypto';
 import { promisify } from 'util';
 import { log, logError } from '../utils/logger';
 import { pathConverter } from './wsl-bridge';
 import { isPathWithinRoot } from '../tools/path-containment';
-
-const SYNC_MANIFEST_FILE = '.opencowork-sync.json';
-
-function buildWorkspaceFingerprint(windowsPath: string): string {
-  return createHash('sha256').update(windowsPath.trim().toLowerCase()).digest('hex');
-}
-
-interface SandboxSyncManifest {
-  windowsPath: string;
-  workspaceFingerprint: string;
-  syncedAt: number;
-}
-
-function parseManifest(raw: string): SandboxSyncManifest | null {
-  try {
-    const parsed = JSON.parse(raw) as Partial<SandboxSyncManifest>;
-    if (
-      typeof parsed.windowsPath === 'string' &&
-      typeof parsed.workspaceFingerprint === 'string' &&
-      typeof parsed.syncedAt === 'number'
-    ) {
-      return parsed as SandboxSyncManifest;
-    }
-  } catch {
-    // Ignore invalid manifest files.
-  }
-  return null;
-}
+import {
+  SYNC_MANIFEST_FILE,
+  buildWorkspaceFingerprint,
+  parseSandboxSyncManifest,
+  serializeSandboxSyncManifest,
+  type SandboxSyncManifest,
+} from './sandbox-sync-manifest';
 
 const execFileAsync = promisify(execFile);
 
@@ -74,6 +52,8 @@ export interface SyncSession {
   fileCount?: number;
   totalSize?: number;
   lastSyncTime?: number; // Last sync timestamp
+  lastExportAt?: number; // Last sandbox → host export timestamp
+  lastHostPullAt?: number; // Last host → sandbox pull timestamp
 }
 
 export interface SyncResult {
@@ -147,6 +127,7 @@ export class SandboxSync {
           distro,
           `test -d '${this.shellEscapePath(existingSession.sandboxPath)}'`
         );
+        await this.syncFromHost(existingSession);
         return {
           success: true,
           sandboxPath: existingSession.sandboxPath,
@@ -189,7 +170,7 @@ export class SandboxSync {
       log(`[SandboxSync]   WSL source path: ${wslSourcePath}`);
 
       // Build rsync exclude arguments
-      const excludeArgs = SYNC_EXCLUDES.map((e) => `--exclude="${e}"`).join(' ');
+      const excludeArgs = this.buildExcludeArgs();
 
       // Sync files from Windows to sandbox (no -v: less overhead on large trees)
       const rsyncCmd = `rsync -a --delete ${excludeArgs} '${this.shellEscapePath(wslSourcePath)}/' '${this.shellEscapePath(sandboxPath)}/'`;
@@ -249,7 +230,10 @@ export class SandboxSync {
    * Sync changes from sandbox back to Windows (without cleanup)
    * Called after each message to persist changes while keeping sandbox alive
    */
-  static async syncToWindows(sessionId: string): Promise<SyncResult> {
+  static async syncToWindows(
+    sessionId: string,
+    options?: { force?: boolean }
+  ): Promise<SyncResult> {
     validateSessionId(sessionId);
     const session = sessions.get(sessionId);
     if (!session) {
@@ -268,10 +252,29 @@ export class SandboxSync {
     log(`[SandboxSync]   Windows: ${session.windowsPath}`);
 
     try {
+      if (!options?.force) {
+        const latestSandboxMtime = await this.getLatestSandboxMtimeMs(session);
+        if (
+          session.lastExportAt &&
+          latestSandboxMtime > 0 &&
+          latestSandboxMtime <= session.lastExportAt
+        ) {
+          log(
+            `[SandboxSync] Skipping export for session ${sessionId} — no sandbox changes since last sync`
+          );
+          return {
+            success: true,
+            sandboxPath: session.sandboxPath,
+            fileCount: session.fileCount || 0,
+            totalSize: session.totalSize || 0,
+          };
+        }
+      }
+
       const wslDestPath = pathConverter.toWSL(session.windowsPath);
 
       // Build rsync exclude arguments
-      const excludeArgs = SYNC_EXCLUDES.map((e) => `--exclude="${e}"`).join(' ');
+      const excludeArgs = this.buildExcludeArgs();
 
       // Sync back to Windows (via /mnt/)
       // NOTE: We use --delete to ensure files deleted/moved in sandbox are also deleted locally
@@ -281,8 +284,12 @@ export class SandboxSync {
 
       await this.wslExec(session.distro, rsyncCmd, 300000); // 5 min timeout
 
-      // Update last sync time
-      session.lastSyncTime = Date.now();
+      const exportedAt = Date.now();
+      session.lastSyncTime = exportedAt;
+      session.lastExportAt = exportedAt;
+      await this.writeManifest(session.distro, session.sandboxPath, session.windowsPath, {
+        lastExportAt: exportedAt,
+      });
 
       log(`[SandboxSync] Sync to Windows complete for session ${sessionId}`);
 
@@ -309,7 +316,7 @@ export class SandboxSync {
    * @deprecated Use syncToWindows instead
    */
   static async finalSync(sessionId: string): Promise<SyncResult> {
-    return this.syncToWindows(sessionId);
+    return this.syncToWindows(sessionId, { force: true });
   }
 
   /**
@@ -359,7 +366,7 @@ export class SandboxSync {
     log(`[SandboxSync] Sync and cleanup for session ${sessionId}`);
 
     // First sync changes back to Windows
-    const syncResult = await this.syncToWindows(sessionId);
+    const syncResult = await this.syncToWindows(sessionId, { force: true });
 
     // Then cleanup the sandbox
     await this.cleanup(sessionId);
@@ -462,7 +469,7 @@ export class SandboxSync {
       sessionIds.map(async (sessionId) => {
         try {
           // First sync to preserve changes
-          await this.syncToWindows(sessionId);
+          await this.syncToWindows(sessionId, { force: true });
           // Then cleanup
           await this.cleanup(sessionId);
           return { sessionId, success: true };
@@ -618,11 +625,14 @@ export class SandboxSync {
       fileCount,
       totalSize,
       lastSyncTime: manifest.syncedAt,
+      lastExportAt: manifest.lastExportAt,
     };
     sessions.set(sessionId, session);
     log(
       `[SandboxSync] Reused persisted sandbox for session ${sessionId} (${fileCount} files, ${this.formatSize(totalSize)})`
     );
+
+    await this.syncFromHost(session);
 
     return {
       success: true,
@@ -639,7 +649,7 @@ export class SandboxSync {
     try {
       const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
       const result = await this.wslExec(distro, `cat '${this.shellEscapePath(manifestPath)}'`);
-      return parseManifest(result.stdout.trim());
+      return parseSandboxSyncManifest(result.stdout.trim());
     } catch {
       return null;
     }
@@ -648,19 +658,50 @@ export class SandboxSync {
   private static async writeManifest(
     distro: string,
     sandboxPath: string,
-    windowsPath: string
+    windowsPath: string,
+    updates?: Partial<Pick<SandboxSyncManifest, 'lastExportAt' | 'syncedAt'>>
   ): Promise<void> {
+    const existing = await this.readManifest(distro, sandboxPath);
     const manifest: SandboxSyncManifest = {
-      windowsPath,
+      workspacePath: windowsPath,
       workspaceFingerprint: buildWorkspaceFingerprint(windowsPath),
-      syncedAt: Date.now(),
+      syncedAt: updates?.syncedAt ?? existing?.syncedAt ?? Date.now(),
+      lastExportAt: updates?.lastExportAt ?? existing?.lastExportAt,
     };
     const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
-    const payload = JSON.stringify(manifest);
+    const payload = serializeSandboxSyncManifest(manifest);
     await this.wslExec(
       distro,
       `printf '%s' '${payload.replace(/'/g, `'\\''`)}' > '${this.shellEscapePath(manifestPath)}'`
     );
+  }
+
+  private static buildExcludeArgs(extraExcludes: string[] = []): string {
+    return [...SYNC_EXCLUDES, ...extraExcludes].map((entry) => `--exclude="${entry}"`).join(' ');
+  }
+
+  private static async getLatestSandboxMtimeMs(session: SyncSession): Promise<number> {
+    const findCmd = `find '${this.shellEscapePath(session.sandboxPath)}' -type f ! -name '${SYNC_MANIFEST_FILE}' -printf '%T@\\n' 2>/dev/null | sort -rn | head -1`;
+    try {
+      const result = await this.wslExec(session.distro, findCmd, 120000);
+      const latest = Number.parseFloat(result.stdout.trim());
+      return Number.isFinite(latest) ? Math.floor(latest * 1000) : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private static async syncFromHost(session: SyncSession): Promise<void> {
+    const wslSourcePath = pathConverter.toWSL(session.windowsPath);
+    const excludeArgs = this.buildExcludeArgs([SYNC_MANIFEST_FILE, '.claude/skills']);
+    const rsyncCmd = `rsync -a --update ${excludeArgs} '${this.shellEscapePath(wslSourcePath)}/' '${this.shellEscapePath(session.sandboxPath)}/'`;
+    log(`[SandboxSync] Pulling host changes into sandbox: ${rsyncCmd}`);
+    await this.wslExec(session.distro, rsyncCmd, 300000);
+    const pulledAt = Date.now();
+    session.lastHostPullAt = pulledAt;
+    await this.writeManifest(session.distro, session.sandboxPath, session.windowsPath, {
+      syncedAt: pulledAt,
+    });
   }
 
   private static shellEscapePath(p: string): string {
