@@ -42,8 +42,6 @@ type TabId =
   | 'api'
   | 'sandbox'
   | 'extensions'
-  | 'connectors'
-  | 'skills'
   | 'memory'
   | 'schedule'
   | 'remote'
@@ -54,8 +52,6 @@ const VALID_TABS = new Set<TabId>([
   'api',
   'sandbox',
   'extensions',
-  'connectors',
-  'skills',
   'memory',
   'schedule',
   'remote',
@@ -68,6 +64,16 @@ const LEGACY_TAB_ALIASES: Record<string, TabId> = {
   skills: 'extensions',
 };
 
+function resolveSettingsTab(tab?: string, fallback: TabId = 'api'): TabId {
+  if (!tab) {
+    return fallback;
+  }
+  if (LEGACY_TAB_ALIASES[tab]) {
+    return LEGACY_TAB_ALIASES[tab];
+  }
+  return VALID_TABS.has(tab as TabId) ? (tab as TabId) : fallback;
+}
+
 export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProps) {
   const { t } = useTranslation();
   const { width } = useWindowSize();
@@ -76,9 +82,7 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
   // takes effect even before this component mounts.
   const storeTab = useAppStore((s) => s.settingsTab);
   const setSettingsTab = useAppStore((s) => s.setSettingsTab);
-  const resolvedInitialRaw =
-    storeTab && VALID_TABS.has(storeTab as TabId) ? (storeTab as TabId) : initialTab;
-  const resolvedInitial = LEGACY_TAB_ALIASES[resolvedInitialRaw] || resolvedInitialRaw;
+  const resolvedInitial = resolveSettingsTab(storeTab || initialTab, 'api');
 
   const [activeTab, setActiveTab] = useState<TabId>(resolvedInitial);
   // Track which tabs have been viewed at least once (for lazy loading)
@@ -96,9 +100,8 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
 
   // Consume the store signal and apply tab in one effect
   useEffect(() => {
-    if (storeTab && VALID_TABS.has(storeTab as TabId)) {
-      const mapped = LEGACY_TAB_ALIASES[storeTab] || (storeTab as TabId);
-      setActiveTab(mapped);
+    if (storeTab) {
+      setActiveTab(resolveSettingsTab(storeTab, activeTab));
       setSettingsTab(null);
     }
   }, [storeTab, setSettingsTab]);

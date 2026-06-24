@@ -15,6 +15,7 @@ import type {
   PluginComponentKind,
   MarketplaceEntry,
   MarketplaceInstallResult,
+  CatalogManifestMeta,
   ScheduleTask,
   ScheduleCreateInput,
   ScheduleUpdateInput,
@@ -259,6 +260,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   marketplace: {
     list: (forceRefresh = false) => ipcRenderer.invoke('marketplace.list', forceRefresh),
+    getMeta: (forceRefresh = false) => ipcRenderer.invoke('marketplace.getMeta', forceRefresh),
     install: (catalogId: string, envValues?: Record<string, string>) =>
       ipcRenderer.invoke('marketplace.install', catalogId, envValues),
     uninstall: (catalogId: string) => ipcRenderer.invoke('marketplace.uninstall', catalogId),
@@ -543,6 +545,7 @@ declare global {
       };
       marketplace: {
         list: (forceRefresh?: boolean) => Promise<MarketplaceEntry[]>;
+        getMeta: (forceRefresh?: boolean) => Promise<CatalogManifestMeta>;
         install: (
           catalogId: string,
           envValues?: Record<string, string>

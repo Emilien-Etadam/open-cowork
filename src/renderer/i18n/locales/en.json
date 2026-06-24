@@ -628,7 +628,11 @@
     "manualWarning": "Manual installs are not reviewed by Open Cowork. Only install folders you trust.",
     "manualSkillInstall": "Install skill from folder",
     "manualSkillSuccess": "Custom skill installed successfully",
-    "envTitle": "Configure {{name}}"
+    "envTitle": "Configure {{name}}",
+    "catalogMeta": "Catalog v{{version}} · updated {{updatedAt}} · {{count}} extensions",
+    "catalogSourceRemote": "Source: remote catalog (OTA)",
+    "catalogSourceBundled": "Source: bundled catalog (offline fallback)",
+    "catalogUpdated": "Catalog updated from the remote registry"
   },
   "logs": {
     "actionsTitle": "Log Actions",
