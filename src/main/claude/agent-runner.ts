@@ -26,7 +26,6 @@ import { Type, type TSchema } from 'typebox';
 import { getSharedAuthStorage, ModelRegistry } from './shared-auth';
 import type { Session, Message, TraceStep, ServerEvent, ContentBlock } from '../../renderer/types';
 import { v4 as uuidv4 } from 'uuid';
-import { decidePermission, rememberAlwaysAllow } from '../config/permission-rules-store';
 import { PathResolver } from '../sandbox/path-resolver';
 import { MCPManager } from '../mcp/mcp-manager';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
@@ -42,12 +41,10 @@ import {
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
-import { execFileSync, spawn } from 'child_process';
+import { execFileSync } from 'child_process';
 import { app } from 'electron';
 import { setMaxListeners } from 'node:events';
 import { getSandboxAdapter } from '../sandbox/sandbox-adapter';
-import { getSandboxExecutionBlockReason } from '../sandbox/sandbox-execution-guard';
-import { pathConverter } from '../sandbox/wsl-bridge';
 import { SandboxSync } from '../sandbox/sandbox-sync';
 import { extractArtifactsFromText, buildArtifactTraceSteps } from '../utils/artifact-parser';
 import { getDefaultShell } from '../utils/shell-resolver';
@@ -98,138 +95,30 @@ import {
   shouldBlockForContextOverflow,
 } from './context-budget';
 import {
-  findLastCompactionAnchor,
-  messagesAfterCompactionAnchor,
-} from '../../shared/compaction-anchor';
-import {
   buildConversationTranscriptForHandoff,
   buildHandoffSummaryUserPrompt,
   HANDOFF_SUMMARY_SYSTEM_PROMPT,
 } from '../../shared/compaction-handoff';
 import { runPiAiOneShot } from './claude-sdk-one-shot';
 import { mt } from '../i18n';
+import {
+  buildColdStartContextualPrompt,
+  serializeMessageContentForHistory,
+} from './agent-runner-history';
+export { serializeMessageContentForHistory } from './agent-runner-history';
+import { bootstrapSandboxEnvironment } from './agent-runner-sandbox-bootstrap';
+import {
+  type CachedPiSession,
+  disposeCachedPiSession,
+  evictOldestPiSession,
+  installPermissionHook,
+  resolveToolDisplayName,
+  wrapBashToolForSudo,
+  wrapBashToolWithDefaultTimeout,
+} from './agent-runner-pi-session';
 
 // Virtual workspace path shown to the model (hides real sandbox path)
 const VIRTUAL_WORKSPACE_PATH = '/workspace';
-
-/**
- * Estimate chars-per-token ratio based on content language.
- * CJK characters tokenize at ~1.5 chars/token vs ~4 for English.
- */
-function estimateCharsPerToken(sampleText: string): number {
-  if (!sampleText || sampleText.length === 0) return 4;
-  const sample = sampleText.substring(0, 500);
-  const cjkCount = (sample.match(/[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/g) || [])
-    .length;
-  const cjkRatio = cjkCount / sample.length;
-  return 4 - cjkRatio * 2.5; // Range: 1.5 (pure CJK) ~ 4 (pure English)
-}
-
-// Escape characters that would break the cold-start `<conversation_history>`
-// envelope when interpolated into XML tag bodies or attribute values. Raw user
-// text blocks are intentionally not escaped (preserves legacy compatibility);
-// only the new wrapper tags (`<thinking>`, `<tool_use>`, `<tool_result>`) and
-// their attributes pass through these.
-//
-// Attribute values additionally need `"` escaped because attributes are
-// double-quoted. Tag bodies do not (keeping `"` keeps JSON input legible to
-// the model).
-function escapeXmlAttr(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function escapeXmlText(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-/**
- * Serialize a message's content blocks into the XML representation used inside the
- * cold-start `<conversation_history>` preamble.
- *
- * Why this exists: when the cached pi-coding-agent SDK session is disposed (cwd
- * change or runtime-signature change), agent-runner rebuilds history from
- * DB-persisted messages. The previous implementation only kept `text` blocks,
- * which silently dropped `thinking`, `tool_use`, and `tool_result` blocks.
- * Providers that require previous reasoning/tool-call replay (e.g. DeepSeek V4
- * Flash) then fail with 400 on the next turn, and every other thinking-capable
- * model loses its reasoning trace across cwd switches (issue #162 \u2014 Bug B).
- *
- * Blocks handled:
- *   - text          \u2192 raw text (matches the legacy serializer's output)
- *   - thinking      \u2192 `<thinking>\u2026</thinking>`
- *   - tool_use      \u2192 `<tool_use name="\u2026" id="\u2026">{json input}</tool_use>`
- *   - tool_result   \u2192 `<tool_result tool_use_id="\u2026"[ is_error="true"]>\u2026</tool_result>`
- *   - image         \u2192 skipped (binary, cannot live inside an XML text preamble)
- *   - file_attachment \u2192 skipped (large, would bloat the prompt)
- */
-export function serializeMessageContentForHistory(content: ContentBlock[]): string {
-  const parts: string[] = [];
-  for (const block of content) {
-    switch (block.type) {
-      case 'text': {
-        const text = block.text ?? '';
-        if (text.length > 0) parts.push(text);
-        break;
-      }
-      case 'thinking': {
-        const thinking = block.thinking ?? '';
-        if (thinking.length > 0) parts.push(`<thinking>${escapeXmlText(thinking)}</thinking>`);
-        break;
-      }
-      case 'tool_use': {
-        const name = block.name ?? 'unknown';
-        const id = block.id ?? '';
-        let inputStr: string;
-        try {
-          inputStr = JSON.stringify(block.input ?? {});
-        } catch {
-          inputStr = '{}';
-        }
-        parts.push(
-          `<tool_use name="${escapeXmlAttr(name)}" id="${escapeXmlAttr(id)}">${escapeXmlText(inputStr)}</tool_use>`
-        );
-        break;
-      }
-      case 'tool_result': {
-        const id = block.toolUseId ?? '';
-        const errAttr = block.isError ? ' is_error="true"' : '';
-        // Local type says `content: string`, but Anthropic-style payloads
-        // from older message rows or third-party providers may store an
-        // array of content blocks. Flatten defensively so we never serialize
-        // "[object Object]".
-        const rawContent = (block as { content: unknown }).content;
-        let text: string;
-        if (typeof rawContent === 'string') {
-          text = rawContent;
-        } else if (Array.isArray(rawContent)) {
-          text = rawContent
-            .map((c) =>
-              c && typeof c === 'object' && 'text' in c
-                ? String((c as { text: unknown }).text ?? '')
-                : ''
-            )
-            .join('\n');
-        } else {
-          text = '';
-        }
-        parts.push(
-          `<tool_result tool_use_id="${escapeXmlAttr(id)}"${errAttr}>${escapeXmlText(text)}</tool_result>`
-        );
-        break;
-      }
-      case 'image':
-      case 'file_attachment':
-      case 'compaction_summary':
-        // Skip \u2014 not representable as XML text in a history preamble.
-        break;
-    }
-  }
-  return parts.join('\n');
-}
 
 // Bundled node/npx paths never change at runtime — resolve once.
 let cachedBundledNodePaths: { node: string; npx: string } | null | undefined = undefined;
@@ -557,16 +446,6 @@ interface AgentRunnerOptions {
   ) => Promise<'allow' | 'deny' | 'allow_always'>;
 }
 
-interface CachedPiSession {
-  session: PiAgentSession;
-  modelId: string;
-  thinkingLevel: string;
-  runtimeSignature: string;
-  skillsSignature?: string;
-  ollamaNumCtx?: { value: number };
-  compactionEnabled: boolean;
-}
-
 /**
  * ClaudeAgentRunner - Uses @mariozechner/pi-coding-agent SDK
  *
@@ -597,7 +476,6 @@ export class ClaudeAgentRunner {
   private activeControllers: Map<string, AbortController> = new Map();
   private piSessions: Map<string, CachedPiSession> = new Map();
   private toolDisplayNameCache: Map<string, string> = new Map();
-  private static readonly MAX_CACHED_SESSIONS = 50;
 
   // Per-instance caches — invalidated when the underlying config changes.
   private _mcpServersCache: { fingerprint: string; servers: Record<string, unknown> } | null = null;
@@ -610,11 +488,7 @@ export class ClaudeAgentRunner {
   clearSdkSession(sessionId: string): void {
     const cached = this.piSessions.get(sessionId);
     if (cached) {
-      try {
-        cached.session.dispose();
-      } catch (e) {
-        logWarn('[ClaudeAgentRunner] dispose error:', e);
-      }
+      disposeCachedPiSession(cached);
       this.piSessions.delete(sessionId);
       log('[ClaudeAgentRunner] Disposed pi session for:', sessionId);
     }
@@ -929,272 +803,8 @@ ${hints.join('\n')}
     }
   }
 
-  /**
-   * Install a permission-gating hook on the pi-coding-agent session via
-   * `agent.setBeforeToolCall`. This is the only interception point that
-   * fires for built-in tools (read, bash, edit, write) — the SDK ignores
-   * wrapped `execute` functions on built-in tools passed via `options.tools`.
-   *
-   * The hook consults `decidePermission` from the main-process rules cache:
-   *  - 'allow' → delegate to SDK's original hook (proceeds normally)
-   *  - 'deny'  → return { block: true, reason } (SDK treats as tool error)
-   *  - 'ask'   → await requestPermission() IPC round-trip to PermissionDialog
-   *
-   * Known limitation: the async requestPermission wait (user dialog) causes
-   * the renderer to miss UI update events. The tool executes correctly on
-   * the backend, but the renderer's loading spinner may not clear. This is
-   * a renderer-side issue tracked as a follow-up.
-   */
-  private installPermissionHook(piSession: PiAgentSession, sessionId: string): void {
-    if (!this.requestPermission) {
-      log('[ClaudeAgentRunner] No requestPermission callback — skipping permission hook');
-      return;
-    }
-
-    // Access the Agent instance (public readonly property on AgentSession)
-    // and wrap its beforeToolCall hook with our permission gate.
-    //
-    // We must chain to the SDK's original beforeToolCall hook because it
-    // fires extension tool_call events and manages the _agentEventQueue.
-    // Without chaining, the renderer misses completion events.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const agent = (piSession as any).agent;
-    if (!agent || typeof agent.setBeforeToolCall !== 'function') {
-      logWarn(
-        '[ClaudeAgentRunner] Cannot access agent.setBeforeToolCall — skipping permission hook'
-      );
-      return;
-    }
-
-    // Capture the SDK's hook before we overwrite it
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sdkBeforeToolCall: ((ctx: any, signal?: AbortSignal) => Promise<any>) | undefined =
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (agent as any)._beforeToolCall;
-
-    const requestPermission = this.requestPermission;
-    const getDisplayName = (name: string): string => this.getToolDisplayName(name);
-
-    agent.setBeforeToolCall(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      async (ctx: any, signal?: AbortSignal): Promise<any> => {
-        const toolName: string = ctx.toolCall?.name ?? '';
-        const input: Record<string, unknown> = ctx.args ?? {};
-
-        const decision = decidePermission(sessionId, toolName, input);
-        // Human-readable name for prompts/messages (e.g. MCP sanitized
-        // 'mcp__chrome__chrome_screenshot__ab12' → 'chrome_screenshot').
-        // Rule matching and rememberAlwaysAllow still use the canonical
-        // `toolName` so allow-once decisions stay stable across calls.
-        const displayName = getDisplayName(toolName);
-
-        if (decision === 'deny') {
-          log(`[ClaudeAgentRunner] Tool '${toolName}' denied by rule`);
-          return {
-            block: true,
-            reason: `Tool '${displayName}' is denied by your permission rules.`,
-          };
-        }
-
-        if (decision === 'ask') {
-          const toolUseId = `${ctx.toolCall?.id ?? 'unknown'}-perm-${uuidv4().slice(0, 8)}`;
-          let result: 'allow' | 'deny' | 'allow_always';
-          try {
-            // Send the display name to the renderer so the dialog shows a
-            // human-readable tool name; canonical `toolName` is still used
-            // for rule matching above and "always allow" memory below.
-            result = await requestPermission(sessionId, toolUseId, displayName, input);
-          } catch (permErr) {
-            logError(
-              `[ClaudeAgentRunner] Permission request failed for '${toolName}' — failing closed`,
-              permErr
-            );
-            return {
-              block: true,
-              reason: `Permission request failed for '${displayName}'; tool not executed.`,
-            };
-          }
-
-          if (result === 'deny') {
-            log(`[ClaudeAgentRunner] Tool '${toolName}' denied by user`);
-            return { block: true, reason: `User denied permission for '${displayName}'.` };
-          }
-
-          if (result === 'allow_always') {
-            rememberAlwaysAllow(sessionId, toolName);
-          }
-        }
-
-        // Allowed — delegate to SDK's original hook for event pipeline
-        return sdkBeforeToolCall ? sdkBeforeToolCall(ctx, signal) : undefined;
-      }
-    );
-
-    log(
-      `[ClaudeAgentRunner] Permission hook installed on session ${sessionId} via agent.setBeforeToolCall`
-    );
-  }
-
-  /**
-   * Check if a command contains sudo
-   */
-  private static isSudoCommand(command: string): boolean {
-    return /\bsudo\b/.test(command);
-  }
-
   private getToolDisplayName(toolName: string): string {
-    const cached = this.toolDisplayNameCache.get(toolName);
-    if (cached) {
-      return cached;
-    }
-
-    let displayName = toolName;
-    if (!toolName.startsWith('mcp__')) {
-      this.toolDisplayNameCache.set(toolName, displayName);
-      return displayName;
-    }
-
-    const mcpTool = this.mcpManager?.getTool(toolName);
-    if (mcpTool?.originalName) {
-      displayName = mcpTool.originalName;
-    } else {
-      const match = toolName.match(/^mcp__(.+?)__(.+)$/);
-      displayName = match?.[2] || toolName;
-    }
-
-    this.toolDisplayNameCache.set(toolName, displayName);
-    return displayName;
-  }
-
-  /**
-   * Wrap the bash tool in the coding tools array to intercept sudo commands.
-   * When a sudo command is detected, prompts the user for a password,
-   * then rewrites the command to pipe the password into sudo -S.
-   */
-  private wrapBashToolForSudo(
-    tools: ToolDefinition[],
-    sessionId: string,
-    effectiveCwd: string
-  ): ToolDefinition[] {
-    if (!this.requestSudoPassword) return tools;
-
-    const requestSudoPassword = this.requestSudoPassword;
-
-    return tools.map((tool) => {
-      if (tool.name !== 'bash') return tool;
-
-      const originalExecute = tool.execute;
-      return {
-        ...tool,
-        execute: async (
-          toolCallId: string,
-          params: { command: string; timeout?: number },
-          signal: AbortSignal | undefined,
-          onUpdate: ((update: unknown) => void) | undefined,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ctx: any
-        ) => {
-          const command = params.command;
-
-          if (ClaudeAgentRunner.isSudoCommand(command)) {
-            log('[ClaudeAgentRunner] Sudo command detected, requesting password');
-            const password = await requestSudoPassword(sessionId, toolCallId, command);
-
-            if (!password) {
-              log('[ClaudeAgentRunner] Sudo password cancelled by user');
-              return {
-                content: [
-                  { type: 'text' as const, text: 'Command cancelled: user denied sudo password.' },
-                ],
-                details: undefined as unknown,
-              };
-            }
-
-            // Add -S flag to sudo invocations that don't already have it
-            const rewrittenCommand = command.replace(/\bsudo\b(?!\s+-S)/g, 'sudo -S');
-
-            // Pass password via stdin pipe so it never appears in process args
-            // or environment variables. Uses async spawn with stdio: 'pipe'.
-            log(
-              '[ClaudeAgentRunner] Executing sudo command with password injection (via stdin pipe)'
-            );
-            try {
-              const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
-              const shellArgs =
-                process.platform === 'win32' ? ['/c', rewrittenCommand] : ['-c', rewrittenCommand];
-              const timeoutMs = (params.timeout ?? 120) * 1000;
-              const output = await new Promise<string>((resolve, reject) => {
-                const child = spawn(shell, shellArgs, {
-                  stdio: ['pipe', 'pipe', 'pipe'],
-                  cwd: effectiveCwd,
-                });
-                let stdout = '';
-                let stderr = '';
-                const timer = setTimeout(() => {
-                  child.kill('SIGKILL');
-                  reject(new Error(`Sudo command timed out after ${timeoutMs}ms`));
-                }, timeoutMs);
-                child.stdout.on('data', (chunk: Buffer) => {
-                  stdout += chunk.toString();
-                });
-                child.stderr.on('data', (chunk: Buffer) => {
-                  stderr += chunk.toString();
-                });
-                child.on('error', (err) => {
-                  clearTimeout(timer);
-                  reject(err);
-                });
-                child.on('close', () => {
-                  clearTimeout(timer);
-                  resolve(stdout + stderr);
-                });
-                child.stdin.write(password + '\n');
-                child.stdin.end();
-              });
-              return {
-                content: [{ type: 'text' as const, text: output || '(no output)' }],
-                details: undefined as unknown,
-              };
-            } catch (sudoErr) {
-              logError('[ClaudeAgentRunner] Sudo command failed:', sudoErr);
-              throw sudoErr instanceof Error ? sudoErr : new Error(String(sudoErr));
-            }
-          }
-
-          return originalExecute(toolCallId, params, signal, onUpdate, ctx);
-        },
-      } as ToolDefinition;
-    });
-  }
-
-  /**
-   * Wrap the bash tool to inject a default timeout when the model omits one.
-   * The agent SDK's bash tool has no default timeout, which means
-   * commands can run indefinitely if the model doesn't specify a timeout.
-   */
-  private static wrapBashToolWithDefaultTimeout(tools: ToolDefinition[]): ToolDefinition[] {
-    const DEFAULT_BASH_TIMEOUT_SECONDS = 120;
-
-    return tools.map((tool) => {
-      if (tool.name !== 'bash') return tool;
-
-      const originalExecute = tool.execute;
-      return {
-        ...tool,
-        execute: async (
-          toolCallId: string,
-          params: { command: string; timeout?: number },
-          signal: AbortSignal | undefined,
-          onUpdate: ((update: unknown) => void) | undefined,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ctx: any
-        ) => {
-          const effectiveParams =
-            params.timeout != null ? params : { ...params, timeout: DEFAULT_BASH_TIMEOUT_SECONDS };
-          return originalExecute(toolCallId, effectiveParams, signal, onUpdate, ctx);
-        },
-      } as ToolDefinition;
-    });
+    return resolveToolDisplayName(toolName, this.mcpManager, this.toolDisplayNameCache);
   }
 
   /**
@@ -1273,402 +883,29 @@ ${hints.join('\n')}
       const workingDir = session.cwd || undefined;
       logCtx('[ClaudeAgentRunner] Working directory:', workingDir || '(none)');
 
-      // Initialize sandbox sync if WSL mode is active
       const sandbox = getSandboxAdapter();
       const sandboxEnabled = configStore.get('sandboxEnabled') !== false;
-
-      const initialSandboxBlock = getSandboxExecutionBlockReason({
+      const sandboxBootstrap = await bootstrapSandboxEnvironment({
+        sessionId: session.id,
+        workingDir,
+        thinkingStepId,
         sandboxEnabled,
-        platform: process.platform,
         sandbox,
+        sendToRenderer: (event) => this.sendToRenderer(event),
+        sendMessage: (sessionId, message) => this.sendMessage(sessionId, message),
+        sendTraceUpdate: (sessionId, stepId, updates) =>
+          this.sendTraceUpdate(sessionId, stepId, updates),
+        getBuiltinSkillsPath: () => this.getBuiltinSkillsPath(),
+        getRuntimeSkillsDir: () => this.getRuntimeSkillsDir(),
+        syncUserSkillsToAppDir: (appSkillsDir) => this.syncUserSkillsToAppDir(appSkillsDir),
+        syncConfiguredSkillsToRuntimeDir: (runtimeSkillsDir) =>
+          this.syncConfiguredSkillsToRuntimeDir(runtimeSkillsDir),
       });
-      if (initialSandboxBlock) {
-        logError('[ClaudeAgentRunner] Sandbox execution blocked:', initialSandboxBlock);
-        const errorMsg: Message = {
-          id: uuidv4(),
-          sessionId: session.id,
-          role: 'assistant',
-          content: [{ type: 'text', text: `**Sandbox indisponible** : ${initialSandboxBlock}` }],
-          timestamp: Date.now(),
-        };
-        this.sendMessage(session.id, errorMsg);
-        this.sendTraceUpdate(session.id, thinkingStepId, {
-          status: 'error',
-          title: 'Sandbox unavailable',
-        });
+      if (sandboxBootstrap.aborted) {
         return;
       }
-
-      if (sandbox.isWSL && sandbox.wslStatus?.distro && workingDir) {
-        log('[ClaudeAgentRunner] WSL mode active, initializing sandbox sync...');
-
-        // Only show sync UI for new sessions (first message)
-        const isNewSession = !SandboxSync.hasSession(session.id);
-
-        if (isNewSession) {
-          // Notify UI: syncing files (only for new sessions)
-          this.sendToRenderer({
-            type: 'sandbox.sync',
-            payload: {
-              sessionId: session.id,
-              phase: 'syncing_files',
-              message: 'Syncing files to sandbox...',
-              detail: 'Copying project files to isolated WSL environment',
-            },
-          });
-        }
-
-        const syncResult = await SandboxSync.initSync(
-          workingDir,
-          session.id,
-          sandbox.wslStatus.distro
-        );
-
-        if (syncResult.success) {
-          sandboxPath = syncResult.sandboxPath;
-          useSandboxIsolation = true;
-          log(`[ClaudeAgentRunner] Sandbox initialized: ${sandboxPath}`);
-          log(
-            `[ClaudeAgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
-          );
-
-          if (isNewSession) {
-            // Update UI with file count (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'syncing_skills',
-                message: 'Configuring skills...',
-                detail: 'Copying built-in skills to sandbox',
-                fileCount: syncResult.fileCount,
-                totalSize: syncResult.totalSize,
-              },
-            });
-          }
-
-          // Copy skills to sandbox ~/.claude/skills/ (first message only)
-          if (isNewSession) {
-            const builtinSkillsPath = this.getBuiltinSkillsPath();
-            try {
-              const distro = sandbox.wslStatus!.distro!;
-              const sandboxSkillsPath = `${sandboxPath}/.claude/skills`;
-
-              // Create .claude/skills directory in sandbox
-              execFileSync('wsl', ['-d', distro, '-e', 'mkdir', '-p', sandboxSkillsPath], {
-                encoding: 'utf-8',
-                timeout: 10000,
-              });
-
-              if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
-                // Use rsync via execFileSync with array args to avoid shell injection
-                const wslSourcePath = pathConverter.toWSL(builtinSkillsPath);
-                log(
-                  `[ClaudeAgentRunner] Copying skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
-                );
-
-                execFileSync(
-                  'wsl',
-                  ['-d', distro, '-e', 'rsync', '-a', wslSourcePath + '/', sandboxSkillsPath + '/'],
-                  {
-                    encoding: 'utf-8',
-                    timeout: 120000, // 2 min timeout for large skill directories
-                  }
-                );
-              }
-
-              const appSkillsDir = this.getRuntimeSkillsDir();
-              if (!fs.existsSync(appSkillsDir)) {
-                fs.mkdirSync(appSkillsDir, { recursive: true });
-              }
-              this.syncUserSkillsToAppDir(appSkillsDir);
-              this.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
-
-              if (fs.existsSync(appSkillsDir)) {
-                const wslSourcePath = pathConverter.toWSL(appSkillsDir);
-                log(
-                  `[ClaudeAgentRunner] Copying app skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
-                );
-
-                execFileSync(
-                  'wsl',
-                  [
-                    '-d',
-                    distro,
-                    '-e',
-                    'rsync',
-                    '-aL',
-                    wslSourcePath + '/',
-                    sandboxSkillsPath + '/',
-                  ],
-                  {
-                    encoding: 'utf-8',
-                    timeout: 120000, // 2 min timeout for large skill directories
-                  }
-                );
-              }
-
-              // List copied skills for verification
-              const copiedSkills = execFileSync(
-                'wsl',
-                ['-d', distro, '-e', 'ls', sandboxSkillsPath],
-                {
-                  encoding: 'utf-8',
-                  timeout: 10000,
-                }
-              )
-                .trim()
-                .split(/\r?\n/)
-                .filter(Boolean);
-
-              log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-              log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
-            } catch (error) {
-              logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
-            }
-          }
-
-          if (isNewSession) {
-            // Notify UI: sync complete (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'ready',
-                message: 'Sandbox ready',
-                detail: `Synced ${syncResult.fileCount} files`,
-                fileCount: syncResult.fileCount,
-                totalSize: syncResult.totalSize,
-              },
-            });
-          }
-        } else {
-          logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          const syncBlockReason = getSandboxExecutionBlockReason({
-            sandboxEnabled,
-            platform: process.platform,
-            sandbox,
-            syncFailed: true,
-            syncError: syncResult.error,
-          });
-          if (syncBlockReason) {
-            if (isNewSession) {
-              this.sendToRenderer({
-                type: 'sandbox.sync',
-                payload: {
-                  sessionId: session.id,
-                  phase: 'error',
-                  message: 'Sandbox file sync failed',
-                  detail: syncBlockReason,
-                },
-              });
-            }
-            const errorMsg: Message = {
-              id: uuidv4(),
-              sessionId: session.id,
-              role: 'assistant',
-              content: [{ type: 'text', text: `**Sandbox indisponible** : ${syncBlockReason}` }],
-              timestamp: Date.now(),
-            };
-            this.sendMessage(session.id, errorMsg);
-            this.sendTraceUpdate(session.id, thinkingStepId, {
-              status: 'error',
-              title: 'Sandbox sync failed',
-            });
-            return;
-          }
-        }
-      }
-
-      // Initialize sandbox sync if Lima mode is active
-      if (sandbox.isLima && sandbox.limaStatus?.instanceRunning && workingDir) {
-        log('[ClaudeAgentRunner] Lima mode active, initializing sandbox sync...');
-
-        const { LimaSync } = await import('../sandbox/lima-sync');
-
-        // Only show sync UI for new sessions (first message)
-        const isNewLimaSession = !LimaSync.hasSession(session.id);
-
-        if (isNewLimaSession) {
-          // Notify UI: syncing files (only for new sessions)
-          this.sendToRenderer({
-            type: 'sandbox.sync',
-            payload: {
-              sessionId: session.id,
-              phase: 'syncing_files',
-              message: 'Syncing files to sandbox...',
-              detail: 'Copying project files to isolated Lima environment',
-            },
-          });
-        }
-
-        const syncResult = await LimaSync.initSync(workingDir, session.id);
-
-        if (syncResult.success) {
-          sandboxPath = syncResult.sandboxPath;
-          useSandboxIsolation = true;
-          log(`[ClaudeAgentRunner] Sandbox initialized: ${sandboxPath}`);
-          log(
-            `[ClaudeAgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
-          );
-
-          if (isNewLimaSession) {
-            // Update UI with file count (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'syncing_skills',
-                message: 'Configuring skills...',
-                detail: 'Copying built-in skills to sandbox',
-                fileCount: syncResult.fileCount,
-                totalSize: syncResult.totalSize,
-              },
-            });
-          }
-
-          // Copy skills to sandbox ~/.claude/skills/
-          const builtinSkillsPath = this.getBuiltinSkillsPath();
-          try {
-            const sandboxSkillsPath = `${sandboxPath}/.claude/skills`;
-
-            // Create .claude/skills directory in sandbox
-            execFileSync(
-              'limactl',
-              ['shell', 'claude-sandbox', '--', 'mkdir', '-p', sandboxSkillsPath],
-              {
-                encoding: 'utf-8',
-                timeout: 10000,
-              }
-            );
-
-            if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
-              // Use rsync via execFileSync with array args to avoid shell injection
-              // Lima mounts /Users directly, so paths are the same
-              log(
-                `[ClaudeAgentRunner] Copying skills with rsync: ${builtinSkillsPath}/ -> ${sandboxSkillsPath}/`
-              );
-
-              execFileSync(
-                'limactl',
-                [
-                  'shell',
-                  'claude-sandbox',
-                  '--',
-                  'rsync',
-                  '-av',
-                  builtinSkillsPath + '/',
-                  sandboxSkillsPath + '/',
-                ],
-                {
-                  encoding: 'utf-8',
-                  timeout: 120000, // 2 min timeout for large skill directories
-                }
-              );
-            }
-
-            const appSkillsDir = this.getRuntimeSkillsDir();
-            if (!fs.existsSync(appSkillsDir)) {
-              fs.mkdirSync(appSkillsDir, { recursive: true });
-            }
-            this.syncUserSkillsToAppDir(appSkillsDir);
-            this.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
-
-            if (fs.existsSync(appSkillsDir)) {
-              log(
-                `[ClaudeAgentRunner] Copying app skills with rsync: ${appSkillsDir}/ -> ${sandboxSkillsPath}/`
-              );
-
-              execFileSync(
-                'limactl',
-                [
-                  'shell',
-                  'claude-sandbox',
-                  '--',
-                  'rsync',
-                  '-avL',
-                  appSkillsDir + '/',
-                  sandboxSkillsPath + '/',
-                ],
-                {
-                  encoding: 'utf-8',
-                  timeout: 120000, // 2 min timeout for large skill directories
-                }
-              );
-            }
-
-            // List copied skills for verification
-            const copiedSkills = execFileSync(
-              'limactl',
-              ['shell', 'claude-sandbox', '--', 'ls', sandboxSkillsPath],
-              {
-                encoding: 'utf-8',
-                timeout: 10000,
-              }
-            )
-              .trim()
-              .split(/\r?\n/)
-              .filter(Boolean);
-
-            log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-            log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
-          } catch (error) {
-            logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
-          }
-
-          if (isNewLimaSession) {
-            // Notify UI: sync complete (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'ready',
-                message: 'Sandbox ready',
-                detail: `Synced ${syncResult.fileCount} files`,
-                fileCount: syncResult.fileCount,
-                totalSize: syncResult.totalSize,
-              },
-            });
-          }
-        } else {
-          logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          const limaSyncBlockReason = getSandboxExecutionBlockReason({
-            sandboxEnabled,
-            platform: process.platform,
-            sandbox,
-            syncFailed: true,
-            syncError: syncResult.error,
-          });
-          if (limaSyncBlockReason) {
-            if (isNewLimaSession) {
-              this.sendToRenderer({
-                type: 'sandbox.sync',
-                payload: {
-                  sessionId: session.id,
-                  phase: 'error',
-                  message: 'Sandbox file sync failed',
-                  detail: limaSyncBlockReason,
-                },
-              });
-            }
-            const errorMsg: Message = {
-              id: uuidv4(),
-              sessionId: session.id,
-              role: 'assistant',
-              content: [
-                { type: 'text', text: `**Sandbox indisponible** : ${limaSyncBlockReason}` },
-              ],
-              timestamp: Date.now(),
-            };
-            this.sendMessage(session.id, errorMsg);
-            this.sendTraceUpdate(session.id, thinkingStepId, {
-              status: 'error',
-              title: 'Sandbox sync failed',
-            });
-            return;
-          }
-        }
-      }
+      sandboxPath = sandboxBootstrap.sandboxPath;
+      useSandboxIsolation = sandboxBootstrap.useSandboxIsolation;
 
       // Check if current user message includes images
       const lastUserMessage =
@@ -1974,83 +1211,12 @@ ${hints.join('\n')}
 
       let contextualPrompt = prompt;
       if (!cachedSession) {
-        // Cold start: inject recent history into prompt if available
-        const anchoredMessages = messagesAfterCompactionAnchor(existingMessages);
-        const { summary: compactionSummary } = findLastCompactionAnchor(existingMessages);
-        const conversationMessages = anchoredMessages.filter(
-          (msg) => msg.role === 'user' || msg.role === 'assistant'
-        );
-        // Filter out messages that contain images (images can't be serialized into text preamble)
-        const textOnlyMessages = conversationMessages.filter(
-          (msg) => !msg.content.some((c) => (c as { type?: string }).type === 'image')
-        );
-        const historyMessages =
-          textOnlyMessages.length > 0 &&
-          textOnlyMessages[textOnlyMessages.length - 1]?.role === 'user'
-            ? textOnlyMessages.slice(0, -1)
-            : textOnlyMessages;
-
-        if (historyMessages.length > 0) {
-          // Content-aware chars-per-token estimation (CJK text uses ~1.5 chars/token vs ~4 for English)
-          const contextWindow = piModel.contextWindow || 128000;
-          const historyBudgetRatio = provider === 'ollama' && contextWindow < 16384 ? 0.15 : 0.3;
-          const historyTokenBudget = Math.floor(contextWindow * historyBudgetRatio);
-
-          // Sample recent messages to estimate chars-per-token ratio. Sampling the
-          // full serialized form (text + thinking + tool blocks) gives a better CJK
-          // ratio estimate than sampling text only.
-          const sampleText = historyMessages
-            .slice(-3)
-            .map((m) => serializeMessageContentForHistory(m.content))
-            .join('');
-          const charsPerToken = estimateCharsPerToken(sampleText);
-          const historyCharBudget = Math.floor(historyTokenBudget * charsPerToken);
-
-          const historyItems: string[] = [];
-          let charCount = 0;
-          // Build from newest to oldest, then reverse. We preserve thinking and
-          // tool blocks (not just text) so providers requiring reasoning/tool-call
-          // replay (DeepSeek V4 Flash, and any thinking-capable model after a
-          // cwd switch) continue to function after a cold start. See #162 Bug B.
-          for (let i = historyMessages.length - 1; i >= 0; i--) {
-            const msg = historyMessages[i];
-            const serialized = serializeMessageContentForHistory(msg.content);
-            if (serialized.length === 0) continue;
-            const roleTag = msg.role === 'user' ? 'user' : 'assistant';
-            const entry = `<turn role="${roleTag}">${serialized}</turn>`;
-            if (charCount + entry.length > historyCharBudget) break;
-            charCount += entry.length;
-            historyItems.unshift(entry);
-          }
-
-          if (historyItems.length > 0) {
-            const trimmedCount = historyMessages.length - historyItems.length;
-            const compactionPrefix = compactionSummary
-              ? `<compaction_summary tokens_before="${compactionSummary.tokensBefore}">\n${escapeXmlText(compactionSummary.summary)}\n</compaction_summary>\n`
-              : '';
-            const historyNote =
-              trimmedCount > 0
-                ? `[${trimmedCount} older messages omitted]\n`
-                : compactionSummary
-                  ? '[older messages compacted manually]\n'
-                  : '';
-            const preamble = `<conversation_history>\n${compactionPrefix}${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
-            contextualPrompt = `${preamble}\n\n${prompt}`;
-            log(
-              '[ClaudeAgentRunner] Cold start: injecting',
-              historyItems.length,
-              'of',
-              historyMessages.length,
-              'history messages (budget:',
-              historyCharBudget,
-              'chars, used:',
-              charCount,
-              ', charsPerToken:',
-              charsPerToken.toFixed(2),
-              ')'
-            );
-          }
-        }
+        contextualPrompt = buildColdStartContextualPrompt({
+          prompt,
+          existingMessages,
+          provider,
+          contextWindow: piModel.contextWindow || 128000,
+        });
       } else {
         // Reusing session — SDK already has the full conversation context
         logCtx('[ClaudeAgentRunner] Reusing existing SDK session for:', session.id);
@@ -2284,13 +1450,16 @@ Tool routing:
       const bashDefinition = createBashToolDefinition(effectiveCwd, bashOptions);
 
       // Inject a default 120s timeout for bash commands when the model omits one
-      const withTimeout = ClaudeAgentRunner.wrapBashToolWithDefaultTimeout([
-        bashDefinition as ToolDefinition,
-      ]);
+      const withTimeout = wrapBashToolWithDefaultTimeout([bashDefinition as ToolDefinition]);
 
       // Wrap the bash tool to intercept sudo commands and request passwords.
       // Passed via customTools to override the SDK built-in bash tool.
-      const wrappedBashTools = this.wrapBashToolForSudo(withTimeout, session.id, effectiveCwd);
+      const wrappedBashTools = wrapBashToolForSudo(
+        withTimeout,
+        session.id,
+        effectiveCwd,
+        this.requestSudoPassword
+      );
       const wrappedBash = wrappedBashTools.find((tool) => tool.name === 'bash');
       const allCustomTools = [
         ...(wrappedBash ? [wrappedBash] : []),
@@ -2394,24 +1563,12 @@ Tool routing:
 
         // Install permission-gating hook via the SDK's tool_call extension event.
         // This must happen once per new session — the hook persists across reuses.
-        this.installPermissionHook(piSession, session.id);
+        installPermissionHook(piSession, session.id, this.requestPermission, (toolName) =>
+          this.getToolDisplayName(toolName)
+        );
 
         // Store session for reuse — evict oldest if cache is full
-        if (this.piSessions.size >= ClaudeAgentRunner.MAX_CACHED_SESSIONS) {
-          const oldestKey = this.piSessions.keys().next().value;
-          if (oldestKey) {
-            const oldest = this.piSessions.get(oldestKey);
-            if (oldest) {
-              try {
-                oldest.session.dispose();
-              } catch (e) {
-                logWarn('[ClaudeAgentRunner] dispose error on eviction:', e);
-              }
-            }
-            this.piSessions.delete(oldestKey);
-            log('[ClaudeAgentRunner] Evicted oldest cached session:', oldestKey);
-          }
-        }
+        evictOldestPiSession(this.piSessions);
         this.piSessions.set(session.id, {
           session: piSession,
           modelId: piModel.id,
