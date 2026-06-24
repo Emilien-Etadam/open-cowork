@@ -8,6 +8,7 @@ export type ParsedSlashCommand =
 export interface SlashCommandDefinition {
   id: SlashCommandId;
   command: `/${SlashCommandId}`;
+  aliases?: readonly string[];
   descriptionKey: `chat.slashCommands.${SlashCommandId}.description`;
 }
 
@@ -20,12 +21,18 @@ export const SLASH_COMMAND_DEFINITIONS: readonly SlashCommandDefinition[] = [
   {
     id: 'handoff',
     command: '/handoff',
+    aliases: ['handsoff'],
     descriptionKey: 'chat.slashCommands.handoff.description',
   },
 ] as const;
 
 const COMPACT_COMMAND_RE = /^\/compact(?:\s+([\s\S]*))?$/i;
 const HANDOFF_COMMAND_RE = /^\/handoff(?:\s+([\s\S]*))?$/i;
+const HANDSOFF_COMMAND_RE = /^\/handsoff(?:\s+([\s\S]*))?$/i;
+
+function getSlashCommandNames(definition: SlashCommandDefinition): string[] {
+  return [definition.command.slice(1), ...(definition.aliases ?? [])];
+}
 
 export function getSlashCommandQuery(input: string): string | null {
   if (!input.startsWith('/')) {
@@ -46,13 +53,13 @@ export function filterSlashCommands(query: string): SlashCommandDefinition[] {
   }
 
   return SLASH_COMMAND_DEFINITIONS.filter((definition) =>
-    definition.command.slice(1).toLowerCase().startsWith(query)
+    getSlashCommandNames(definition).some((name) => name.toLowerCase().startsWith(query))
   );
 }
 
 export function hasExactSlashCommandQuery(query: string): boolean {
-  return SLASH_COMMAND_DEFINITIONS.some(
-    (definition) => definition.command.slice(1).toLowerCase() === query
+  return SLASH_COMMAND_DEFINITIONS.some((definition) =>
+    getSlashCommandNames(definition).some((name) => name.toLowerCase() === query)
   );
 }
 
@@ -71,6 +78,12 @@ export function parseSlashCommand(input: string): ParsedSlashCommand {
   const handoffMatch = trimmed.match(HANDOFF_COMMAND_RE);
   if (handoffMatch) {
     const instructions = handoffMatch[1]?.trim();
+    return { kind: 'handoff', instructions: instructions || undefined };
+  }
+
+  const handsoffMatch = trimmed.match(HANDSOFF_COMMAND_RE);
+  if (handsoffMatch) {
+    const instructions = handsoffMatch[1]?.trim();
     return { kind: 'handoff', instructions: instructions || undefined };
   }
 
