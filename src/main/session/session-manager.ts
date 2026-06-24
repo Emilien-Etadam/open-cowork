@@ -497,6 +497,7 @@ export class SessionManager {
   ): Promise<{
     success: boolean;
     newSession?: Session;
+    initialContent?: ContentBlock[];
     errorKey?: string;
     error?: string;
   }> {
@@ -555,7 +556,7 @@ export class SessionManager {
         session.memoryEnabled
       );
 
-      return { success: true, newSession };
+      return { success: true, newSession, initialContent: content };
     } catch (error) {
       const errorKey =
         error instanceof Error && error.message.startsWith('errHandoff')

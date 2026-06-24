@@ -27,12 +27,14 @@ describe('slash command suggestions', () => {
     expect(filterSlashCommands('')).toEqual([...SLASH_COMMAND_DEFINITIONS]);
     expect(filterSlashCommands('com').map((item) => item.id)).toEqual(['compact']);
     expect(filterSlashCommands('hand').map((item) => item.id)).toEqual(['handoff']);
+    expect(filterSlashCommands('handsof').map((item) => item.id)).toEqual(['handoff']);
     expect(filterSlashCommands('xyz')).toEqual([]);
   });
 
-  it('detects exact command queries', () => {
+  it('detects exact command queries including aliases', () => {
     expect(hasExactSlashCommandQuery('compact')).toBe(true);
     expect(hasExactSlashCommandQuery('handoff')).toBe(true);
+    expect(hasExactSlashCommandQuery('handsoff')).toBe(true);
     expect(hasExactSlashCommandQuery('com')).toBe(false);
   });
 });
@@ -51,6 +53,14 @@ describe('parseSlashCommand', () => {
 
   it('detects bare /handoff', () => {
     expect(parseSlashCommand('/handoff')).toEqual({ kind: 'handoff', instructions: undefined });
+  });
+
+  it('accepts the common /handsoff typo as handoff', () => {
+    expect(parseSlashCommand('/handsoff')).toEqual({ kind: 'handoff', instructions: undefined });
+    expect(parseSlashCommand('/handsoff focus on tests')).toEqual({
+      kind: 'handoff',
+      instructions: 'focus on tests',
+    });
   });
 
   it('detects /handoff with custom instructions', () => {

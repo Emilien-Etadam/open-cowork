@@ -719,38 +719,59 @@ export function useIPC() {
         const result = await invoke<{
           success: boolean;
           newSession?: Session;
+          initialContent?: ContentBlock[];
           errorKey?: string;
           error?: string;
-        }>({
+        } | null>({
           type: 'session.handoff',
           payload: { sessionId, customInstructions },
         });
 
-        if (result.success && result.newSession) {
-          addSession(result.newSession);
-          useAppStore.getState().setActiveSession(result.newSession.id);
-          const mockStepId = `pending-handoff-${Date.now()}`;
-          activateNextTurn(result.newSession.id, mockStepId);
-          useAppStore.getState().setGlobalNotice({
-            id: `notice-handoff-${Date.now()}`,
-            type: 'success',
-            message: i18n.t('chat.handoffSuccess'),
-            messageKey: 'chat.handoffSuccess',
-          });
-        } else {
+        if (!result?.success || !result.newSession) {
           setLoading(false);
-          const noticeKey = result.errorKey || 'errHandoffFailed';
+          const noticeKey = result?.errorKey || 'errHandoffFailed';
           useAppStore.getState().setGlobalNotice({
             id: `notice-handoff-${Date.now()}`,
             type: 'warning',
             message: i18n.t(`chat.handoffErrors.${noticeKey}`, {
-              defaultValue: result.error || noticeKey,
+              defaultValue: result?.error || noticeKey,
             }),
             messageKey: `chat.handoffErrors.${noticeKey}`,
           });
+          return { success: false, errorKey: noticeKey };
         }
 
-        return result;
+        const { newSession, initialContent } = result;
+        addSession(newSession);
+        const store = useAppStore.getState();
+        store.setShowSettings(false);
+        store.setActiveSession(newSession.id);
+
+        const content: ContentBlock[] =
+          initialContent && initialContent.length > 0
+            ? initialContent
+            : [{ type: 'text', text: '' }];
+
+        const userMessage: Message = {
+          id: `msg-user-${Date.now()}`,
+          sessionId: newSession.id,
+          role: 'user',
+          content,
+          timestamp: Date.now(),
+        };
+        addMessage(newSession.id, userMessage);
+        startExecutionClock(newSession.id, userMessage.timestamp);
+
+        const mockStepId = `pending-handoff-${Date.now()}`;
+        activateNextTurn(newSession.id, mockStepId);
+        store.setGlobalNotice({
+          id: `notice-handoff-${Date.now()}`,
+          type: 'success',
+          message: i18n.t('chat.handoffSuccess'),
+          messageKey: 'chat.handoffSuccess',
+        });
+
+        return { success: true };
       } catch (error) {
         setLoading(false);
         useAppStore.getState().setGlobalNotice({
@@ -763,7 +784,7 @@ export function useIPC() {
         return { success: false, errorKey: 'errHandoffFailed' };
       }
     },
-    [invoke, addSession, setLoading, activateNextTurn]
+    [invoke, addSession, addMessage, setLoading, activateNextTurn, startExecutionClock]
   );
 
   const stopSession = useCallback(
