@@ -1347,75 +1347,85 @@ ${hints.join('\n')}
             });
           }
 
-          // Copy skills to sandbox ~/.claude/skills/
-          const builtinSkillsPath = this.getBuiltinSkillsPath();
-          try {
-            const distro = sandbox.wslStatus!.distro!;
-            const sandboxSkillsPath = `${sandboxPath}/.claude/skills`;
+          // Copy skills to sandbox ~/.claude/skills/ (first message only)
+          if (isNewSession) {
+            const builtinSkillsPath = this.getBuiltinSkillsPath();
+            try {
+              const distro = sandbox.wslStatus!.distro!;
+              const sandboxSkillsPath = `${sandboxPath}/.claude/skills`;
 
-            // Create .claude/skills directory in sandbox
-            execFileSync('wsl', ['-d', distro, '-e', 'mkdir', '-p', sandboxSkillsPath], {
-              encoding: 'utf-8',
-              timeout: 10000,
-            });
-
-            if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
-              // Use rsync via execFileSync with array args to avoid shell injection
-              const wslSourcePath = pathConverter.toWSL(builtinSkillsPath);
-              log(
-                `[ClaudeAgentRunner] Copying skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
-              );
-
-              execFileSync(
-                'wsl',
-                ['-d', distro, '-e', 'rsync', '-av', wslSourcePath + '/', sandboxSkillsPath + '/'],
-                {
-                  encoding: 'utf-8',
-                  timeout: 120000, // 2 min timeout for large skill directories
-                }
-              );
-            }
-
-            const appSkillsDir = this.getRuntimeSkillsDir();
-            if (!fs.existsSync(appSkillsDir)) {
-              fs.mkdirSync(appSkillsDir, { recursive: true });
-            }
-            this.syncUserSkillsToAppDir(appSkillsDir);
-            this.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
-
-            if (fs.existsSync(appSkillsDir)) {
-              const wslSourcePath = pathConverter.toWSL(appSkillsDir);
-              log(
-                `[ClaudeAgentRunner] Copying app skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
-              );
-
-              execFileSync(
-                'wsl',
-                ['-d', distro, '-e', 'rsync', '-avL', wslSourcePath + '/', sandboxSkillsPath + '/'],
-                {
-                  encoding: 'utf-8',
-                  timeout: 120000, // 2 min timeout for large skill directories
-                }
-              );
-            }
-
-            // List copied skills for verification
-            const copiedSkills = execFileSync(
-              'wsl',
-              ['-d', distro, '-e', 'ls', sandboxSkillsPath],
-              {
+              // Create .claude/skills directory in sandbox
+              execFileSync('wsl', ['-d', distro, '-e', 'mkdir', '-p', sandboxSkillsPath], {
                 encoding: 'utf-8',
                 timeout: 10000,
-              }
-            )
-              .trim()
-              .split(/\r?\n/)
-              .filter(Boolean);
+              });
 
-            log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-            log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
-          } catch (error) {
-            logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+              if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
+                // Use rsync via execFileSync with array args to avoid shell injection
+                const wslSourcePath = pathConverter.toWSL(builtinSkillsPath);
+                log(
+                  `[ClaudeAgentRunner] Copying skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
+                );
+
+                execFileSync(
+                  'wsl',
+                  ['-d', distro, '-e', 'rsync', '-a', wslSourcePath + '/', sandboxSkillsPath + '/'],
+                  {
+                    encoding: 'utf-8',
+                    timeout: 120000, // 2 min timeout for large skill directories
+                  }
+                );
+              }
+
+              const appSkillsDir = this.getRuntimeSkillsDir();
+              if (!fs.existsSync(appSkillsDir)) {
+                fs.mkdirSync(appSkillsDir, { recursive: true });
+              }
+              this.syncUserSkillsToAppDir(appSkillsDir);
+              this.syncConfiguredSkillsToRuntimeDir(appSkillsDir);
+
+              if (fs.existsSync(appSkillsDir)) {
+                const wslSourcePath = pathConverter.toWSL(appSkillsDir);
+                log(
+                  `[ClaudeAgentRunner] Copying app skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
+                );
+
+                execFileSync(
+                  'wsl',
+                  [
+                    '-d',
+                    distro,
+                    '-e',
+                    'rsync',
+                    '-aL',
+                    wslSourcePath + '/',
+                    sandboxSkillsPath + '/',
+                  ],
+                  {
+                    encoding: 'utf-8',
+                    timeout: 120000, // 2 min timeout for large skill directories
+                  }
+                );
+              }
+
+              // List copied skills for verification
+              const copiedSkills = execFileSync(
+                'wsl',
+                ['-d', distro, '-e', 'ls', sandboxSkillsPath],
+                {
+                  encoding: 'utf-8',
+                  timeout: 10000,
+                }
+              )
+                .trim()
+                .split(/\r?\n/)
+                .filter(Boolean);
+
+              log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
+              log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
+            } catch (error) {
+              logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+            }
           }
 
           if (isNewSession) {

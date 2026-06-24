@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
-import { log } from '../utils/logger';
 import type Store from 'electron-store';
 import type { AppConfig } from './config-store';
 
@@ -34,7 +33,7 @@ function writeMigrationState(state: ConfigMigrationState): void {
 /**
  * One-time migrations for persisted app config.
  */
-export function runConfigMigrations(store: Store<AppConfig>): void {
+export function runConfigMigrations(_store: Store<AppConfig>): void {
   if (process.platform !== 'win32') {
     return;
   }
@@ -44,10 +43,6 @@ export function runConfigMigrations(store: Store<AppConfig>): void {
     return;
   }
 
-  if (store.get('sandboxEnabled') === false) {
-    store.set('sandboxEnabled', true);
-    log('[ConfigStore] Migrated Windows installs to sandboxEnabled=true');
-  }
-
+  // Record migration without overriding an explicit user choice (sandboxEnabled=false).
   writeMigrationState({ ...state, win32SandboxDefault: true });
 }

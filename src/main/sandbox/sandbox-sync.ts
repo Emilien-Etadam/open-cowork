@@ -15,10 +15,39 @@
  */
 
 import { execFile } from 'child_process';
+import { createHash } from 'crypto';
 import { promisify } from 'util';
 import { log, logError } from '../utils/logger';
 import { pathConverter } from './wsl-bridge';
 import { isPathWithinRoot } from '../tools/path-containment';
+
+const SYNC_MANIFEST_FILE = '.opencowork-sync.json';
+
+function buildWorkspaceFingerprint(windowsPath: string): string {
+  return createHash('sha256').update(windowsPath.trim().toLowerCase()).digest('hex');
+}
+
+interface SandboxSyncManifest {
+  windowsPath: string;
+  workspaceFingerprint: string;
+  syncedAt: number;
+}
+
+function parseManifest(raw: string): SandboxSyncManifest | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<SandboxSyncManifest>;
+    if (
+      typeof parsed.windowsPath === 'string' &&
+      typeof parsed.workspaceFingerprint === 'string' &&
+      typeof parsed.syncedAt === 'number'
+    ) {
+      return parsed as SandboxSyncManifest;
+    }
+  } catch {
+    // Ignore invalid manifest files.
+  }
+  return null;
+}
 
 const execFileAsync = promisify(execFile);
 
@@ -142,6 +171,16 @@ export class SandboxSync {
     log(`[SandboxSync]   Sandbox path: ${sandboxPath}`);
 
     try {
+      const restored = await this.tryRestorePersistedSandbox(
+        windowsPath,
+        sessionId,
+        distro,
+        sandboxPath
+      );
+      if (restored) {
+        return restored;
+      }
+
       // Create sandbox directory
       await this.wslExec(distro, `mkdir -p '${this.shellEscapePath(sandboxPath)}'`);
 
@@ -152,8 +191,8 @@ export class SandboxSync {
       // Build rsync exclude arguments
       const excludeArgs = SYNC_EXCLUDES.map((e) => `--exclude="${e}"`).join(' ');
 
-      // Sync files from Windows to sandbox
-      const rsyncCmd = `rsync -av --delete ${excludeArgs} '${this.shellEscapePath(wslSourcePath)}/' '${this.shellEscapePath(sandboxPath)}/'`;
+      // Sync files from Windows to sandbox (no -v: less overhead on large trees)
+      const rsyncCmd = `rsync -a --delete ${excludeArgs} '${this.shellEscapePath(wslSourcePath)}/' '${this.shellEscapePath(sandboxPath)}/'`;
       log(`[SandboxSync] Running: ${rsyncCmd}`);
 
       await this.wslExec(distro, rsyncCmd, 300000); // 5 min timeout
@@ -170,6 +209,8 @@ export class SandboxSync {
 
       const fileCount = parseInt(countResult.stdout.trim()) || 0;
       const totalSize = parseInt(sizeResult.stdout.trim()) || 0;
+
+      await this.writeManifest(distro, sandboxPath, windowsPath);
 
       // Store session info
       const session: SyncSession = {
@@ -539,6 +580,89 @@ export class SandboxSync {
    * single-quote, reopen quote) which is the standard POSIX escaping technique.
    * The returned value does NOT include the surrounding single-quote delimiters.
    */
+  private static async tryRestorePersistedSandbox(
+    windowsPath: string,
+    sessionId: string,
+    distro: string,
+    sandboxPath: string
+  ): Promise<SyncResult | null> {
+    try {
+      await this.wslExec(distro, `test -d '${this.shellEscapePath(sandboxPath)}'`);
+    } catch {
+      return null;
+    }
+
+    const manifest = await this.readManifest(distro, sandboxPath);
+    const fingerprint = buildWorkspaceFingerprint(windowsPath);
+    if (!manifest || manifest.workspaceFingerprint !== fingerprint) {
+      return null;
+    }
+
+    const countResult = await this.wslExec(
+      distro,
+      `find '${this.shellEscapePath(sandboxPath)}' -type f | wc -l`
+    );
+    const sizeResult = await this.wslExec(
+      distro,
+      `du -sb '${this.shellEscapePath(sandboxPath)}' | cut -f1`
+    );
+    const fileCount = parseInt(countResult.stdout.trim()) || 0;
+    const totalSize = parseInt(sizeResult.stdout.trim()) || 0;
+
+    const session: SyncSession = {
+      sessionId,
+      windowsPath,
+      sandboxPath,
+      distro,
+      initialized: true,
+      fileCount,
+      totalSize,
+      lastSyncTime: manifest.syncedAt,
+    };
+    sessions.set(sessionId, session);
+    log(
+      `[SandboxSync] Reused persisted sandbox for session ${sessionId} (${fileCount} files, ${this.formatSize(totalSize)})`
+    );
+
+    return {
+      success: true,
+      sandboxPath,
+      fileCount,
+      totalSize,
+    };
+  }
+
+  private static async readManifest(
+    distro: string,
+    sandboxPath: string
+  ): Promise<SandboxSyncManifest | null> {
+    try {
+      const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
+      const result = await this.wslExec(distro, `cat '${this.shellEscapePath(manifestPath)}'`);
+      return parseManifest(result.stdout.trim());
+    } catch {
+      return null;
+    }
+  }
+
+  private static async writeManifest(
+    distro: string,
+    sandboxPath: string,
+    windowsPath: string
+  ): Promise<void> {
+    const manifest: SandboxSyncManifest = {
+      windowsPath,
+      workspaceFingerprint: buildWorkspaceFingerprint(windowsPath),
+      syncedAt: Date.now(),
+    };
+    const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
+    const payload = JSON.stringify(manifest);
+    await this.wslExec(
+      distro,
+      `printf '%s' '${payload.replace(/'/g, `'\\''`)}' > '${this.shellEscapePath(manifestPath)}'`
+    );
+  }
+
   private static shellEscapePath(p: string): string {
     return p.replace(/'/g, "'\\''");
   }

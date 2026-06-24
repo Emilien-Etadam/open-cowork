@@ -1,24 +1,38 @@
 import { EventEmitter } from 'events';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ChildProcess, SpawnOptions } from 'child_process';
-import { createWslSandboxBashOperations } from '../../main/claude/wsl-sandbox-bash-operations';
+import {
+  createWslSandboxBashOperations,
+  resetWslSandboxBashSessionsForTests,
+} from '../../main/claude/wsl-sandbox-bash-operations';
 
 class FakeChildProcess extends EventEmitter {
+  stdin = new EventEmitter();
   stdout = new EventEmitter();
   stderr = new EventEmitter();
   kill = vi.fn();
 
   constructor(readonly pid = 4242) {
     super();
+    this.stdin.write = vi.fn((script: string, cb?: (error?: Error | null) => void) => {
+      const markerDone = '__OCOWORK_BASH_DONE__';
+      const markerExit = '__OCOWORK_BASH_EXIT:';
+      if (script.includes('pwd')) {
+        this.stdout.emit(
+          'data',
+          Buffer.from(`/home/ubuntu/.claude/sandbox/session-1\n${markerExit}0\n${markerDone}\n`)
+        );
+      } else {
+        this.stdout.emit('data', Buffer.from(`${markerExit}0\n${markerDone}\n`));
+      }
+      cb?.(null);
+      return true;
+    }) as unknown as ChildProcess['stdin']['write'];
   }
 }
 
-function createSpawnMock(children: FakeChildProcess[]) {
+function createSpawnMock(child: FakeChildProcess) {
   return vi.fn((command: string, args: string[], _options: SpawnOptions) => {
-    const child = children.shift();
-    if (!child) {
-      throw new Error(`Unexpected spawn: ${command} ${args.join(' ')}`);
-    }
     return Object.assign(child, {
       spawnargs: [command, ...args],
       spawnfile: command,
@@ -33,9 +47,14 @@ function createSpawnMock(children: FakeChildProcess[]) {
 describe('wsl sandbox bash operations', () => {
   const sandboxPath = '/home/ubuntu/.claude/sandbox/session-1';
 
-  it('runs commands inside WSL with sandbox cwd and virtual path rewrite', async () => {
+  afterEach(() => {
+    resetWslSandboxBashSessionsForTests();
+    vi.restoreAllMocks();
+  });
+
+  it('reuses a persistent WSL bash session across commands', async () => {
     const child = new FakeChildProcess();
-    const spawnProcess = createSpawnMock([child]);
+    const spawnProcess = createSpawnMock(child);
     const ops = createWslSandboxBashOperations({
       distro: 'Ubuntu-24.04',
       sandboxPath,
@@ -43,28 +62,22 @@ describe('wsl sandbox bash operations', () => {
     });
 
     const chunks: Buffer[] = [];
-    const promise = ops.exec('pwd && ls /workspace', '/workspace', {
+    await ops.exec('pwd', '/workspace', {
       onData: (chunk) => chunks.push(chunk as Buffer),
       signal: undefined,
       timeout: 30,
       env: undefined,
     });
+    await ops.exec('echo ok', '/workspace', {
+      onData: () => undefined,
+      signal: undefined,
+      timeout: 30,
+      env: undefined,
+    });
 
-    child.stdout.emit('data', Buffer.from('/home/ubuntu/.claude/sandbox/session-1\n'));
-    child.emit('close', 0);
-
-    await expect(promise).resolves.toEqual({ exitCode: 0 });
     expect(spawnProcess).toHaveBeenCalledTimes(1);
     const [, args] = spawnProcess.mock.calls[0]!;
-    expect(args).toEqual([
-      '-d',
-      'Ubuntu-24.04',
-      '-e',
-      'bash',
-      '-c',
-      expect.stringContaining(`cd '${sandboxPath}'`),
-    ]);
-    expect(args[5]).toContain(`ls ${sandboxPath}`);
+    expect(args).toEqual(['-d', 'Ubuntu-24.04', '-e', 'bash', '--noprofile', '--norc']);
     expect(Buffer.concat(chunks).toString()).toContain(sandboxPath);
   });
 
@@ -76,7 +89,7 @@ describe('wsl sandbox bash operations', () => {
     const ops = createWslSandboxBashOperations({
       distro: 'Ubuntu-24.04',
       sandboxPath,
-      spawnProcess: createSpawnMock([child]),
+      spawnProcess: createSpawnMock(child),
     });
 
     await expect(
