@@ -4,6 +4,51 @@ import { app } from 'electron';
 import path from 'path';
 import { log, logError, logWarn } from '../utils/logger';
 
+function resolveChromeExecutable(platform: NodeJS.Platform): string {
+  if (platform === 'darwin') {
+    return '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+  }
+
+  if (platform === 'win32') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const fs = require('fs') as typeof import('fs');
+    const candidates = [
+      path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+      path.join(
+        process.env['PROGRAMFILES'] || 'C:\\Program Files',
+        'Google',
+        'Chrome',
+        'Application',
+        'chrome.exe'
+      ),
+      path.join(
+        process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)',
+        'Google',
+        'Chrome',
+        'Application',
+        'chrome.exe'
+      ),
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    ];
+    for (const candidate of candidates) {
+      if (candidate && fs.existsSync(candidate)) {
+        return candidate;
+      }
+    }
+    return 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fs = require('fs') as typeof import('fs');
+  const linuxCandidates = ['google-chrome', 'google-chrome-stable', 'chromium-browser', 'chromium'];
+  for (const candidate of linuxCandidates) {
+    if (candidate.includes(path.sep) && fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return 'google-chrome';
+}
+
 /**
  * Check if Chrome debugging port is accessible.
  */
@@ -87,69 +132,35 @@ export async function startChromeWithDebugging(): Promise<void> {
     'about:blank',
   ];
 
-  let chromePath: string;
-  if (platform === 'darwin') {
-    chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-  } else if (platform === 'win32') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require('fs');
-    const candidates = [
-      path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-      path.join(
-        process.env['PROGRAMFILES'] || 'C:\\Program Files',
-        'Google',
-        'Chrome',
-        'Application',
-        'chrome.exe'
-      ),
-      path.join(
-        process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)',
-        'Google',
-        'Chrome',
-        'Application',
-        'chrome.exe'
-      ),
-    ];
-    chromePath = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-    for (const candidate of candidates) {
-      if (candidate && fs.existsSync(candidate)) {
-        chromePath = candidate;
-        break;
-      }
-    }
-  } else {
-    chromePath = 'google-chrome';
-  }
+  const chromePath = resolveChromeExecutable(platform);
 
   log(`[MCPManager] Chrome path: ${chromePath}`);
   log(`[MCPManager] Chrome args: ${JSON.stringify(chromeArgs)}`);
 
-  try {
+  await new Promise<void>((resolve, reject) => {
     const chromeProcess = spawn(chromePath, chromeArgs, {
       detached: true,
       stdio: 'ignore',
     });
-    chromeProcess.unref();
 
-    log(`[MCPManager] Chrome spawned successfully`);
-  } catch (error: unknown) {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw new Error(
-        `Chrome executable not found at: ${chromePath}. Please install Google Chrome.`
-      );
-    }
-    logWarn(`[MCPManager] Chrome startup command completed with warning`);
-    logWarn(
-      `[MCPManager] Error message: ${error instanceof Error ? error.message : String(error)}`
-    );
-    const spawnErr = error as { stdout?: string; stderr?: string };
-    if (spawnErr.stdout) {
-      log(`[MCPManager] stdout: ${spawnErr.stdout}`);
-    }
-    if (spawnErr.stderr) {
-      log(`[MCPManager] stderr: ${spawnErr.stderr}`);
-    }
-  }
+    chromeProcess.once('error', (error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') {
+        reject(
+          new Error(
+            `Chrome executable not found (${chromePath}). Please install Google Chrome or Chromium.`
+          )
+        );
+        return;
+      }
+      reject(error);
+    });
+
+    chromeProcess.once('spawn', () => {
+      chromeProcess.unref();
+      log(`[MCPManager] Chrome spawned successfully`);
+      resolve();
+    });
+  });
 }
 
 /**
