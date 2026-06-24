@@ -37,7 +37,7 @@ function makeBashTool(execute = vi.fn(async () => ({ content: [{ type: 'text', t
 
 function makeCachedSession(id: string): CachedPiSession {
   return {
-    session: { dispose: vi.fn() } as CachedPiSession['session'],
+    session: { dispose: vi.fn() } as unknown as CachedPiSession['session'],
     modelId: `model-${id}`,
     thinkingLevel: 'off',
     runtimeSignature: `sig-${id}`,
@@ -75,7 +75,7 @@ describe('disposeCachedPiSession', () => {
     const dispose = vi.fn();
     disposeCachedPiSession({
       ...makeCachedSession('a'),
-      session: { dispose } as CachedPiSession['session'],
+      session: { dispose } as unknown as CachedPiSession['session'],
     });
     expect(dispose).toHaveBeenCalledOnce();
   });
@@ -87,7 +87,7 @@ describe('disposeCachedPiSession', () => {
     expect(() =>
       disposeCachedPiSession({
         ...makeCachedSession('a'),
-        session: { dispose } as CachedPiSession['session'],
+        session: { dispose } as unknown as CachedPiSession['session'],
       })
     ).not.toThrow();
   });
@@ -190,7 +190,7 @@ describe('installPermissionHook', () => {
     installPermissionHook(
       { agent: { setBeforeToolCall, _beforeToolCall: sdkBeforeToolCall } } as never,
       'session-1',
-      vi.fn(async () => 'allow_always'),
+      vi.fn(async (): Promise<'allow_always'> => 'allow_always'),
       () => 'bash'
     );
 
@@ -209,14 +209,14 @@ describe('wrapBashToolWithDefaultTimeout', () => {
     const execute = vi.fn(async () => ({ content: [{ type: 'text', text: 'done' }] }));
     const [wrapped] = wrapBashToolWithDefaultTimeout([makeBashTool(execute)]);
 
-    await wrapped.execute('id-1', { command: 'sleep 1' }, undefined, undefined, {});
+    await wrapped.execute('id-1', { command: 'sleep 1' }, undefined, undefined, {} as never);
 
     expect(execute).toHaveBeenCalledWith(
       'id-1',
       { command: 'sleep 1', timeout: 120 },
       undefined,
       undefined,
-      {}
+      {} as never
     );
   });
 
@@ -224,14 +224,20 @@ describe('wrapBashToolWithDefaultTimeout', () => {
     const execute = vi.fn(async () => ({ content: [{ type: 'text', text: 'done' }] }));
     const [wrapped] = wrapBashToolWithDefaultTimeout([makeBashTool(execute)]);
 
-    await wrapped.execute('id-1', { command: 'sleep 1', timeout: 30 }, undefined, undefined, {});
+    await wrapped.execute(
+      'id-1',
+      { command: 'sleep 1', timeout: 30 },
+      undefined,
+      undefined,
+      {} as never
+    );
 
     expect(execute).toHaveBeenCalledWith(
       'id-1',
       { command: 'sleep 1', timeout: 30 },
       undefined,
       undefined,
-      {}
+      {} as never
     );
   });
 });
@@ -260,7 +266,7 @@ describe('wrapBashToolForSudo', () => {
       { command: 'echo hi' },
       undefined,
       undefined,
-      {}
+      {} as never
     );
 
     expect(execute).toHaveBeenCalledOnce();
@@ -282,7 +288,7 @@ describe('wrapBashToolForSudo', () => {
       { command: 'sudo apt update' },
       undefined,
       undefined,
-      {}
+      {} as never
     );
 
     expect(result).toEqual({
@@ -318,7 +324,7 @@ describe('wrapBashToolForSudo', () => {
       { command: 'sudo echo hi' },
       undefined,
       undefined,
-      {}
+      {} as never
     );
 
     await Promise.resolve();
