@@ -180,6 +180,15 @@ async function waitForDevServer(url: string, maxAttempts = 30, intervalMs = 500)
 // without the old process blocking the new one during async cleanup.
 const isDev = !!process.env.VITE_DEV_SERVER_URL;
 const ELECTRON_DEVTOOLS_DEBUG_PORT = '9223';
+const APP_DISPLAY_NAME = 'Open Cowork';
+const APP_ID = 'com.opencowork.app';
+
+if (!app.isPackaged) {
+  app.setName(APP_DISPLAY_NAME);
+}
+if (process.platform === 'win32') {
+  app.setAppUserModelId(APP_ID);
+}
 
 // Enable Chrome DevTools Protocol in dev mode so the renderer can be inspected
 // via chrome://inspect or connected to by Puppeteer/Playwright at localhost:9223.
@@ -317,32 +326,43 @@ function buildApplicationMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+function getResourcePath(fileName: string): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, fileName)
+    : join(__dirname, '../../resources', fileName);
+}
+
+function resolveAppIcon(kind: 'window' | 'tray'): string | undefined {
+  const candidates =
+    kind === 'window'
+      ? process.platform === 'darwin'
+        ? ['icon.icns']
+        : process.platform === 'win32'
+          ? ['icon.ico']
+          : ['icon.png']
+      : process.platform === 'darwin'
+        ? ['tray-iconTemplate.png']
+        : process.platform === 'win32'
+          ? ['tray-icon.ico', 'tray-icon.png']
+          : ['tray-icon.png'];
+
+  for (const candidate of candidates) {
+    const resolvedPath = getResourcePath(candidate);
+    if (fs.existsSync(resolvedPath)) {
+      return resolvedPath;
+    }
+  }
+
+  return undefined;
+}
+
 function setupTray() {
   if (tray) return;
 
-  // Use .ico on Windows for proper multi-resolution tray support; fall back to .png if absent
-  const iconName =
-    process.platform === 'darwin'
-      ? 'tray-iconTemplate.png'
-      : process.platform === 'win32'
-        ? 'tray-icon.ico'
-        : 'tray-icon.png';
-  // TODO: create resources/tray-icon.ico from tray-icon.png for full Windows tray fidelity
-  const iconPath = app.isPackaged
-    ? join(process.resourcesPath, iconName)
-    : join(__dirname, '../../resources', iconName);
+  const resolvedIconPath = resolveAppIcon('tray');
 
-  // On Windows, fall back to .png if the .ico file has not been created yet
-  const resolvedIconPath =
-    process.platform === 'win32' && !fs.existsSync(iconPath)
-      ? app.isPackaged
-        ? join(process.resourcesPath, 'tray-icon.png')
-        : join(__dirname, '../../resources', 'tray-icon.png')
-      : iconPath;
-
-  // Gracefully skip tray if icon is missing (e.g. dev environment)
-  if (!fs.existsSync(resolvedIconPath)) {
-    log('[Tray] Icon not found at', resolvedIconPath, '— skipping tray setup');
+  if (!resolvedIconPath) {
+    log('[Tray] Icon not found — skipping tray setup');
     return;
   }
 
@@ -460,12 +480,6 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: THEME.background,
-    icon: (() => {
-      const windowIconName = isMac ? 'icon.icns' : isWindows ? 'icon.ico' : 'icon.png';
-      return app.isPackaged
-        ? join(process.resourcesPath, windowIconName)
-        : join(__dirname, `../../resources/${windowIconName}`);
-    })(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       nodeIntegration: false,
@@ -473,6 +487,11 @@ function createWindow() {
       sandbox: true,
     },
   };
+
+  const windowIcon = resolveAppIcon('window');
+  if (windowIcon) {
+    windowOptions.icon = windowIcon;
+  }
 
   if (isMac) {
     // macOS: Use hiddenInset for native traffic light buttons
