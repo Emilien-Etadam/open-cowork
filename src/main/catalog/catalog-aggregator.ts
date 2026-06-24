@@ -1,16 +1,22 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { app } from 'electron';
-import type { CatalogEntry, CatalogManifest } from '../../shared/catalog-types';
+import type {
+  CatalogEntry,
+  CatalogManifest,
+  CatalogManifestMeta,
+} from '../../shared/catalog-types';
+import { validateCatalogManifest } from '../../shared/catalog-manifest-validator';
 import { log, logWarn } from '../utils/logger';
 
-const REMOTE_MANIFEST_URL =
+export const REMOTE_MANIFEST_URL =
   'https://raw.githubusercontent.com/OpenCoworkAI/open-cowork/main/catalog/manifest.json';
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 interface CachedManifest {
   expiresAt: number;
   manifest: CatalogManifest;
+  meta: CatalogManifestMeta;
 }
 
 export class CatalogAggregator {
@@ -22,27 +28,36 @@ export class CatalogAggregator {
   }
 
   async listVerifiedEntries(forceRefresh = false): Promise<CatalogEntry[]> {
-    const manifest = await this.loadManifest(forceRefresh);
-    return manifest.entries.filter((entry) => entry.verified === true && entry.deprecated !== true);
+    const loaded = await this.loadManifest(forceRefresh);
+    return loaded.manifest.entries.filter(
+      (entry) => entry.verified === true && entry.deprecated !== true
+    );
   }
 
   async getEntry(catalogId: string, forceRefresh = false): Promise<CatalogEntry | undefined> {
-    const manifest = await this.loadManifest(forceRefresh);
-    return manifest.entries.find((entry) => entry.id === catalogId);
+    const loaded = await this.loadManifest(forceRefresh);
+    return loaded.manifest.entries.find((entry) => entry.id === catalogId);
   }
 
-  private async loadManifest(forceRefresh: boolean): Promise<CatalogManifest> {
+  async getMeta(forceRefresh = false): Promise<CatalogManifestMeta> {
+    const cached = await this.loadManifest(forceRefresh);
+    return cached.meta;
+  }
+
+  private async loadManifest(forceRefresh: boolean): Promise<CachedManifest> {
     if (!forceRefresh && this.cache && this.cache.expiresAt > Date.now()) {
-      return this.cache.manifest;
+      return this.cache;
     }
 
     const bundled = this.readBundledManifest();
-    let manifest = bundled;
+    let manifest = bundled.manifest;
+    let meta = bundled.meta;
 
     try {
       const remote = await this.fetchRemoteManifest();
-      if (remote && this.isValidManifest(remote)) {
-        manifest = remote;
+      if (remote) {
+        manifest = remote.manifest;
+        meta = remote.meta;
         log('[CatalogAggregator] Loaded remote manifest');
       }
     } catch (error) {
@@ -53,19 +68,25 @@ export class CatalogAggregator {
     this.cache = {
       expiresAt: Date.now() + CACHE_TTL_MS,
       manifest,
+      meta,
     };
-    return manifest;
+    return this.cache;
   }
 
-  private readBundledManifest(): CatalogManifest {
+  private readBundledManifest(): CachedManifest {
     const candidates = this.getBundledManifestPaths();
     for (const candidate of candidates) {
       try {
         if (fs.existsSync(candidate)) {
           const raw = fs.readFileSync(candidate, 'utf8');
           const parsed = JSON.parse(raw) as CatalogManifest;
-          if (this.isValidManifest(parsed)) {
-            return parsed;
+          const validation = validateCatalogManifest(parsed);
+          if (validation.valid) {
+            return {
+              expiresAt: 0,
+              manifest: parsed,
+              meta: this.buildMeta(parsed, 'bundled'),
+            };
           }
         }
       } catch (error) {
@@ -84,31 +105,37 @@ export class CatalogAggregator {
     ];
   }
 
-  private async fetchRemoteManifest(): Promise<CatalogManifest | null> {
+  private async fetchRemoteManifest(): Promise<CachedManifest | null> {
     const response = await this.fetchFn(REMOTE_MANIFEST_URL, {
       headers: { Accept: 'application/json' },
     });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    return (await response.json()) as CatalogManifest;
+    const parsed = (await response.json()) as CatalogManifest;
+    const validation = validateCatalogManifest(parsed);
+    if (!validation.valid) {
+      throw new Error(`Remote manifest failed validation: ${validation.errors.join('; ')}`);
+    }
+    return {
+      expiresAt: 0,
+      manifest: parsed,
+      meta: this.buildMeta(parsed, 'remote'),
+    };
   }
 
-  private isValidManifest(value: CatalogManifest): boolean {
-    return (
-      value &&
-      value.policy === 'curated-strict' &&
-      Array.isArray(value.entries) &&
-      value.entries.every(
-        (entry) =>
-          typeof entry.id === 'string' &&
-          typeof entry.name === 'string' &&
-          typeof entry.description === 'string' &&
-          typeof entry.verified === 'boolean' &&
-          entry.resolve &&
-          typeof entry.resolve.via === 'string'
-      )
-    );
+  private buildMeta(
+    manifest: CatalogManifest,
+    source: CatalogManifestMeta['source']
+  ): CatalogManifestMeta {
+    return {
+      source,
+      version: manifest.version,
+      updatedAt: manifest.updatedAt,
+      entryCount: manifest.entries.filter((entry) => entry.verified && !entry.deprecated).length,
+      fetchedAt: Date.now(),
+      remoteUrl: REMOTE_MANIFEST_URL,
+    };
   }
 }
 
