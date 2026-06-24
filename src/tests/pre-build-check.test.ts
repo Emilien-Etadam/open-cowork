@@ -26,6 +26,19 @@ function makeDir(dirPath: string): void {
 }
 
 /**
+ * Creates branding/icon assets required on all platforms.
+ */
+function populateBrandingArtifacts(root: string): void {
+  makeFile(path.join(root, 'resources/logo.png'));
+  makeFile(path.join(root, 'resources/icon.ico'));
+  makeFile(path.join(root, 'resources/icon.icns'));
+  makeFile(path.join(root, 'resources/icon.png'));
+  makeFile(path.join(root, 'resources/tray-icon.png'));
+  makeFile(path.join(root, 'resources/tray-icon.ico'));
+  makeFile(path.join(root, 'resources/tray-iconTemplate.png'));
+}
+
+/**
  * Creates all artifacts that are required for a successful darwin/arm64 check.
  */
 function populateDarwinArtifacts(root: string, arch: string = 'arm64'): void {
@@ -35,6 +48,7 @@ function populateDarwinArtifacts(root: string, arch: string = 'arm64'): void {
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
   makeDir(path.join(root, '.claude/skills'));
+  populateBrandingArtifacts(root);
 
   // macOS FATAL resources
   makeFile(path.join(root, `resources/node/darwin-${arch}/bin/node`));
@@ -50,6 +64,7 @@ function populateWin32Artifacts(root: string): void {
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
   makeDir(path.join(root, '.claude/skills'));
+  populateBrandingArtifacts(root);
   makeFile(path.join(root, 'resources/node/win32-x64/node.exe'));
   makeFile(path.join(root, 'dist-wsl-agent/index.js'));
 }
@@ -80,8 +95,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    // 5 common + 2 darwin FATAL = 7 FATAL checks should pass
-    expect(result.passed).toBeGreaterThanOrEqual(7);
+    // 12 common + 2 darwin FATAL checks should pass
+    expect(result.passed).toBeGreaterThanOrEqual(14);
   });
 
   it('passes all FATAL checks on win32 when required artifacts exist', () => {
@@ -91,7 +106,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    expect(result.passed).toBeGreaterThanOrEqual(7);
+    // 12 common + 2 win32 FATAL checks should pass
+    expect(result.passed).toBeGreaterThanOrEqual(14);
   });
 
   it('reports warnings for optional darwin resources that are missing', () => {

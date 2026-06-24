@@ -65,6 +65,48 @@ function buildCheckList(platform, arch) {
       type: 'dir',
       severity: 'fatal',
     },
+    {
+      label: 'App logo (resources/logo.png)',
+      relPath: 'resources/logo.png',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'Windows app icon (resources/icon.ico)',
+      relPath: 'resources/icon.ico',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'macOS app icon (resources/icon.icns)',
+      relPath: 'resources/icon.icns',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'Linux app icon (resources/icon.png)',
+      relPath: 'resources/icon.png',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'Tray icon PNG (resources/tray-icon.png)',
+      relPath: 'resources/tray-icon.png',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'Tray icon ICO (resources/tray-icon.ico)',
+      relPath: 'resources/tray-icon.ico',
+      type: 'file',
+      severity: 'fatal',
+    },
+    {
+      label: 'macOS tray template icon (resources/tray-iconTemplate.png)',
+      relPath: 'resources/tray-iconTemplate.png',
+      type: 'file',
+      severity: 'fatal',
+    },
   ];
 
   if (platform === 'darwin') {
