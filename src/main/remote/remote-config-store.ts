@@ -9,6 +9,10 @@ import {
   createEncryptedStoreWithKeyRotation,
   getLegacyDerivedKeyHexes,
 } from '../utils/store-encryption';
+import {
+  getMachineEncryptionKey,
+  LEGACY_STATIC_ENCRYPTION_KEYS,
+} from '../utils/machine-encryption-key';
 import type {
   RemoteConfig,
   GatewayConfig,
@@ -32,8 +36,9 @@ class RemoteConfigStore {
         unknown
       >;
     this.store = createEncryptedStoreWithKeyRotation<RemoteConfigRecord>({
-      stableKey: 'open-cowork-remote-stable-v1',
+      stableKey: getMachineEncryptionKey(),
       legacyKeys: [
+        ...LEGACY_STATIC_ENCRYPTION_KEYS,
         'open-cowork-remote-v1',
         ...getLegacyDerivedKeyHexes({
           moduleDirname: __dirname,

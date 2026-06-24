@@ -665,6 +665,17 @@
     "noModel": "Ingen modell",
     "connectorCount_one": "{{count}} kobling",
     "connectorCount_other": "{{count}} koblinger",
+    "compactErrors": {
+      "errCompactNoSession": "Ingen aktiv agentsesjon å komprimere. Send minst én melding i denne samtalen først.",
+      "errCompactNothingToCompact": "Ingenting å komprimere ennå — samtalen er fortsatt for kort.",
+      "errCompactAlreadyCompacted": "Samtalen ble nylig allerede komprimert.",
+      "errCompactFailed": "Kontekstkomprimering mislyktes. Prøv igjen."
+    },
+    "handoffSuccess": "Ny økt opprettet med fortsettelsessammendrag.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Ingenting å oppsummere ennå — samtalen er fortsatt for kort.",
+      "errHandoffFailed": "Kunne ikke starte ny økt fra denne samtalen. Prøv igjen."
+    },
     "scrollToBottom": "Rull til bunnen"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Ingen spørsmål",
     "question": "Spørsmål",
     "thinking": "Tenker",
-    "executionTime": "Kjøretid: {{time}}"
+    "executionTime": "Kjøretid: {{time}}",
+    "compactionTitle": "Kontekst komprimert",
+    "compactionHandoffTitle": "Fortsettelse fra «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} tokens oppsummert",
+    "compactionInstructions": "Fokus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Opprett tidsplan",

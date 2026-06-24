@@ -2728,7 +2728,12 @@ ipcMain.handle('sandbox.retrySetup', async () => {
 
 async function handleClientEvent(event: ClientEvent): Promise<unknown> {
   // Check if configured before starting sessions
-  if (event.type === 'session.start' && !configStore.hasUsableCredentialsForActiveSet()) {
+  if (
+    (event.type === 'session.start' ||
+      event.type === 'session.compact' ||
+      event.type === 'session.handoff') &&
+    !configStore.hasUsableCredentialsForActiveSet()
+  ) {
     sendToRenderer({
       type: 'error',
       payload: {
@@ -2773,6 +2778,12 @@ async function handleClientEvent(event: ClientEvent): Promise<unknown> {
         event.payload.prompt,
         event.payload.content
       );
+
+    case 'session.compact':
+      return sm.compactSession(event.payload.sessionId, event.payload.customInstructions);
+
+    case 'session.handoff':
+      return sm.handoffSession(event.payload.sessionId, event.payload.customInstructions);
 
     case 'session.stop':
       return sm.stopSession(event.payload.sessionId);

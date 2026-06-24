@@ -8,6 +8,7 @@ import { EventEmitter } from 'events';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer, Server as HttpServer, IncomingMessage, ServerResponse } from 'http';
 import { log, logError, logWarn } from '../utils/logger';
+import { isLoopbackHostname } from '../../shared/network/loopback';
 import type {
   GatewayConfig,
   GatewayStatus,
@@ -776,15 +777,40 @@ export class RemoteGateway extends EventEmitter {
           requestId: message.requestId,
         });
       }
-    } else {
-      // Other auth modes don't require token for WS
+      return;
+    }
+
+    if (
+      this.config.auth.mode === 'open' &&
+      this.config.bind === '127.0.0.1' &&
+      isLoopbackHostname(client.ip)
+    ) {
       client.authenticated = true;
       this.sendWSMessage(client.ws, {
         type: 'auth_result',
         payload: { success: true },
         requestId: message.requestId,
       });
+      log('[Gateway] WS client authenticated via local open mode:', client.id);
+      return;
     }
+
+    if (this.config.auth.token && token === this.config.auth.token) {
+      client.authenticated = true;
+      this.sendWSMessage(client.ws, {
+        type: 'auth_result',
+        payload: { success: true },
+        requestId: message.requestId,
+      });
+      log('[Gateway] WS client authenticated with shared gateway token:', client.id);
+      return;
+    }
+
+    this.sendWSMessage(client.ws, {
+      type: 'auth_result',
+      payload: { success: false, error: 'Authentication required' },
+      requestId: message.requestId,
+    });
   }
 
   private async handleWSClientMessage(client: WSClient, message: WSMessage): Promise<void> {

@@ -57,10 +57,23 @@ import {
 } from './session-title-utils';
 import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
 import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
+import {
+  buildCompactionHandoffPrompt,
+  buildCompactionSessionTitle,
+} from '../../shared/compaction-handoff';
 
 interface AgentRunner {
   run(session: Session, prompt: string, existingMessages: Message[]): Promise<void>;
   cancel(sessionId: string): void;
+  compactSession?(
+    session: Session,
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }>;
+  summarizeForHandoff?(
+    session: Session,
+    messages: Message[],
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }>;
   clearSdkSession?(sessionId: string): void;
   clearAllSdkSessions?(): void;
 }
@@ -421,6 +434,140 @@ export class SessionManager {
     }
 
     this.enqueuePrompt(session, prompt, content);
+  }
+
+  async compactSession(
+    sessionId: string,
+    customInstructions?: string
+  ): Promise<{ success: boolean; errorKey?: string; error?: string }> {
+    log('[SessionManager] Manual compaction requested for session:', sessionId);
+
+    const session = this.loadSession(sessionId);
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+
+    if (this.activeSessions.has(sessionId)) {
+      this.stopSession(sessionId);
+    }
+
+    if (!this.agentRunner.compactSession) {
+      return { success: false, errorKey: 'errCompactFailed' };
+    }
+
+    try {
+      const result = await this.agentRunner.compactSession(session, customInstructions);
+      const compactionMessage: Message = {
+        id: uuidv4(),
+        sessionId,
+        role: 'system',
+        content: [
+          {
+            type: 'compaction_summary',
+            summary: result.summary,
+            tokensBefore: result.tokensBefore,
+            customInstructions,
+          },
+        ],
+        timestamp: Date.now(),
+      };
+      this.saveMessage(compactionMessage);
+      this.sendToRenderer({
+        type: 'stream.message',
+        payload: { sessionId, message: compactionMessage },
+      });
+      return { success: true };
+    } catch (error) {
+      const errorKey =
+        error instanceof Error && error.message.startsWith('errCompact')
+          ? error.message
+          : undefined;
+      logError('[SessionManager] Manual compaction failed:', error);
+      return {
+        success: false,
+        errorKey,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  async handoffSession(
+    sessionId: string,
+    customInstructions?: string
+  ): Promise<{
+    success: boolean;
+    newSession?: Session;
+    errorKey?: string;
+    error?: string;
+  }> {
+    log('[SessionManager] Handoff to new session requested for:', sessionId);
+
+    const session = this.loadSession(sessionId);
+    if (!session) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+
+    if (this.activeSessions.has(sessionId)) {
+      this.stopSession(sessionId);
+    }
+
+    const messages = this.getMessages(sessionId);
+    const hasConversation = messages.some(
+      (message) => message.role === 'user' || message.role === 'assistant'
+    );
+    if (!hasConversation) {
+      return { success: false, errorKey: 'errHandoffNothingToSummarize' };
+    }
+
+    if (!this.agentRunner.summarizeForHandoff) {
+      return { success: false, errorKey: 'errHandoffFailed' };
+    }
+
+    try {
+      const result = await this.agentRunner.summarizeForHandoff(
+        session,
+        messages,
+        customInstructions
+      );
+      const handoffPrompt = buildCompactionHandoffPrompt({
+        summary: result.summary,
+        sourceTitle: session.title,
+        tokensBefore: result.tokensBefore,
+        customInstructions,
+      });
+      const content: ContentBlock[] = [
+        {
+          type: 'compaction_summary',
+          summary: result.summary,
+          tokensBefore: result.tokensBefore,
+          customInstructions,
+          sourceTitle: session.title,
+        },
+        { type: 'text', text: handoffPrompt },
+      ];
+
+      const newSession = await this.startSession(
+        buildCompactionSessionTitle(session.title),
+        handoffPrompt,
+        session.cwd,
+        session.allowedTools,
+        content,
+        session.memoryEnabled
+      );
+
+      return { success: true, newSession };
+    } catch (error) {
+      const errorKey =
+        error instanceof Error && error.message.startsWith('errHandoff')
+          ? error.message
+          : undefined;
+      logError('[SessionManager] Handoff failed:', error);
+      return {
+        success: false,
+        errorKey: errorKey || 'errHandoffFailed',
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
   }
 
   async generateSessionTitleFromPrompt(prompt: string): Promise<string> {

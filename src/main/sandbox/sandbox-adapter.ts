@@ -28,7 +28,7 @@ import type {
   PathConverter,
 } from './types';
 
-export type SandboxMode = 'wsl' | 'lima' | 'native' | 'none';
+export type SandboxMode = 'wsl' | 'lima' | 'native' | 'none' | 'blocked';
 
 export interface SandboxAdapterConfig extends SandboxConfig {
   /** Force native execution even on Windows (not recommended) */
@@ -45,6 +45,7 @@ interface SandboxState {
   limaStatus?: LimaStatus;
   initialized: boolean;
   workspacePath: string;
+  blockingReason: string | null;
 }
 
 /**
@@ -56,6 +57,7 @@ export class SandboxAdapter implements SandboxExecutor {
     mode: 'none',
     initialized: false,
     workspacePath: '',
+    blockingReason: null,
   };
   private _config: SandboxAdapterConfig | null = null;
   private initPromise: Promise<void> | null = null;
@@ -80,6 +82,14 @@ export class SandboxAdapter implements SandboxExecutor {
    */
   get isLima(): boolean {
     return this.state.mode === 'lima';
+  }
+
+  get isBlocked(): boolean {
+    return this.state.mode === 'blocked';
+  }
+
+  get blockingReason(): string | null {
+    return this.state.blockingReason;
   }
 
   /**
@@ -177,10 +187,11 @@ export class SandboxAdapter implements SandboxExecutor {
     log('[SandboxAdapter] WSL Status:', JSON.stringify(wslStatus, null, 2));
 
     if (!wslStatus.available) {
-      // WSL not available - show warning and fallback to native
       log('[SandboxAdapter] [X] WSL2 not available');
-      await this.showWSLNotAvailableWarning(config);
-      await this.initializeNative(config);
+      await this.initializeBlocked(
+        config,
+        'WSL2 is not installed. Run "wsl --install" in PowerShell as Administrator, restart, then relaunch Open Cowork.'
+      );
       return;
     }
 
@@ -204,7 +215,10 @@ export class SandboxAdapter implements SandboxExecutor {
       if (!config.skipInstallPrompts) {
         const shouldInstall = await this.showNodeInstallPrompt(config, wslStatus.distro!);
         if (!shouldInstall) {
-          await this.initializeNative(config);
+          await this.initializeBlocked(
+            config,
+            `Node.js is required in ${wslStatus.distro} for sandbox mode.`
+          );
           return;
         }
       }
@@ -214,7 +228,10 @@ export class SandboxAdapter implements SandboxExecutor {
       if (!installed) {
         logError('[SandboxAdapter] Failed to install Node.js in WSL');
         await this.showInstallFailedWarning(config, 'Node.js');
-        await this.initializeNative(config);
+        await this.initializeBlocked(
+          config,
+          `Failed to install Node.js in ${wslStatus.distro}. Sandbox execution is blocked.`
+        );
         return;
       }
       wslStatus.nodeAvailable = true;
@@ -240,7 +257,10 @@ export class SandboxAdapter implements SandboxExecutor {
     } catch (error) {
       logError('[SandboxAdapter] ✗ Failed to initialize WSL bridge:', error);
       await this.showWSLInitFailedWarning(config, error);
-      await this.initializeNative(config);
+      await this.initializeBlocked(
+        config,
+        `Failed to initialize WSL sandbox: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -268,7 +288,10 @@ export class SandboxAdapter implements SandboxExecutor {
     if (!limaStatus.available) {
       log('[SandboxAdapter] [X] Lima not available');
       await this.showLimaNotAvailableWarning(config);
-      await this.initializeNative(config);
+      await this.initializeBlocked(
+        config,
+        'Lima is not available. Install Lima or disable sandbox mode in Settings.'
+      );
       return;
     }
 
@@ -301,7 +324,36 @@ export class SandboxAdapter implements SandboxExecutor {
     } catch (error) {
       logError('[SandboxAdapter] Failed to initialize Lima bridge:', error);
       await this.showLimaInitFailedWarning(config, error);
-      await this.initializeNative(config);
+      await this.initializeBlocked(
+        config,
+        `Failed to initialize Lima sandbox: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Block sandbox-backed execution when required isolation cannot be established.
+   */
+  private async initializeBlocked(config: SandboxAdapterConfig, reason: string): Promise<void> {
+    this.executor = null;
+    this.state.mode = 'blocked';
+    this.state.blockingReason = reason;
+
+    log('[SandboxAdapter] =============================================');
+    log('[SandboxAdapter] [X] SANDBOX BLOCKED');
+    log('[SandboxAdapter] Reason:', reason);
+    log('[SandboxAdapter] =============================================');
+
+    if (config.mainWindow) {
+      await dialog.showMessageBox(config.mainWindow, {
+        type: 'error',
+        title: 'Sandbox Unavailable',
+        message: 'Sandbox isolation could not be started.',
+        detail: `${reason}\n\nAgent execution is blocked while sandbox mode is enabled.`,
+        buttons: ['OK'],
+      });
+    } else {
+      logWarn('[SandboxAdapter] Sandbox blocked, no window to show dialog');
     }
   }
 
@@ -336,7 +388,8 @@ export class SandboxAdapter implements SandboxExecutor {
 
   // ==================== Warning Dialogs ====================
 
-  private async showWSLNotAvailableWarning(config: SandboxAdapterConfig): Promise<void> {
+  // @ts-expect-error Reserved for future use
+  private async _showWSLNotAvailableWarning(config: SandboxAdapterConfig): Promise<void> {
     if (!config.mainWindow) {
       logWarn('[SandboxAdapter] WSL2 not available, no window to show dialog');
       return;
@@ -371,7 +424,7 @@ export class SandboxAdapter implements SandboxExecutor {
       detail:
         'Node.js is required for the sandbox environment. ' +
         'Would you like to install it automatically?',
-      buttons: ['Install', 'Skip (use native execution)'],
+      buttons: ['Install', 'Cancel (block sandbox)'],
       defaultId: 0,
     });
 

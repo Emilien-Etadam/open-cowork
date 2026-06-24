@@ -46,6 +46,7 @@ import { execFileSync, spawn } from 'child_process';
 import { app } from 'electron';
 import { setMaxListeners } from 'node:events';
 import { getSandboxAdapter } from '../sandbox/sandbox-adapter';
+import { getSandboxExecutionBlockReason } from '../sandbox/sandbox-execution-guard';
 import { pathConverter } from '../sandbox/wsl-bridge';
 import { SandboxSync } from '../sandbox/sandbox-sync';
 import { extractArtifactsFromText, buildArtifactTraceSteps } from '../utils/artifact-parser';
@@ -87,6 +88,8 @@ import {
 } from './tool-result-utils';
 import { fetchOllamaModelInfo } from '../config/ollama-api';
 import { createWindowsBashOperations } from './windows-bash-operations';
+import { createWslSandboxBashOperations } from './wsl-sandbox-bash-operations';
+import { wslUnixPathToWindowsUnc } from '../sandbox/sandbox-workspace-path';
 import {
   buildCompactionSettings,
   estimateTokensFromText,
@@ -94,6 +97,16 @@ import {
   getLastInputTokenCount,
   shouldBlockForContextOverflow,
 } from './context-budget';
+import {
+  findLastCompactionAnchor,
+  messagesAfterCompactionAnchor,
+} from '../../shared/compaction-anchor';
+import {
+  buildConversationTranscriptForHandoff,
+  buildHandoffSummaryUserPrompt,
+  HANDOFF_SUMMARY_SYSTEM_PROMPT,
+} from '../../shared/compaction-handoff';
+import { runPiAiOneShot } from './claude-sdk-one-shot';
 import { mt } from '../i18n';
 
 // Virtual workspace path shown to the model (hides real sandbox path)
@@ -210,6 +223,7 @@ export function serializeMessageContentForHistory(content: ContentBlock[]): stri
       }
       case 'image':
       case 'file_attachment':
+      case 'compaction_summary':
         // Skip \u2014 not representable as XML text in a history preamble.
         break;
     }
@@ -1261,6 +1275,29 @@ ${hints.join('\n')}
 
       // Initialize sandbox sync if WSL mode is active
       const sandbox = getSandboxAdapter();
+      const sandboxEnabled = configStore.get('sandboxEnabled') !== false;
+
+      const initialSandboxBlock = getSandboxExecutionBlockReason({
+        sandboxEnabled,
+        platform: process.platform,
+        sandbox,
+      });
+      if (initialSandboxBlock) {
+        logError('[ClaudeAgentRunner] Sandbox execution blocked:', initialSandboxBlock);
+        const errorMsg: Message = {
+          id: uuidv4(),
+          sessionId: session.id,
+          role: 'assistant',
+          content: [{ type: 'text', text: `**Sandbox indisponible** : ${initialSandboxBlock}` }],
+          timestamp: Date.now(),
+        };
+        this.sendMessage(session.id, errorMsg);
+        this.sendTraceUpdate(session.id, thinkingStepId, {
+          status: 'error',
+          title: 'Sandbox unavailable',
+        });
+        return;
+      }
 
       if (sandbox.isWSL && sandbox.wslStatus?.distro && workingDir) {
         log('[ClaudeAgentRunner] WSL mode active, initializing sandbox sync...');
@@ -1397,19 +1434,38 @@ ${hints.join('\n')}
           }
         } else {
           logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          log('[ClaudeAgentRunner] Falling back to /mnt/ access (less secure)');
-
-          if (isNewSession) {
-            // Notify UI: error (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'error',
-                message: 'Sandbox file sync failed, falling back to direct access mode',
-                detail: 'Falling back to direct access mode (less secure)',
-              },
+          const syncBlockReason = getSandboxExecutionBlockReason({
+            sandboxEnabled,
+            platform: process.platform,
+            sandbox,
+            syncFailed: true,
+            syncError: syncResult.error,
+          });
+          if (syncBlockReason) {
+            if (isNewSession) {
+              this.sendToRenderer({
+                type: 'sandbox.sync',
+                payload: {
+                  sessionId: session.id,
+                  phase: 'error',
+                  message: 'Sandbox file sync failed',
+                  detail: syncBlockReason,
+                },
+              });
+            }
+            const errorMsg: Message = {
+              id: uuidv4(),
+              sessionId: session.id,
+              role: 'assistant',
+              content: [{ type: 'text', text: `**Sandbox indisponible** : ${syncBlockReason}` }],
+              timestamp: Date.now(),
+            };
+            this.sendMessage(session.id, errorMsg);
+            this.sendTraceUpdate(session.id, thinkingStepId, {
+              status: 'error',
+              title: 'Sandbox sync failed',
             });
+            return;
           }
         }
       }
@@ -1566,19 +1622,40 @@ ${hints.join('\n')}
           }
         } else {
           logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
-          log('[ClaudeAgentRunner] Falling back to direct access (less secure)');
-
-          if (isNewLimaSession) {
-            // Notify UI: error (only for new sessions)
-            this.sendToRenderer({
-              type: 'sandbox.sync',
-              payload: {
-                sessionId: session.id,
-                phase: 'error',
-                message: 'Sandbox file sync failed, falling back to direct access mode',
-                detail: 'Falling back to direct access mode (less secure)',
-              },
+          const limaSyncBlockReason = getSandboxExecutionBlockReason({
+            sandboxEnabled,
+            platform: process.platform,
+            sandbox,
+            syncFailed: true,
+            syncError: syncResult.error,
+          });
+          if (limaSyncBlockReason) {
+            if (isNewLimaSession) {
+              this.sendToRenderer({
+                type: 'sandbox.sync',
+                payload: {
+                  sessionId: session.id,
+                  phase: 'error',
+                  message: 'Sandbox file sync failed',
+                  detail: limaSyncBlockReason,
+                },
+              });
+            }
+            const errorMsg: Message = {
+              id: uuidv4(),
+              sessionId: session.id,
+              role: 'assistant',
+              content: [
+                { type: 'text', text: `**Sandbox indisponible** : ${limaSyncBlockReason}` },
+              ],
+              timestamp: Date.now(),
+            };
+            this.sendMessage(session.id, errorMsg);
+            this.sendTraceUpdate(session.id, thinkingStepId, {
+              status: 'error',
+              title: 'Sandbox sync failed',
             });
+            return;
           }
         }
       }
@@ -1729,8 +1806,13 @@ ${hints.join('\n')}
 
       // the agent SDK handles path sandboxing via its own tools
       const imageCapable = true; // pi-ai models generally support images; let the model handle unsupported cases
+      const wslDistro = sandbox.isWSL ? sandbox.wslStatus?.distro : undefined;
       const effectiveCwd =
-        useSandboxIsolation && sandboxPath ? sandboxPath : workingDir || process.cwd();
+        useSandboxIsolation && sandboxPath && wslDistro
+          ? wslUnixPathToWindowsUnc(wslDistro, sandboxPath)
+          : useSandboxIsolation && sandboxPath
+            ? sandboxPath
+            : workingDir || process.cwd();
 
       // Use app-specific Claude config directory to avoid conflicts with user settings
       // SDK uses CLAUDE_CONFIG_DIR to locate skills
@@ -1883,7 +1965,9 @@ ${hints.join('\n')}
       let contextualPrompt = prompt;
       if (!cachedSession) {
         // Cold start: inject recent history into prompt if available
-        const conversationMessages = existingMessages.filter(
+        const anchoredMessages = messagesAfterCompactionAnchor(existingMessages);
+        const { summary: compactionSummary } = findLastCompactionAnchor(existingMessages);
+        const conversationMessages = anchoredMessages.filter(
           (msg) => msg.role === 'user' || msg.role === 'assistant'
         );
         // Filter out messages that contain images (images can't be serialized into text preamble)
@@ -1931,9 +2015,16 @@ ${hints.join('\n')}
 
           if (historyItems.length > 0) {
             const trimmedCount = historyMessages.length - historyItems.length;
+            const compactionPrefix = compactionSummary
+              ? `<compaction_summary tokens_before="${compactionSummary.tokensBefore}">\n${escapeXmlText(compactionSummary.summary)}\n</compaction_summary>\n`
+              : '';
             const historyNote =
-              trimmedCount > 0 ? `[${trimmedCount} older messages omitted]\n` : '';
-            const preamble = `<conversation_history>\n${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
+              trimmedCount > 0
+                ? `[${trimmedCount} older messages omitted]\n`
+                : compactionSummary
+                  ? '[older messages compacted manually]\n'
+                  : '';
+            const preamble = `<conversation_history>\n${compactionPrefix}${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
             contextualPrompt = `${preamble}\n\n${prompt}`;
             log(
               '[ClaudeAgentRunner] Cold start: injecting',
@@ -2160,8 +2251,26 @@ Tool routing:
       // executed via Pi SDK's Bash tool can find bundled and user-installed executables.
       await enrichProcessPathForBuild();
 
-      const bashOptions: BashToolOptions | undefined =
-        process.platform === 'win32' ? { operations: createWindowsBashOperations() } : undefined;
+      const isolatedSandboxPath = sandboxPath;
+      const useWslSandboxBash = Boolean(
+        useSandboxIsolation && isolatedSandboxPath && sandbox.isWSL && sandbox.wslStatus?.distro
+      );
+      const bashOptions: BashToolOptions | undefined = useWslSandboxBash
+        ? {
+            operations: createWslSandboxBashOperations({
+              distro: sandbox.wslStatus!.distro!,
+              sandboxPath: isolatedSandboxPath!,
+              virtualWorkspacePath: VIRTUAL_WORKSPACE_PATH,
+            }),
+          }
+        : process.platform === 'win32'
+          ? { operations: createWindowsBashOperations() }
+          : undefined;
+      if (useWslSandboxBash) {
+        log(
+          `[ClaudeAgentRunner] Using WSL sandbox bash (distro=${sandbox.wslStatus!.distro}, sandbox=${sandboxPath})`
+        );
+      }
       const bashDefinition = createBashToolDefinition(effectiveCwd, bashOptions);
 
       // Inject a default 120s timeout for bash commands when the model omits one
@@ -3134,6 +3243,78 @@ Tool routing:
   cancel(sessionId: string): void {
     const controller = this.activeControllers.get(sessionId);
     if (controller) controller.abort();
+  }
+
+  async compactSession(
+    session: Session,
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }> {
+    const cached = this.piSessions.get(session.id);
+    if (!cached) {
+      throw new Error('errCompactNoSession');
+    }
+
+    this.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
+
+    try {
+      const result = await cached.session.compact(customInstructions);
+      this.sendSessionNotice(session.id, mt('noticeCompactionCompleted'), 'success');
+      return {
+        summary: result.summary,
+        tokensBefore: result.tokensBefore,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('Nothing to compact')) {
+        throw new Error('errCompactNothingToCompact');
+      }
+      if (message.includes('Already compacted')) {
+        throw new Error('errCompactAlreadyCompacted');
+      }
+      this.sendSessionNotice(
+        session.id,
+        mt('noticeCompactionFailed', { error: message }),
+        'warning'
+      );
+      throw new Error('errCompactFailed');
+    }
+  }
+
+  async summarizeForHandoff(
+    session: Session,
+    messages: Message[],
+    customInstructions?: string
+  ): Promise<{ summary: string; tokensBefore: number }> {
+    const transcript = buildConversationTranscriptForHandoff(
+      messages,
+      serializeMessageContentForHistory
+    );
+    if (!transcript.trim()) {
+      throw new Error('errHandoffNothingToSummarize');
+    }
+
+    const tokensBefore = getLastInputTokenCount(messages) || estimateTokensFromText(transcript);
+
+    this.sendSessionNotice(session.id, mt('noticeHandoffStart'), 'info');
+
+    try {
+      const config = configStore.getAll();
+      const result = await runPiAiOneShot(
+        buildHandoffSummaryUserPrompt(transcript, customInstructions),
+        HANDOFF_SUMMARY_SYSTEM_PROMPT,
+        config,
+        { maxTokens: 4096 }
+      );
+      const summary = result.text.trim();
+      if (!summary) {
+        throw new Error('errHandoffFailed');
+      }
+      return { summary, tokensBefore };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.sendSessionNotice(session.id, mt('noticeHandoffFailed', { error: message }), 'warning');
+      throw new Error('errHandoffFailed');
+    }
   }
 
   private sendTraceStep(sessionId: string, step: TraceStep): void {

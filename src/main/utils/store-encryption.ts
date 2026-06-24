@@ -14,6 +14,8 @@ interface EncryptedStoreRotationOptions<T extends Record<string, unknown>> {
   logPrefix: string;
   log?: Logger;
   warn?: Logger;
+  /** When set, unreadable-recovery backups may restore a wiped store on startup. */
+  recoverIfReset?: (current: T, recovered: T) => boolean;
 }
 
 interface KeyMaterialOptions {
@@ -121,6 +123,112 @@ function moveUnreadableStoreToBackup(storePath: string): string {
   }
 }
 
+function listUnreadableRecoveryBackups(storePath: string): string[] {
+  const dir = path.dirname(storePath);
+  const baseName = path.basename(storePath);
+  const prefix = `${baseName}.unreadable-recovery-`;
+
+  try {
+    return fs
+      .readdirSync(dir)
+      .filter((file) => file.startsWith(prefix) && file.endsWith('.bak'))
+      .map((file) => path.join(dir, file))
+      .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  } catch {
+    return [];
+  }
+}
+
+function readEncryptedStoreSnapshot<T extends Record<string, unknown>>(
+  storePath: string,
+  encryptionKey: string,
+  storeOptions: StoreOptions<T>
+): T | null {
+  const dir = path.dirname(storePath);
+  const storeName = resolveStoreName(storeOptions);
+  const tempName = `${storeName}.recovery-read`;
+  const tempPath = path.join(dir, `${tempName}.json`);
+
+  try {
+    fs.copyFileSync(storePath, tempPath);
+    const store = new Store<T>({
+      ...(storeOptions as StoreOptions<T>),
+      cwd: dir,
+      name: tempName,
+      encryptionKey,
+    });
+    return store.store as T;
+  } catch (error) {
+    if (!isLikelyKeyMismatch(error)) {
+      throw error;
+    }
+    return null;
+  } finally {
+    try {
+      if (fs.existsSync(tempPath)) {
+        fs.unlinkSync(tempPath);
+      }
+    } catch {
+      // Best-effort cleanup.
+    }
+  }
+}
+
+function writeEncryptedStoreSnapshot<T extends Record<string, unknown>>(
+  snapshot: T,
+  stableKey: string,
+  storeOptions: StoreOptions<T> & { projectName?: string }
+): Store<T> {
+  const storeName = resolveStoreName(storeOptions);
+  const storePath = resolveStorePath(storeOptions);
+  const migratingName = `${storeName}.migrating`;
+
+  const migratingStore = new Store<T>({
+    ...(storeOptions as StoreOptions<T>),
+    name: migratingName,
+    encryptionKey: stableKey,
+  });
+  migratingStore.store = snapshot;
+
+  if (storePath) {
+    fs.renameSync(migratingStore.path, storePath);
+  }
+
+  return new Store<T>({
+    ...(storeOptions as StoreOptions<T>),
+    encryptionKey: stableKey,
+  });
+}
+
+function migrateLegacyEncryptedStore<T extends Record<string, unknown>>(
+  snapshot: T,
+  storePath: string,
+  stableKey: string,
+  storeOptions: StoreOptions<T> & { projectName?: string },
+  logPrefix: string,
+  log?: Logger
+): Store<T> {
+  let backupPath: string | null = null;
+  if (fs.existsSync(storePath)) {
+    backupPath = buildBackupPath(storePath);
+    try {
+      fs.renameSync(storePath, backupPath);
+    } catch {
+      fs.copyFileSync(storePath, backupPath);
+      fs.unlinkSync(storePath);
+    }
+  }
+
+  const stableStore = writeEncryptedStoreSnapshot(snapshot, stableKey, storeOptions);
+
+  log?.(`${logPrefix} Migrating encrypted store to a stable key`, {
+    storePath,
+    backupPath,
+  });
+
+  return stableStore;
+}
+
 export function getLegacyDerivedKeyHexes(options: KeyMaterialOptions): string[] {
   return buildLegacyDirCandidates(options.moduleDirname).map((dir) =>
     deriveKeyHex(
@@ -152,10 +260,11 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
   const legacyKeys = uniqueValues(options.legacyKeys);
 
   try {
-    return new Store<T>({
+    const stableStore = new Store<T>({
       ...(options.storeOptions as StoreOptions<T>),
       encryptionKey: stableKey,
     });
+    return attemptRecoveryFromUnreadableBackups(stableStore, options, stableKey, legacyKeys);
   } catch (error) {
     if (!isLikelyKeyMismatch(error)) {
       throw error;
@@ -174,34 +283,16 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
         const snapshot = legacyStore.store as T;
         const storePath = legacyStore.path;
 
-        // Write the new store with the stable key FIRST so data is safe on disk
-        // before we touch the old file. If the process crashes after this point,
-        // the new store already holds all data and will be used on next startup.
-        const stableStore = new Store<T>({
-          ...(options.storeOptions as StoreOptions<T>),
-          encryptionKey: stableKey,
-        });
-        stableStore.store = snapshot;
-
-        // Now that the new store is safely written, back up the old file.
-        // electron-store may have already replaced it when we opened stableStore
-        // above, so we only move it if it still exists.
-        if (fs.existsSync(storePath)) {
-          const backupPath = buildBackupPath(storePath);
-          try {
-            fs.renameSync(storePath, backupPath);
-          } catch {
-            // renameSync can fail across devices; fall back to copy + delete.
-            fs.copyFileSync(storePath, backupPath);
-            fs.unlinkSync(storePath);
-          }
-          options.log?.(`${options.logPrefix} Migrating encrypted store to a stable key`, {
-            storePath,
-            backupPath,
-          });
-        }
-
-        return stableStore;
+        // electron-store reads the existing file on construction. The legacy blob
+        // must be moved aside before opening the stable-key store.
+        return migrateLegacyEncryptedStore(
+          snapshot,
+          storePath,
+          stableKey,
+          options.storeOptions,
+          options.logPrefix,
+          options.log
+        );
       } catch (legacyError) {
         if (!isLikelyKeyMismatch(legacyError)) {
           throw legacyError;
@@ -232,4 +323,38 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
     );
     throw new Error(`${options.logPrefix} All decryption keys failed: ${aggregated}`);
   }
+}
+
+function attemptRecoveryFromUnreadableBackups<T extends Record<string, unknown>>(
+  stableStore: Store<T>,
+  options: EncryptedStoreRotationOptions<T>,
+  stableKey: string,
+  legacyKeys: string[]
+): Store<T> {
+  if (!options.recoverIfReset) {
+    return stableStore;
+  }
+
+  const storePath = resolveStorePath(options.storeOptions);
+  if (!storePath) {
+    return stableStore;
+  }
+
+  const currentSnapshot = stableStore.store as T;
+  for (const backupPath of listUnreadableRecoveryBackups(storePath)) {
+    for (const legacyKey of legacyKeys) {
+      const recovered = readEncryptedStoreSnapshot(backupPath, legacyKey, options.storeOptions);
+      if (!recovered || !options.recoverIfReset(currentSnapshot, recovered)) {
+        continue;
+      }
+
+      options.warn?.(
+        `${options.logPrefix} Restoring encrypted store from unreadable-recovery backup`,
+        { backupPath }
+      );
+      return writeEncryptedStoreSnapshot(recovered, stableKey, options.storeOptions);
+    }
+  }
+
+  return stableStore;
 }

@@ -665,6 +665,17 @@
     "noModel": "Geen model",
     "connectorCount_one": "{{count}} connector",
     "connectorCount_other": "{{count}} connectoren",
+    "compactErrors": {
+      "errCompactNoSession": "Geen actieve agentsessie om te comprimeren. Stuur eerst minstens één bericht in dit gesprek.",
+      "errCompactNothingToCompact": "Nog niets te comprimeren — het gesprek is nog te kort.",
+      "errCompactAlreadyCompacted": "Het gesprek is onlangs al gecomprimeerd.",
+      "errCompactFailed": "Contextcompressie mislukt. Probeer het opnieuw."
+    },
+    "handoffSuccess": "Nieuwe sessie aangemaakt met voortzettingssamenvatting.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Nog niets samen te vatten — het gesprek is nog te kort.",
+      "errHandoffFailed": "Kon geen nieuwe sessie starten vanuit dit gesprek. Probeer het opnieuw."
+    },
     "scrollToBottom": "Naar beneden scrollen"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Geen vragen",
     "question": "Vraag",
     "thinking": "Denken",
-    "executionTime": "Uitvoertijd: {{time}}"
+    "executionTime": "Uitvoertijd: {{time}}",
+    "compactionTitle": "Context gecomprimeerd",
+    "compactionHandoffTitle": "Voortzetting van «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} tokens samengevat",
+    "compactionInstructions": "Focus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Planning maken",

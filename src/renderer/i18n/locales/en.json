@@ -665,6 +665,17 @@
     "noModel": "No model",
     "connectorCount_one": "{{count}} connector",
     "connectorCount_other": "{{count}} connectors",
+    "compactErrors": {
+      "errCompactNoSession": "No active agent session to compact. Send at least one message in this conversation first.",
+      "errCompactNothingToCompact": "Nothing to compact yet — the conversation is still too short.",
+      "errCompactAlreadyCompacted": "The conversation was already compacted recently.",
+      "errCompactFailed": "Context compaction failed. Please try again."
+    },
+    "handoffSuccess": "New session created with continuation summary.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Nothing to summarize yet — the conversation is still too short.",
+      "errHandoffFailed": "Starting a new session from this conversation failed. Please try again."
+    },
     "scrollToBottom": "Scroll to bottom"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "No questions",
     "question": "Question",
     "thinking": "Thinking",
-    "executionTime": "Execution time: {{time}}"
+    "executionTime": "Execution time: {{time}}",
+    "compactionTitle": "Context compacted",
+    "compactionHandoffTitle": "Continued from \"{{sourceTitle}}\"",
+    "compactionMeta": "{{tokensBefore}} tokens summarized",
+    "compactionInstructions": "Focus: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Create Schedule",

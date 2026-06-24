@@ -20,6 +20,7 @@ import { CodeBlock } from './CodeBlock';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ToolUseBlock } from './ToolUseBlock';
 import { ToolResultBlock } from './ToolResultBlock';
+import { CompactionSummaryBlock } from './CompactionSummaryBlock';
 import type { ContentBlockViewProps } from './types';
 
 const MessageMarkdown = lazy(() =>
@@ -355,6 +356,9 @@ export const ContentBlockView = memo(function ContentBlockView({
 
     case 'thinking':
       return <ThinkingBlock block={block as { type: 'thinking'; thinking: string }} />;
+
+    case 'compaction_summary':
+      return <CompactionSummaryBlock block={block} />;
 
     default:
       return null;

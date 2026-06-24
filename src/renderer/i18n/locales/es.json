@@ -665,6 +665,17 @@
     "noModel": "Sin modelo",
     "connectorCount_one": "{{count}} conector",
     "connectorCount_other": "{{count}} conectores",
+    "compactErrors": {
+      "errCompactNoSession": "No hay sesión de agente activa para compactar. Envía al menos un mensaje en esta conversación primero.",
+      "errCompactNothingToCompact": "Nada que compactar por ahora — la conversación sigue siendo demasiado corta.",
+      "errCompactAlreadyCompacted": "La conversación ya se compactó recientemente.",
+      "errCompactFailed": "Error al compactar el contexto. Inténtalo de nuevo."
+    },
+    "handoffSuccess": "Nueva sesión creada con resumen de continuación.",
+    "handoffErrors": {
+      "errHandoffNothingToSummarize": "Nada que resumir por ahora — la conversación sigue siendo demasiado corta.",
+      "errHandoffFailed": "No se pudo iniciar una nueva sesión desde esta conversación. Inténtalo de nuevo."
+    },
     "scrollToBottom": "Ir al final"
   },
   "context": {
@@ -713,7 +724,11 @@
     "noQuestions": "Sin preguntas",
     "question": "Pregunta",
     "thinking": "Pensando",
-    "executionTime": "Tiempo de ejecución: {{time}}"
+    "executionTime": "Tiempo de ejecución: {{time}}",
+    "compactionTitle": "Contexto compactado",
+    "compactionHandoffTitle": "Continuación de «{{sourceTitle}}»",
+    "compactionMeta": "{{tokensBefore}} tokens resumidos",
+    "compactionInstructions": "Enfoque: {{instructions}}"
   },
   "schedule": {
     "createTitle": "Crear programación",
