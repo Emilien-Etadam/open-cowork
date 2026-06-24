@@ -224,7 +224,8 @@ Open Cowork exposes a **curated-strict** extensions marketplace backed by [`cata
 
 ### Validation
 
-- Run `npm run test -- tests/catalog-aggregator.test.ts tests/mcp-registry-resolver.test.ts`.
+- Run `npm run test -- tests/catalog-manifest-validation.test.ts tests/catalog-aggregator.test.ts`.
+- CI runs manifest validation on every pull request.
 - Verify the new entry installs from **Settings → Extensions** in the desktop app.
 
 ---

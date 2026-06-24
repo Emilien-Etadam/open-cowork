@@ -14,8 +14,9 @@ import {
   ShieldCheck,
   Trash2,
 } from 'lucide-react';
-import type { CatalogEntryType, MarketplaceEntry } from '../../types';
+import type { CatalogEntryType, CatalogManifestMeta, MarketplaceEntry } from '../../types';
 import { SettingsContentSection } from './shared';
+import { MarketplaceMcpAdvanced } from './MarketplaceMcpAdvanced';
 
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
@@ -34,6 +35,7 @@ export function SettingsMarketplace({ isActive }: { isActive: boolean }) {
   const [success, setSuccess] = useState('');
   const [envTarget, setEnvTarget] = useState<MarketplaceEntry | null>(null);
   const [envValues, setEnvValues] = useState<Record<string, string>>({});
+  const [catalogMeta, setCatalogMeta] = useState<CatalogManifestMeta | null>(null);
 
   const loadEntries = useCallback(
     async (forceRefresh = false) => {
@@ -42,13 +44,18 @@ export function SettingsMarketplace({ isActive }: { isActive: boolean }) {
       }
       setIsLoading(true);
       try {
-        const [catalog, path] = await Promise.all([
+        const [catalog, path, meta] = await Promise.all([
           window.electronAPI.marketplace.list(forceRefresh),
           window.electronAPI.skills.getStoragePath(),
+          window.electronAPI.marketplace.getMeta(forceRefresh),
         ]);
         setEntries(catalog);
         setStoragePath(path || '');
+        setCatalogMeta(meta);
         setError('');
+        if (forceRefresh && meta.source === 'remote') {
+          setSuccess(t('marketplace.catalogUpdated'));
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : t('marketplace.failedToLoad'));
       } finally {
@@ -60,7 +67,7 @@ export function SettingsMarketplace({ isActive }: { isActive: boolean }) {
 
   useEffect(() => {
     if (isActive) {
-      void loadEntries();
+      void loadEntries(true);
     }
   }, [isActive, loadEntries]);
 
@@ -236,6 +243,23 @@ export function SettingsMarketplace({ isActive }: { isActive: boolean }) {
         </div>
       )}
 
+      {catalogMeta && view !== 'storage' && (
+        <div className="text-xs text-text-muted rounded-lg border border-border px-3 py-2 space-y-1">
+          <div>
+            {t('marketplace.catalogMeta', {
+              version: catalogMeta.version,
+              updatedAt: new Date(catalogMeta.updatedAt).toLocaleDateString(),
+              count: catalogMeta.entryCount,
+            })}
+          </div>
+          <div>
+            {catalogMeta.source === 'remote'
+              ? t('marketplace.catalogSourceRemote')
+              : t('marketplace.catalogSourceBundled')}
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {viewButtons.map((button) => (
           <button
@@ -340,6 +364,7 @@ export function SettingsMarketplace({ isActive }: { isActive: boolean }) {
             <FolderOpen className="w-4 h-4" />
             {t('marketplace.manualSkillInstall')}
           </button>
+          <MarketplaceMcpAdvanced isActive={isActive && view === 'marketplace'} />
         </SettingsContentSection>
       )}
 

@@ -1,8 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
-// SettingsPanel was split — skills/plugin content lives in settings/SettingsSkills.tsx
 const settingsPanelPath = path.resolve(process.cwd(), 'src/renderer/components/SettingsPanel.tsx');
 const settingsDir = path.resolve(process.cwd(), 'src/renderer/components/settings');
 const settingsPanelContent = [
@@ -10,49 +9,35 @@ const settingsPanelContent = [
   ...readdirSync(settingsDir).map((f) => readFileSync(path.join(settingsDir, f), 'utf8')),
 ].join('\n');
 
-describe('SettingsPanel skills plugin browse entry', () => {
-  it('unit: renders browse plugins action', () => {
-    expect(settingsPanelContent).toContain("t('skills.browsePlugins')");
+describe('SettingsPanel extensions marketplace', () => {
+  it('uses unified extensions tab instead of legacy skills/connectors tabs', () => {
+    expect(settingsPanelContent).toContain('SettingsMarketplace');
+    expect(settingsPanelContent).toContain("id: 'extensions'");
+    expect(settingsPanelContent).not.toContain('SettingsSkills');
+    expect(settingsPanelContent).not.toContain('SettingsConnectors');
   });
 
-  it('smoke: includes plugin list modal title i18n key', () => {
-    expect(settingsPanelContent).toContain("t('skills.pluginListTitle')");
+  it('exposes marketplace IPC for curated catalog', () => {
+    expect(settingsPanelContent).toContain('window.electronAPI.marketplace.list');
+    expect(settingsPanelContent).toContain('window.electronAPI.marketplace.getMeta');
+    expect(settingsPanelContent).toContain('window.electronAPI.marketplace.install');
   });
 
-  it('functional: includes plugin install action i18n key', () => {
-    expect(settingsPanelContent).toContain("t('skills.pluginInstall')");
+  it('keeps manual skill install and MCP advanced section', () => {
+    expect(settingsPanelContent).toContain("t('marketplace.manualSkillInstall')");
+    expect(settingsPanelContent).toContain('MarketplaceMcpAdvanced');
+    expect(settingsPanelContent).toContain("t('marketplace.manualWarning')");
   });
 
-  it('functional: includes skills storage controls', () => {
+  it('shows catalog OTA metadata in the UI', () => {
+    expect(settingsPanelContent).toContain("t('marketplace.catalogMeta'");
+    expect(settingsPanelContent).toContain("t('marketplace.catalogSourceRemote')");
+    expect(settingsPanelContent).toContain('marketplace.getMeta');
+  });
+
+  it('retains skills storage controls in marketplace storage view', () => {
     expect(settingsPanelContent).toContain("t('skills.storagePathTitle')");
-    expect(settingsPanelContent).toContain("t('skills.selectStoragePath')");
-    expect(settingsPanelContent).toContain("t('skills.openStoragePath')");
-    expect(settingsPanelContent).toContain("t('skills.refreshSkills')");
     expect(settingsPanelContent).toContain('window.electronAPI.skills.getStoragePath()');
-    expect(settingsPanelContent).toContain('window.electronAPI.skills.setStoragePath(folderPath, true)');
-    expect(settingsPanelContent).toContain('window.electronAPI.skills.openStoragePath()');
-    expect(settingsPanelContent).toContain('Promise.allSettled([');
-    expect(settingsPanelContent).toContain("throw new Error(errors.join(' | '));");
-    expect(settingsPanelContent).toContain("`${tRef.current('skills.failedToLoad')}: ${err.message}`");
-    expect(settingsPanelContent).toContain('await loadSkills();');
-  });
-
-  it('functional: uses plugins API for catalog and management', () => {
-    expect(settingsPanelContent).toContain('window.electronAPI.plugins.listCatalog');
-    expect(settingsPanelContent).toContain('window.electronAPI.plugins.listInstalled');
-    expect(settingsPanelContent).toContain('window.electronAPI.plugins.install(installTarget)');
-    expect(settingsPanelContent).toContain('window.electronAPI.plugins.setComponentEnabled');
-    expect(settingsPanelContent).toContain("t('skills.pluginManageUninstall')");
-  });
-
-  it('functional: handles marketplace catalog items with unknown component counts', () => {
-    expect(settingsPanelContent).toContain("plugin.catalogSource === 'claude-marketplace'");
-    expect(settingsPanelContent).toContain("t('skills.pluginComponentsAvailableAfterInstall')");
-  });
-
-  it('functional: matches installed plugins using normalized lookup keys', () => {
-    expect(settingsPanelContent).toContain('normalizePluginLookupKey');
-    expect(settingsPanelContent).toContain('getCatalogLookupKeys');
-    expect(settingsPanelContent).toContain('installedPluginsByKey');
+    expect(settingsPanelContent).toContain('window.electronAPI.skills.setStoragePath');
   });
 });
