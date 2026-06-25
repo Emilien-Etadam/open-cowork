@@ -82,6 +82,12 @@ export async function handleClientEvent(event: ClientEvent): Promise<unknown> {
     case 'session.handoff':
       return sm.handoffSession(event.payload.sessionId, event.payload.customInstructions);
 
+    case 'session.forkFromMessage':
+      return sm.forkSessionFromMessage(event.payload.sessionId, event.payload.messageId);
+
+    case 'session.rewindToMessage':
+      return sm.rewindSessionForEdit(event.payload.sessionId, event.payload.messageId);
+
     case 'session.stop':
       return sm.stopSession(event.payload.sessionId);
 

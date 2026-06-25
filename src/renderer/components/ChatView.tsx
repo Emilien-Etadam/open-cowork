@@ -24,7 +24,6 @@ import {
   type SlashCommandDefinition,
 } from '../../shared/slash-commands';
 import { SlashCommandMenu } from './SlashCommandMenu';
-import { ChatContextUsageBar } from './ChatContextUsageBar';
 import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
 
 type AttachedFile = {
@@ -48,7 +47,15 @@ export function ChatView() {
   const appConfig = useAppConfig();
   const setGlobalNotice = useAppStore((s) => s.setGlobalNotice);
   const pluginCommandsRevision = useAppStore((s) => s.pluginCommandsRevision);
-  const { continueSession, compactSession, handoffSession, stopSession, isElectron } = useIPC();
+  const {
+    continueSession,
+    compactSession,
+    handoffSession,
+    forkSessionFromMessage,
+    rewindSessionForEdit,
+    stopSession,
+    isElectron,
+  } = useIPC();
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<
@@ -740,6 +747,35 @@ export function ChatView() {
     }
   };
 
+  const handleForkMessage = async (message: Message) => {
+    if (!activeSessionId || isSubmitting) {
+      return;
+    }
+    await forkSessionFromMessage(activeSessionId, message.id);
+  };
+
+  const handleEditPrompt = async (message: Message) => {
+    if (!activeSessionId || isSubmitting) {
+      return;
+    }
+    const result = await rewindSessionForEdit(activeSessionId, message.id);
+    if (!result.success) {
+      return;
+    }
+
+    const nextPrompt = result.promptText ?? '';
+    setPrompt(nextPrompt);
+    if (textareaRef.current) {
+      textareaRef.current.value = nextPrompt;
+      textareaRef.current.focus();
+      const end = nextPrompt.length;
+      textareaRef.current.setSelectionRange(end, end);
+    }
+    pastedImages.forEach((img) => URL.revokeObjectURL(img.url));
+    setPastedImages([]);
+    setAttachedFiles([]);
+  };
+
   if (!activeSession) {
     return (
       <div className="flex-1 flex items-center justify-center text-text-muted">
@@ -809,7 +845,20 @@ export function ChatView() {
                 typeof message.id === 'string' && message.id.startsWith('partial-');
               return (
                 <div key={message.id}>
-                  <MessageCard message={message} isStreaming={isStreaming} />
+                  <MessageCard
+                    message={message}
+                    isStreaming={isStreaming}
+                    onFork={
+                      message.role === 'user' && !isStreaming
+                        ? () => void handleForkMessage(message)
+                        : undefined
+                    }
+                    onEditPrompt={
+                      message.role === 'user' && !isStreaming
+                        ? () => void handleEditPrompt(message)
+                        : undefined
+                    }
+                  />
                 </div>
               );
             })
@@ -840,8 +889,6 @@ export function ChatView() {
           <div ref={messagesEndRef} />
         </div>
       </div>
-
-      <ChatContextUsageBar />
 
       {/* Input */}
       <div className="relative border-t border-border-muted bg-background/92 backdrop-blur-md">

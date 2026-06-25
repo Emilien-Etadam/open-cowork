@@ -243,12 +243,14 @@ function createDatabaseInstance(db: Database.Database): DatabaseInstance {
       ),
       delete: vi.fn(),
       deleteBySessionId: vi.fn(),
+      deleteFromTimestamp: vi.fn(),
     },
     traceSteps: {
       create: vi.fn(),
       update: vi.fn(),
       getBySessionId: vi.fn(() => []),
       deleteBySessionId: vi.fn(),
+      deleteFromTimestamp: vi.fn(),
     },
     scheduledTasks: {
       create: vi.fn(),

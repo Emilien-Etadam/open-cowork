@@ -722,6 +722,17 @@
       "errHandoffNothingToSummarize": "Rien à résumer pour l'instant — la conversation est encore trop courte.",
       "errHandoffFailed": "La reprise dans une nouvelle session a échoué. Veuillez réessayer."
     },
+    "forkSuccess": "Nouvelle session créée à partir de ce message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session introuvable.",
+      "errForkMessageNotFound": "Message utilisateur introuvable.",
+      "errForkFailed": "Impossible de créer la branche depuis ce message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session introuvable.",
+      "errRewindMessageNotFound": "Message utilisateur introuvable.",
+      "errRewindFailed": "Impossible de rééditer ce message."
+    },
     "slashCommands": {
       "menuLabel": "Commandes",
       "unknownCommand": "Commande slash inconnue : {{command}}",
@@ -774,6 +785,8 @@
     "emptyMessage": "Message vide",
     "emptyText": "(texte vide)",
     "copyMessage": "Copier le message",
+    "forkFromMessage": "Forker depuis ce message",
+    "editPrompt": "Modifier le prompt",
     "revealInFolder": "Afficher dans le dossier",
     "pastedContentAlt": "Contenu collé",
     "taskProgress": "Progression de la tâche",

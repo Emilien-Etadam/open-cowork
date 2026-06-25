@@ -46,6 +46,6 @@ describe('ChatView IPC wiring', () => {
 
     expect(chatView).toContain('pluginCommandsRevision');
     expect(chatView).not.toContain('window.electronAPI.on((event)');
-    expect(chatView).toContain('ChatContextUsageBar');
+    expect(chatView).not.toContain('ChatContextUsageBar');
   });
 });
