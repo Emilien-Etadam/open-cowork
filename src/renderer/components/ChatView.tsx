@@ -20,6 +20,7 @@ import {
   filterSlashCommands,
   getSlashCommandQuery,
   hasExactSlashCommandQuery,
+  normalizePluginSlashPromptForExpansion,
   type SlashCommandDefinition,
 } from '../../shared/slash-commands';
 import { SlashCommandMenu } from './SlashCommandMenu';
@@ -681,8 +682,23 @@ export function ChatView() {
           }
           return;
         }
+        if (command.kind === 'unknown') {
+          setGlobalNotice({
+            id: `notice-unknown-slash-${Date.now()}`,
+            type: 'warning',
+            message: t('chat.slashCommands.unknownCommand', {
+              command: `/${command.token}`,
+            }),
+            messageKey: 'chat.slashCommands.unknownCommand',
+            messageValues: { command: `/${command.token}` },
+          });
+          return;
+        }
       }
 
+      const promptText = textOnly
+        ? normalizePluginSlashPromptForExpansion(textOnly, pluginSlashCommands)
+        : currentPrompt.trim();
       // Build content blocks
       const contentBlocks: ContentBlock[] = [];
 
@@ -711,10 +727,10 @@ export function ChatView() {
       });
 
       // Add text if present
-      if (currentPrompt.trim()) {
+      if (promptText) {
         contentBlocks.push({
           type: 'text',
-          text: currentPrompt.trim(),
+          text: promptText,
         });
       }
 

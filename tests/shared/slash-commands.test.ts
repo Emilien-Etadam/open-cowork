@@ -8,6 +8,7 @@ import {
   isCompactSlashCommand,
   isHandoffSlashCommand,
   isPluginSlashCommand,
+  normalizePluginSlashPromptForExpansion,
   parseSlashCommand,
   SLASH_COMMAND_DEFINITIONS,
 } from '../../src/shared/slash-commands';
@@ -19,6 +20,16 @@ const PLUGIN_COMMANDS: PluginSlashCommandInfo[] = [
     pluginName: 'Demo Plugin',
     name: 'deploy',
     command: '/deploy',
+    description: 'Deploy the app',
+  },
+];
+
+const NAMESPACED_PLUGIN_COMMANDS: PluginSlashCommandInfo[] = [
+  {
+    pluginId: 'demo',
+    pluginName: 'Demo Plugin',
+    name: 'deploy',
+    command: '/demo:deploy',
     description: 'Deploy the app',
   },
 ];
@@ -121,9 +132,42 @@ describe('parseSlashCommand', () => {
     expect(parseSlashCommand('/deploy staging', PLUGIN_COMMANDS)).toEqual({
       kind: 'plugin',
       command: '/deploy',
+      name: 'deploy',
       instructions: 'staging',
     });
     expect(isPluginSlashCommand('/deploy', PLUGIN_COMMANDS)).toBe(true);
-    expect(parseSlashCommand('/unknown', PLUGIN_COMMANDS)).toEqual({ kind: 'message' });
+    expect(parseSlashCommand('/unknown', PLUGIN_COMMANDS)).toEqual({
+      kind: 'unknown',
+      token: 'unknown',
+    });
+  });
+
+  it('detects namespaced plugin slash commands', () => {
+    expect(parseSlashCommand('/demo:deploy staging', NAMESPACED_PLUGIN_COMMANDS)).toEqual({
+      kind: 'plugin',
+      command: '/demo:deploy',
+      name: 'deploy',
+      instructions: 'staging',
+    });
+  });
+});
+
+describe('normalizePluginSlashPromptForExpansion', () => {
+  it('rewrites namespaced plugin commands to template names', () => {
+    expect(
+      normalizePluginSlashPromptForExpansion('/demo:deploy staging', NAMESPACED_PLUGIN_COMMANDS)
+    ).toBe('/deploy staging');
+  });
+
+  it('leaves short plugin commands unchanged', () => {
+    expect(normalizePluginSlashPromptForExpansion('/deploy staging', PLUGIN_COMMANDS)).toBe(
+      '/deploy staging'
+    );
+  });
+
+  it('leaves normal messages unchanged', () => {
+    expect(normalizePluginSlashPromptForExpansion('hello world', PLUGIN_COMMANDS)).toBe(
+      'hello world'
+    );
   });
 });

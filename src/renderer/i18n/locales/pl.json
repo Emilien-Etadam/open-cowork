@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Polecenia",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Skompresuj kontekst w bieżącej sesji"
       },
