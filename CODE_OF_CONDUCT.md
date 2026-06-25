@@ -26,35 +26,35 @@ Examples of unacceptable behavior:
 
 ## Enforcement Responsibilities
 
-Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
+The fork maintainer is responsible for clarifying and enforcing these standards and will take appropriate and fair corrective action in response to any behavior deemed inappropriate, threatening, offensive, or harmful.
 
-Community leaders have the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct, and will communicate reasons for moderation decisions when appropriate.
+The maintainer has the right and responsibility to remove, edit, or reject comments, commits, code, wiki edits, issues, and other contributions that are not aligned to this Code of Conduct, and will communicate reasons for moderation decisions when appropriate.
 
 ## Scope
 
-This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces.
+This Code of Conduct applies within all community spaces of this repository (issues, pull requests, discussions), and also applies when an individual is officially representing the project in public spaces.
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at **conduct@opencowork.ai**. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the maintainer via [GitHub Issues](https://github.com/Emilien-Etadam/open-cowork/issues) (mark as conduct-related) or through a [private security advisory](https://github.com/Emilien-Etadam/open-cowork/security/advisories/new) if sensitive.
 
-All community leaders are obligated to respect the privacy and security of the reporter of any incident.
+All reports will be reviewed and investigated promptly and fairly. The privacy of reporters will be respected.
 
 ## Enforcement Guidelines
 
-Community leaders will follow these Community Impact Guidelines in determining the consequences for any action they deem in violation of this Code of Conduct:
+The maintainer will follow these Community Impact Guidelines in determining the consequences for any action deemed in violation of this Code of Conduct:
 
 ### 1. Correction
 
 **Community Impact**: Use of inappropriate language or other behavior deemed unprofessional or unwelcome in the community.
 
-**Consequence**: A private, written warning from community leaders, providing clarity around the nature of the violation and an explanation of why the behavior was inappropriate.
+**Consequence**: A private, written warning providing clarity around the nature of the violation.
 
 ### 2. Warning
 
 **Community Impact**: A violation through a single incident or series of actions.
 
-**Consequence**: A warning with consequences for continued behavior. No interaction with the people involved, including unsolicited interaction with those enforcing the Code of Conduct, for a specified period of time.
+**Consequence**: A warning with consequences for continued behavior. No interaction with the people involved for a specified period of time.
 
 ### 3. Temporary Ban
 
@@ -70,4 +70,6 @@ Community leaders will follow these Community Impact Guidelines in determining t
 
 ## Attribution
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1, available at [https://www.contributor-covenant.org/version/2/1/code_of_conduct.html](https://www.contributor-covenant.org/version/2/1/code_of_conduct.html).
+This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
+
+This fork is maintained by [Emilien-Etadam](https://github.com/Emilien-Etadam) and based on [Open Cowork](https://github.com/OpenCoworkAI/open-cowork) upstream.

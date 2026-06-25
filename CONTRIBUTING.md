@@ -1,6 +1,8 @@
-# Contributing to Open Cowork
+# Contributing to Open Cowork (Fork EE)
 
-Thank you for your interest in contributing! Open Cowork is an open-source desktop AI agent app built with Electron, React, and TypeScript. This guide covers everything you need to get started.
+Thank you for your interest in contributing! This repository is a **personal fork** of [Open Cowork](https://github.com/OpenCoworkAI/open-cowork), maintained by [Emilien-Etadam](https://github.com/Emilien-Etadam). Releases are tagged `3.3.1-EE*` (alpha).
+
+Upstream contributions should generally go to [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork). Use this fork for EE-specific features, marketplace curation, and fork UX.
 
 ---
 
@@ -15,9 +17,9 @@ Thank you for your interest in contributing! Open Cowork is an open-source deskt
 **Install**
 
 ```bash
-git clone https://github.com/OpenCoworkAI/open-cowork.git
+git clone https://github.com/Emilien-Etadam/open-cowork.git
 cd open-cowork
-npm install        # also runs postinstall: downloads Node binaries + rebuilds native modules
+npm install        # postinstall: downloads Node binaries + rebuilds native modules
 ```
 
 **Common commands**
@@ -38,212 +40,135 @@ npm install        # also runs postinstall: downloads Node binaries + rebuilds n
 ```
 src/
 ├── main/                    # Electron main process
-│   ├── claude/              # AI execution (agent-runner, model resolution, auth)
-│   ├── config/              # electron-store, API keys, presets
-│   ├── mcp/                 # MCP server lifecycle (stdio / SSE / Streamable HTTP)
-│   ├── session/             # Session CRUD, chat history
-│   ├── tools/               # Tool execution dispatch
-│   ├── db/                  # SQLite schema and migrations
-│   ├── sandbox/             # Lima (macOS) / WSL2 (Windows) isolation
-│   ├── skills/              # Skill discovery and hot-reload
-│   ├── catalog/             # Curated marketplace manifest + install resolver
-│   ├── remote/              # Feishu/Lark bot integration
-│   └── schedule/            # Cron-like scheduled tasks
+│   ├── claude/              # Agent runner (pi-coding-agent)
+│   ├── config/              # Settings, API keys, provider migration
+│   ├── mcp/                 # MCP lifecycle (stdio / SSE / Streamable HTTP)
+│   ├── session/             # Sessions, compaction, message branching
+│   ├── sandbox/             # WSL2 (Windows) / Lima (macOS)
+│   ├── skills/              # Skills + plugin runtime
+│   ├── catalog/             # Curated marketplace (manifest + install)
+│   ├── chat-lan-server/     # Local web UI for LAN chat
+│   ├── memory/              # Core + experience memory
+│   └── schedule/            # Scheduled tasks
 └── renderer/                # React frontend
-    ├── components/          # UI components
-    ├── hooks/               # Custom React hooks
-    ├── store/               # Zustand state
-    ├── i18n/                # i18next localization
-    └── styles/              # Tailwind + global CSS
+    ├── components/          # UI (ChatView, Settings, marketplace…)
+    ├── hooks/               # IPC, API config
+    ├── i18n/locales/        # 12 UI languages
+    └── store/               # Zustand state
+
+catalog/manifest.json        # Curated marketplace whitelist
 ```
 
-Test files live in `src/` alongside their source, or under `tests/` at the root, mirroring the source path (e.g. `src/main/mcp/foo.ts` → `src/tests/mcp/foo.test.ts`).
+Tests live in `src/tests/` or `tests/`, mirroring source paths.
 
 ---
 
 ## Code Style
 
 - **TypeScript strict mode** — no implicit `any`
-- **ESLint + Prettier** — 2-space indent; run `npm run lint` and `npm run format` before pushing
-- **React functional components** with hooks only — no class components
-- **Tailwind CSS** for all styling — no CSS modules, no inline style objects unless unavoidable
-- **Icons** — use `lucide-react`; do not add other icon libraries
+- **ESLint + Prettier** — run `npm run lint` and `npm run format` before pushing
+- **React functional components** with hooks only
+- **Tailwind CSS** for styling
+- **Icons** — `lucide-react` only
 
 ---
 
 ## Git Workflow
 
-**Branch naming**
+**Branch naming** (fork convention)
 
 ```
-main            — stable releases
-dev             — integration branch (target for most PRs)
-feature/<name>  — new features
-fix/<name>      — bug fixes
+cursor/<description>-7e4e    # feature branches (Cloud Agent / PR workflow)
+main                          # integration & EE releases
 ```
 
-**Conventional Commits** are enforced by commitlint + husky on every commit.
+**Conventional Commits** (enforced by commitlint + husky):
 
 ```
 <type>(<scope>): <short summary>
 ```
 
-Allowed types: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`, `chore`, `ci`, `style`, `revert`, `release`, `merge`
-
-Header max length: **100 characters**
+Allowed types: `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `build`, `chore`, `ci`, `style`, `revert`, `release`
 
 Examples:
 
 ```
-feat(mcp): add Streamable HTTP transport support
-fix(sandbox): handle WSL2 path with spaces
-docs: update README setup instructions
-test(session): add unit tests for session-manager
+feat(marketplace): add playwright MCP entry
+fix(chat-lan): resolve packaged UI path
+docs: update SECURITY.md for fork EE
 ```
-
-Scope is optional but encouraged.
 
 ---
 
 ## Pull Request Guidelines
 
-1. **Target `dev`** for all feature/fix PRs; target `main` only for releases.
-2. **Tests are required** for every `feat` and `fix` PR — see [Testing](#testing).
-3. **Single component file limit**: keep individual component files under 500 lines. Split large components into smaller sub-components.
-4. **No `any`**: use `unknown` + type guards instead. `catch (e: unknown)` is correct; `catch (e: any)` will be rejected in review.
-5. **CI must be green**: the PR must pass lint (`npm run lint`), type-check (`npx tsc --noEmit`), and tests (`npx vitest run`) before merge.
-6. Keep changes minimal and focused — avoid unrelated refactors in the same PR.
+1. **Target `main`** for all PRs on this fork.
+2. **Tests required** for `feat` and `fix` — CI must pass lint, typecheck, and `npm run test:coverage`.
+3. Keep component files under **500 lines**; split when larger.
+4. No `any` — use `unknown` + type guards.
+5. Keep changes focused; avoid unrelated refactors.
+6. Update `CHANGELOG.md` for user-visible EE changes.
 
 ---
 
 ## Dependency Management
 
-Open Cowork uses **Dependabot** (`.github/dependabot.yml`) to keep dependencies current. To avoid PR pile-up and reduce risk, we follow a tiered strategy:
+Same tiered policy as upstream (Dependabot in `.github/dependabot.yml`).
 
-### Tiers
+**Manual review always required for:**
 
-| Tier                 | Scope                            | Merge policy                                                                         |
-| -------------------- | -------------------------------- | ------------------------------------------------------------------------------------ |
-| **Auto-merge**       | GitHub Actions (all versions)    | CI green → merge immediately. CI actions are grouped into a single PR.               |
-| **Auto-merge**       | Dev-dependencies (patch + minor) | CI green → merge immediately. Grouped into a single PR per week.                     |
-| **Quick review**     | Production dependencies (patch)  | Skim changelog, merge if CI green. Grouped into a single PR per week.                |
-| **Manual review**    | Production dependencies (minor)  | Read changelog, check for behavioral changes, then merge. Grouped into a single PR.  |
-| **Dedicated branch** | Any dependency (major)           | Create a migration branch, test thoroughly, update code if needed. Never auto-merge. |
+- `electron`
+- `@mariozechner/pi-coding-agent` / `@mariozechner/pi-ai`
+- `better-sqlite3`
+- `vite` / `@vitejs/plugin-react`
 
-### Critical dependencies (always manual review)
-
-These packages are deeply integrated — any update (including patch) should be tested locally before merge:
-
-- `electron` — major upgrades need a dedicated migration branch; skip Dependabot for major versions
-- `@mariozechner/pi-coding-agent` — core AI SDK; read release notes carefully
-- `better-sqlite3` — native module; rebuild required, test on both platforms
-- `vite` / `@vitejs/plugin-react` — build toolchain; verify `npm run build` succeeds
-
-### Weekly workflow
-
-1. **Monday**: Dependabot opens grouped PRs
-2. **Within the week**: maintainer reviews and merges per tier policy
-3. **Friday**: any remaining patch/minor PRs should be merged or closed with reason
-4. **Major upgrades**: file an issue, plan the migration, merge when ready
-
-### Adding new dependencies
-
-Before adding a dependency:
-
-1. **Check license** — must be MIT, Apache-2.0, BSD, or ISC. No GPL/AGPL/SSPL.
-2. **Check size** — run `npx pkg-size <package>` or check bundlephobia. Avoid bloating the installer.
-3. **Check maintenance** — prefer packages with recent commits, multiple maintainers, and >1K weekly downloads.
-4. **Prefer built-in** — use Node.js built-ins or existing dependencies before adding new ones.
-5. **Document why** — add a comment in the PR description explaining why this dependency is needed and what alternatives were considered.
+Before adding a dependency: check license (MIT/Apache/BSD/ISC), size, and maintenance activity.
 
 ---
 
 ## Testing
 
-Open Cowork uses **Vitest**.
-
-**File placement**
-
-Place test files next to their source or under a mirrored path:
-
-```
-src/main/mcp/mcp-manager.ts      →  src/tests/mcp/mcp-manager.test.ts
-src/main/session/session-manager.ts  →  src/tests/session/session-manager.test.ts
-```
-
-Both `src/**/*.{test,spec}.ts` and `tests/**/*.{test,spec}.ts` are picked up automatically.
-
-**Run tests**
-
 ```bash
 npm run test               # watch mode
-npx vitest run             # single run (used in CI)
-npx vitest run --coverage  # with v8 coverage report
+npx vitest run             # single run (CI)
+npm run test:coverage      # with coverage thresholds
 ```
-
-Coverage reports are written to `coverage/` (html, json, text).
 
 ---
 
 ## i18n
 
-All user-visible strings must go through **i18next** — never hard-code display text.
+All user-visible strings go through **i18next**. Translation files: `src/renderer/i18n/locales/` (**12 languages**).
 
-```tsx
-// Good
-import { useTranslation } from 'react-i18next';
-const { t } = useTranslation();
-return <button>{t('settings.save')}</button>;
-
-// Bad
-return <button>Save</button>;
-```
-
-Translation files live in `src/renderer/i18n/`. Add keys to both `en` and `zh` locales when introducing new UI text.
+When adding UI text, update **all** locale files (`en`, `fr`, `zh`, `es`, `de`, `it`, `uk`, `pl`, `sv`, `no`, `nl`, `ro`). Backend strings use `src/main/i18n/`.
 
 ---
 
-## Curated Marketplace Catalog
+## Curated Marketplace
 
-Open Cowork exposes a **curated-strict** extensions marketplace backed by [`catalog/manifest.json`](catalog/manifest.json).
+Extensions are defined in [`catalog/manifest.json`](catalog/manifest.json) (curated-strict).
 
-### Adding a new extension
+1. Add a verified entry with a `resolve` block (`builtin`, `preset`, `mcp-registry`, or `github`).
+2. Pin MCP versions when possible (`pinVersion`).
+3. Run `npm run test -- tests/catalog-manifest-validation.test.ts`.
+4. Test install from **Réglages → Extensions**.
 
-1. Open a PR that adds an entry to `catalog/manifest.json`.
-2. Every entry must include `"verified": true` and a `resolve` block (`builtin`, `preset`, `mcp-registry`, or `github`).
-3. Prefer pinned versions for MCP registry entries (`pinVersion`) instead of uncontrolled `@latest`.
-4. Document required environment variables in `requiresEnv` and `envDescription`.
-
-### Security review checklist
-
-- Source code or package has been reviewed by a maintainer.
-- No hardcoded secrets, tokens, or credentials in the manifest.
-- MCP stdio servers are treated as **local code execution** — review npm/GitHub sources carefully.
-- Plugins installed from GitHub must come from a trusted repository and subdirectory.
-- Community packages are **not** accepted via open self-service publishing; curation is mandatory.
-
-### Validation
-
-- Run `npm run test -- tests/catalog-manifest-validation.test.ts tests/catalog-aggregator.test.ts`.
-- CI runs manifest validation on every pull request.
-- Verify the new entry installs from **Settings → Extensions** in the desktop app.
+MCP stdio servers execute local code — review sources carefully. No open self-service publishing.
 
 ---
 
 ## Reporting Issues
 
-**Bug reports** — use the GitHub issue template and include:
+Open issues on [Emilien-Etadam/open-cowork](https://github.com/Emilien-Etadam/open-cowork/issues).
 
-- Open Cowork version
-- Operating system (macOS / Windows + version)
+Include:
+
+- Version (`3.3.1-EE4.97` or build from commit)
+- OS (Windows / macOS + version)
 - Steps to reproduce
-- Expected vs. actual behavior
-- Relevant logs (from DevTools console or the in-app log viewer)
+- Expected vs actual behavior
+- Relevant logs
 
-**Feature requests** — open a GitHub Discussion or issue with:
+**Security issues** — see [SECURITY.md](SECURITY.md). Do not file public issues for vulnerabilities.
 
-- The problem you are trying to solve
-- Your proposed solution or behavior
-- Any alternatives you considered
-
-For questions or informal discussion, open a GitHub Discussion rather than an issue.
+For bugs in shared upstream behavior, consider reporting to [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork/issues) as well.
