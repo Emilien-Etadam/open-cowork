@@ -93,7 +93,8 @@
     "updateOpenReleases": "Open releases page",
     "updateError": "Update check failed: {{error}}",
     "updateManualDownload": "Download the latest installer from GitHub.",
-    "updateDownloading": "Downloading update…"
+    "updateDownloading": "Downloading update…",
+    "updateDownloadError": "Automatic download failed: {{error}}"
   },
   "memory": {
     "title": "Memorie",

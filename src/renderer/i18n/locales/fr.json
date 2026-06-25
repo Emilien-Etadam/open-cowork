@@ -93,7 +93,8 @@
     "updateOpenReleases": "Ouvrir la page des releases",
     "updateError": "Échec de la vérification : {{error}}",
     "updateManualDownload": "Téléchargez le dernier installateur sur GitHub.",
-    "updateDownloading": "Téléchargement de la mise à jour en cours…"
+    "updateDownloading": "Téléchargement de la mise à jour en cours…",
+    "updateDownloadError": "Échec du téléchargement automatique : {{error}}"
   },
   "chatLan": {
     "title": "Chat LAN",

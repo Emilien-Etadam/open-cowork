@@ -64,7 +64,7 @@ win:
     - target: nsis
       arch:
         - x64
-  artifactName: ${productName}-${version}-win-${arch}.${ext}
+  artifactName: Open.Cowork-${version}-win-${arch}.${ext}
   extraResources:
     - from: resources/icon.ico
       to: icon.ico
@@ -93,7 +93,7 @@ mac:
     - target: dir
       arch:
         - arm64
-  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  artifactName: Open.Cowork-${version}-mac-${arch}.${ext}
   identity: auto
   hardenedRuntime: true
   gatekeeperAssess: true
@@ -135,7 +135,7 @@ linux:
     - target: AppImage
       arch:
         - x64
-  artifactName: ${productName}-${version}-linux-${arch}.${ext}
+  artifactName: Open.Cowork-${version}-linux-${arch}.${ext}
   extraResources:
     - from: resources/icon.png
       to: icon.png

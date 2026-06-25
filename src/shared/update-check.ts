@@ -15,6 +15,8 @@ export interface UpdateCheckResult {
   /** True when electron-updater can download/install (packaged Windows). */
   autoUpdateSupported?: boolean;
   canInstall?: boolean;
+  /** Set when auto-download was attempted but failed (Windows). */
+  downloadError?: string;
   message?: string;
   error?: string;
 }
@@ -25,8 +27,12 @@ export function buildUpdateCheckResult(params: {
   downloadedVersion?: string | null;
   autoUpdateSupported?: boolean;
 }): UpdateCheckResult {
-  const { currentVersion, latestVersion, downloadedVersion = null, autoUpdateSupported = false } =
-    params;
+  const {
+    currentVersion,
+    latestVersion,
+    downloadedVersion = null,
+    autoUpdateSupported = false,
+  } = params;
 
   if (!latestVersion) {
     return {

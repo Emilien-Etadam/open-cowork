@@ -152,6 +152,10 @@ export function SettingsGeneral() {
     updateState?.status === 'update-available' &&
     !canInstallUpdate &&
     !updateState.autoUpdateSupported;
+  const showWindowsDownloadFallback =
+    updateState?.status === 'update-available' &&
+    Boolean(updateState.autoUpdateSupported) &&
+    !canInstallUpdate;
 
   return (
     <div className="space-y-6">
@@ -253,7 +257,15 @@ export function SettingsGeneral() {
           </button>
         </div>
         {updateMessage && <p className="text-xs text-text-muted">{updateMessage}</p>}
+        {updateState?.downloadError && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            {t('general.updateDownloadError', { error: updateState.downloadError })}
+          </p>
+        )}
         {showManualDownloadHint && (
+          <p className="text-xs text-text-muted">{t('general.updateManualDownload')}</p>
+        )}
+        {showWindowsDownloadFallback && (
           <p className="text-xs text-text-muted">{t('general.updateManualDownload')}</p>
         )}
       </div>

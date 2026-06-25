@@ -187,6 +187,8 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
           const latestVersion =
             result?.updateInfo?.version ?? (await fetchLatestGitHubReleaseVersion());
 
+          let downloadError: string | undefined;
+
           if (
             latestVersion &&
             isEeVersionNewer(latestVersion, currentVersion) &&
@@ -195,16 +197,24 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
             try {
               await result.downloadPromise;
               downloadedVersion = latestVersion;
-            } catch (downloadError) {
-              logError('[AutoUpdater] Update download failed:', downloadError);
+            } catch (downloadErr) {
+              downloadError =
+                downloadErr instanceof Error ? downloadErr.message : 'Update download failed';
+              logError('[AutoUpdater] Update download failed:', downloadErr);
             }
+          } else if (
+            latestVersion &&
+            isEeVersionNewer(latestVersion, currentVersion) &&
+            !result?.downloadPromise
+          ) {
+            downloadError = 'Update metadata found but download did not start';
+            logError('[AutoUpdater]', downloadError);
           }
 
-          const checkResult = buildResultFromVersions(
-            currentVersion,
-            latestVersion,
-            true
-          );
+          const checkResult = buildResultFromVersions(currentVersion, latestVersion, true);
+          if (downloadError && checkResult.status === 'update-available') {
+            checkResult.downloadError = downloadError;
+          }
           notifyRenderer(checkResult);
           return checkResult;
         }

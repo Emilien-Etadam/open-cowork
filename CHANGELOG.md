@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.95] - 2026-06-25
+
+### Fixed
+
+- **Auto-update Windows** : `latest.yml` pointait vers `Open-Cowork-*.exe` au lieu de `Open.Cowork-*.exe` (téléchargement 404)
+- Script CI `sync-windows-latest-yml.mjs` pour aligner le YAML sur le nom réel de l’installateur
+- Affichage de l’erreur de téléchargement automatique dans Paramètres
+
 ## [3.3.1-EE4.94] - 2026-06-25
 
 ### Fixed

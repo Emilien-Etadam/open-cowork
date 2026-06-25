@@ -297,6 +297,9 @@ jobs:
             exit 1
           }
 
+      - name: Sync Windows latest.yml with installer filename
+        run: node scripts/sync-windows-latest-yml.mjs release
+
       - name: Verify Windows update metadata
         shell: pwsh
         run: |
