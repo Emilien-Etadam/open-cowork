@@ -20,6 +20,30 @@ import {
 export { type AgentRunnerRunContext } from './agent-runner-run-context';
 import { runPromptWithStreamHandling } from './agent-runner-stream-handler';
 
+const PI_SESSION_SETUP_TIMEOUT_MS = 120_000;
+
+async function withTimeout<T>(
+  label: string,
+  timeoutMs: number,
+  operation: () => Promise<T>
+): Promise<T> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation(),
+      new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(new Error(`${label} timed out after ${timeoutMs}ms`));
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+}
+
 export async function executeAgentRun(
   ctx: AgentRunnerRunContext,
   session: Session,
@@ -91,17 +115,19 @@ export async function executeAgentRun(
     }
     sandboxPath = sandboxBootstrap.sandboxPath;
     useSandboxIsolation = sandboxBootstrap.useSandboxIsolation;
-    const piSetup = await preparePiSessionRun({
-      ctx,
-      session,
-      prompt,
-      existingMessages,
-      workingDir,
-      sandboxPath,
-      useSandboxIsolation,
-      sandbox,
-      runStartTime,
-    });
+    const piSetup = await withTimeout('preparePiSessionRun', PI_SESSION_SETUP_TIMEOUT_MS, () =>
+      preparePiSessionRun({
+        ctx,
+        session,
+        prompt,
+        existingMessages,
+        workingDir,
+        sandboxPath,
+        useSandboxIsolation,
+        sandbox,
+        runStartTime,
+      })
+    );
 
     const streamResult = await runPromptWithStreamHandling({
       ctx,
