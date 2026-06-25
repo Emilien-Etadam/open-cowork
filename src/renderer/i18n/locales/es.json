@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Comandos",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Compactar el contexto en la sesión actual"
       },

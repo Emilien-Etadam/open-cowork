@@ -27,6 +27,7 @@ export type BackendMessageKey =
   | 'noticeCompactionCompleted'
   | 'noticeHandoffStart'
   | 'noticeHandoffFailed'
+  | 'errUnknownSlashCommand'
   | 'startupFailedTitle'
   | 'startupFailedBody'
   | 'configDefaultSetName'
@@ -75,6 +76,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: '上下文压缩完成，正在继续处理请求。',
     noticeHandoffStart: '正在总结当前对话，以便在新会话中继续…',
     noticeHandoffFailed: '会话交接失败：{{error}}',
+    errUnknownSlashCommand: '未知斜杠命令：{{command}}',
     startupFailedTitle: 'Open Cowork 启动失败',
     startupFailedBody: '{{message}}\n\n请查看日志获取更多信息。',
     configDefaultSetName: '默认方案',
@@ -106,6 +108,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Context compaction completed. Continuing the request.',
     noticeHandoffStart: 'Summarizing this conversation for a new session…',
     noticeHandoffFailed: 'Session handoff failed: {{error}}',
+    errUnknownSlashCommand: 'Unknown slash command: {{command}}',
     startupFailedTitle: 'Open Cowork failed to start',
     startupFailedBody: '{{message}}\n\nPlease check the logs for more information.',
     configDefaultSetName: 'Default',
@@ -137,6 +140,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Compactación del contexto completada. Continuando la solicitud.',
     noticeHandoffStart: 'Resumiendo esta conversación para una nueva sesión…',
     noticeHandoffFailed: 'Error al transferir la sesión: {{error}}',
+    errUnknownSlashCommand: 'Comando desconocido: {{command}}',
     startupFailedTitle: 'No se pudo iniciar Open Cowork',
     startupFailedBody: '{{message}}\n\nConsulta los registros para obtener más información.',
     configDefaultSetName: 'Predeterminada',
@@ -168,6 +172,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Compaction du contexte terminée. Poursuite de la requête.',
     noticeHandoffStart: 'Résumé de la conversation en cours pour une nouvelle session…',
     noticeHandoffFailed: 'Échec de la reprise de session : {{error}}',
+    errUnknownSlashCommand: 'Commande slash inconnue : {{command}}',
     startupFailedTitle: "Échec du démarrage d'Open Cowork",
     startupFailedBody: '{{message}}\n\nVeuillez consulter les journaux pour plus d’informations.',
     configDefaultSetName: 'Par défaut',
@@ -199,6 +204,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Kontextkomprimierung abgeschlossen. Anfrage wird fortgesetzt.',
     noticeHandoffStart: 'Diese Unterhaltung wird für eine neue Sitzung zusammengefasst…',
     noticeHandoffFailed: 'Sitzungsübergabe fehlgeschlagen: {{error}}',
+    errUnknownSlashCommand: 'Unbekannter Slash-Befehl: {{command}}',
     startupFailedTitle: 'Open Cowork konnte nicht gestartet werden',
     startupFailedBody: '{{message}}\n\nWeitere Informationen finden Sie in den Protokollen.',
     configDefaultSetName: 'Standard',
@@ -231,6 +237,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Compressione del contesto completata. Continuazione della richiesta.',
     noticeHandoffStart: 'Riassunto della conversazione per una nuova sessione in corso…',
     noticeHandoffFailed: 'Passaggio di sessione non riuscito: {{error}}',
+    errUnknownSlashCommand: 'Comando slash sconosciuto: {{command}}',
     startupFailedTitle: 'Avvio di Open Cowork non riuscito',
     startupFailedBody: '{{message}}\n\nControlla i log per maggiori informazioni.',
     configDefaultSetName: 'Predefinito',
@@ -262,6 +269,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Стиснення контексту завершено. Продовжуємо запит.',
     noticeHandoffStart: 'Підсумовуємо цю розмову для нової сесії…',
     noticeHandoffFailed: 'Не вдалося передати сесію: {{error}}',
+    errUnknownSlashCommand: 'Невідома slash-команда: {{command}}',
     startupFailedTitle: 'Не вдалося запустити Open Cowork',
     startupFailedBody: '{{message}}\n\nПерегляньте журнали для отримання додаткової інформації.',
     configDefaultSetName: 'За замовчуванням',
@@ -293,6 +301,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Kompresja kontekstu zakończona. Kontynuowanie żądania.',
     noticeHandoffStart: 'Podsumowywanie rozmowy dla nowej sesji…',
     noticeHandoffFailed: 'Przekazanie sesji nie powiodło się: {{error}}',
+    errUnknownSlashCommand: 'Nieznane polecenie slash: {{command}}',
     startupFailedTitle: 'Nie udało się uruchomić Open Cowork',
     startupFailedBody: '{{message}}\n\nSprawdź dzienniki, aby uzyskać więcej informacji.',
     configDefaultSetName: 'Domyślny',
@@ -324,6 +333,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Kontextkomprimering slutförd. Fortsätter begäran.',
     noticeHandoffStart: 'Sammanfattar den här konversationen för en ny session…',
     noticeHandoffFailed: 'Sessionsöverlämning misslyckades: {{error}}',
+    errUnknownSlashCommand: 'Okänt snedstreckskommando: {{command}}',
     startupFailedTitle: 'Open Cowork kunde inte starta',
     startupFailedBody: '{{message}}\n\nKontrollera loggarna för mer information.',
     configDefaultSetName: 'Standard',
@@ -355,6 +365,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Kontekstkomprimering fullført. Fortsetter forespørselen.',
     noticeHandoffStart: 'Oppsummerer denne samtalen for en ny økt…',
     noticeHandoffFailed: 'Øktoverlevering mislyktes: {{error}}',
+    errUnknownSlashCommand: 'Ukjent skråstrek-kommando: {{command}}',
     startupFailedTitle: 'Open Cowork kunne ikke starte',
     startupFailedBody: '{{message}}\n\nSjekk loggene for mer informasjon.',
     configDefaultSetName: 'Standard',
@@ -386,6 +397,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Contextcompressie voltooid. Verzoek wordt voortgezet.',
     noticeHandoffStart: 'Dit gesprek wordt samengevat voor een nieuwe sessie…',
     noticeHandoffFailed: 'Sessieoverdracht mislukt: {{error}}',
+    errUnknownSlashCommand: 'Onbekend slash-commando: {{command}}',
     startupFailedTitle: 'Open Cowork kon niet worden gestart',
     startupFailedBody: '{{message}}\n\nRaadpleeg de logbestanden voor meer informatie.',
     configDefaultSetName: 'Standaard',
@@ -417,6 +429,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     noticeCompactionCompleted: 'Compactarea contextului s-a încheiat. Se continuă cererea.',
     noticeHandoffStart: 'Se rezumă această conversație pentru o sesiune nouă…',
     noticeHandoffFailed: 'Transferul sesiunii a eșuat: {{error}}',
+    errUnknownSlashCommand: 'Comandă slash necunoscută: {{command}}',
     startupFailedTitle: 'Open Cowork nu a putut porni',
     startupFailedBody: '{{message}}\n\nVerifică jurnalele pentru mai multe informații.',
     configDefaultSetName: 'Implicit',

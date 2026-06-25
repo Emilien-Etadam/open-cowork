@@ -84,6 +84,24 @@ export class SessionManagerStore {
     return this.db.sessions.getAll().map(mapSessionRow);
   }
 
+  resetStaleRunningSessions(): number {
+    const now = Date.now();
+    const staleSessions = this.db.sessions
+      .getAll()
+      .filter((row) => row.status === 'running')
+      .map((row) => row.id);
+
+    for (const sessionId of staleSessions) {
+      this.db.sessions.update(sessionId, { status: 'idle', updated_at: now });
+    }
+
+    if (staleSessions.length > 0) {
+      log('[SessionManager] Reset stale running sessions on startup:', staleSessions.length);
+    }
+
+    return staleSessions.length;
+  }
+
   saveMessage(message: Message): void {
     this.db.messages.create({
       id: message.id,

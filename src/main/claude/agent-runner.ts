@@ -99,6 +99,7 @@ export class ClaudeAgentRunner {
   /** Call after the user installs / removes a skill so the next query re-links everything. */
   invalidateSkillsSetup(): void {
     this._skillsSetupDone = false;
+    this.skillsPaths.invalidatePluginPathsCache();
   }
 
   /** Call after the user changes MCP server config so the next query rebuilds mcpServers. */

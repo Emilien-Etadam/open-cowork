@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Comenzi",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Compactează contextul în sesiunea curentă"
       },

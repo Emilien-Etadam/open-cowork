@@ -357,6 +357,36 @@ export async function reuseCachedPiSession({
   return { piSession, cachedSession, compactionEnabled: cachedSession.compactionEnabled ?? true };
 }
 
+const RESOURCE_LOADER_RELOAD_TIMEOUT_MS = 90_000;
+
+async function reloadResourceLoaderWithTimeout(
+  resourceLoader: { reload: () => Promise<void> },
+  promptTemplatePaths: string[]
+): Promise<void> {
+  let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+  try {
+    await Promise.race([
+      resourceLoader.reload(),
+      new Promise<never>((_, reject) => {
+        timeoutHandle = setTimeout(() => {
+          reject(
+            new Error(
+              `resourceLoader.reload() timed out after ${RESOURCE_LOADER_RELOAD_TIMEOUT_MS}ms (promptTemplatePaths=${promptTemplatePaths.length})`
+            )
+          );
+        }, RESOURCE_LOADER_RELOAD_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (error) {
+    logWarn('[ClaudeAgentRunner] Resource loader reload failed:', error);
+    throw error;
+  } finally {
+    if (timeoutHandle) {
+      clearTimeout(timeoutHandle);
+    }
+  }
+}
+
 interface CreatePiSessionOptions {
   ctx: AgentRunnerRunContext;
   sessionId: string;
@@ -401,7 +431,7 @@ export async function createPiSession({
     additionalPromptTemplatePaths: promptTemplatePaths,
     appendSystemPrompt: coworkAppendPrompt,
   });
-  await resourceLoader.reload();
+  await reloadResourceLoaderWithTimeout(resourceLoader, promptTemplatePaths);
 
   const compactionSettings = buildCompactionSettings(
     provider,
