@@ -13,6 +13,7 @@ afterAllArtifactBuild: ./scripts/compress-dmg.js
 files:
   - dist/**/*
   - dist-electron/**/*
+  - resources/chat-lan/**/*
   - package.json
   - node_modules/@img/**/*
   - node_modules/better-sqlite3/**/*

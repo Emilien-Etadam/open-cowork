@@ -94,6 +94,19 @@
     "updateError": "Update check failed: {{error}}",
     "updateWindowsOnly": "Automatic install is available on Windows builds only. Download the latest installer from GitHub."
   },
+  "chatLan": {
+    "title": "LAN Chat",
+    "description": "Local web UI to chat with the agent on your network (WireGuard/LAN). No external relay.",
+    "enable": "Enable LAN chat",
+    "port": "Port",
+    "token": "Access token",
+    "regenerateToken": "Regenerate token",
+    "tokenCopied": "Token copied",
+    "tokenRegenerated": "New token generated",
+    "urls": "Open in browser (local network)",
+    "wireguardHint": "From another device on WireGuard, use the IP address shown above.",
+    "saved": "Settings saved"
+  },
   "memory": {
     "title": "Memory",
     "description": "Global core memory stores stable preferences, while workspace experience memory stores project-specific multi-turn knowledge.",
