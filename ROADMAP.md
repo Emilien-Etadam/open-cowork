@@ -28,6 +28,12 @@
   - Chargement `electron-updater` via `createRequire` (interop CJS — `autoUpdater` absent en `import()` ESM)
   - Repli API GitHub Releases si `electron-updater` indisponible (macOS/Linux + secours Windows)
   - `allowPrerelease = false` pour ignorer les releases draft/prerelease sur le feed GitHub
+- **Post-EE4.91 merges** (2026-06-25, intégrés dans `main`) :
+  - **#40** : suppression intégration Feishu (Slack only pour le remote restant)
+  - **#41** : suppression complète du module contrôle à distance (gateway, Slack, tunnel, UI)
+  - **#42** : simplification config API — deux fournisseurs (OpenAI-compatible + Anthropic-compatible)
+  - **#44** : chat LAN — UI web locale avec permissions (LAN / WireGuard)
+  - **#36** : supersédée par EE4.91 (à fermer manuellement sur GitHub)
 - **EE4.9** :
   - Fix blocage chat infini « Traitement… » (timeout `preparePiSessionRun` / `resourceLoader.reload`, cycle `activeTurn`, reset sessions `running` orphelines)
   - Commandes slash : rejet des inconnues, normalisation `/plugin:cmd` → `/cmd`
@@ -74,23 +80,12 @@ Current stable fork baseline: **`3.3.1-EE4.91`** — [release](https://github.co
 
 ## 🚧 In Progress
 
-### PRs ouvertes (CI verte, en attente de revue / merge)
-
-| PR   | Branche                         | Description                                              | CI    |
-| ---- | ------------------------------- | -------------------------------------------------------- | ----- |
-| #44  | `cursor/lan-chat-webui-2d3f`    | UI web chat locale avec permissions (LAN / WireGuard)    | ✅    |
-| #42  | `cursor/local-providers-only-2d3f` | Deux fournisseurs seulement (OpenAI + Anthropic compat.) | ✅    |
-| #41  | `cursor/remove-remote-external-2d3f` | Suppression du module contrôle à distance             | ✅    |
-| #40  | `cursor/remove-feishu-remote-2d3f`   | Suppression intégration Feishu (Slack only)           | ✅    |
-| #36  | `cursor/fix-auto-update-ee-1345`  | Auto-update Windows — drafts + bouton (supersédée par main, à fermer ou merger) | ✅ |
-
-> Les PR #40–#42 ont été rebasées sur `main` (fix test `session-manager-crud`, correctifs EE4.9+).
-
-### Validation post-release
+### Validation post-merge (main)
 
 - Smoke test EE4.91 : bouton « Vérifier les mises à jour » (Windows + macOS)
-- Auto-update Windows depuis `latest.yml` GitHub Releases
-- Régression chat : envoi message, commandes slash plugin, pas de blocage « Traitement… »
+- Régression chat LAN (#44) : serveur local, permissions, UI web `resources/chat-lan/`
+- Régression config API (#42) : migration profils → deux fournisseurs
+- Vérifier absence de régression après suppression remote control (#40, #41)
 
 ## 📋 Planned
 
@@ -120,5 +115,5 @@ Current stable fork baseline: **`3.3.1-EE4.91`** — [release](https://github.co
 
 ---
 
-_Last updated: 2026-06-25 (release EE4.91, PRs rebasées, CI verte)_  
+_Last updated: 2026-06-25 (merges #40–#44, baseline EE4.91)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

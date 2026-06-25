@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Chat LAN** : serveur web local avec UI (`resources/chat-lan/`), permissions et onglet Paramètres dédié (#44)
+- **Config API** : deux fournisseurs uniquement — OpenAI-compatible et Anthropic-compatible, avec migration automatique (#42)
+
+### Removed
+
+- **Feishu** : intégration remote Feishu/Lark supprimée (#40)
+- **Contrôle à distance** : module complet supprimé (gateway WebSocket, Slack, tunnel ngrok, panneau UI) (#41)
+
+### Changed
+
+- Dépendances allégées (`@larksuiteoapi/node-sdk`, code remote ~7k lignes retirées)
+
 ## [3.3.1-EE4.91] - 2026-06-25
 
 ### Fixed
