@@ -24,7 +24,7 @@
 
 ## C'est quoi ?
 
-**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), et isole les commandes dans un **sandbox** (WSL2 / Lima).
+**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), isole les commandes dans un **sandbox** (WSL2 / Lima), et expose un **chat LAN** (interface web locale sur le réseau).
 
 > [!NOTE]
 > Ce dépôt est un **fork personnel**. Les releases `EE*` sont des builds **alpha** expérimentales. Pour la version stable officielle, voir [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
@@ -34,13 +34,14 @@
 ## Ce que ce fork ajoute
 
 - **12 langues** — fr, en, zh, es, de, it, uk, pl, sv, no, nl, ro — avec localisation backend (erreurs, dialogues)
-- **Marketplace unifiée** — onglet Réglages → Extensions : skills, connecteurs MCP et plugins (catalogue curated, 21+ entrées)
+- **Marketplace unifiée** — Réglages → Extensions : skills, connecteurs MCP et plugins (catalogue curated, 21+ entrées)
+- **Chat LAN** — serveur web local pour discuter avec l'agent depuis un navigateur (Réglages → Chat LAN)
 - **Commandes slash** — autocomplétion `/` dans le chat, dont les commandes des plugins installés
-- **Auto-update Windows** — mises à jour automatiques depuis les [releases GitHub](https://github.com/emilien-etadam/open-cowork/releases) du fork EE
-- **Thème VS Code** — alternative au thème Claude par défaut (Réglages → Apparence)
-- **Copier / coller** — menu contextuel et raccourcis natifs sur Windows
-- **Toggle sandbox** — activation/désactivation dans Réglages → Sandbox
-- **pi-coding-agent 0.73.1** — agent récent + correctifs de compaction du contexte
+- **Fork / édition de messages** — nouvelle session depuis un message ou modification du prompt utilisateur
+- **Compaction proactive** — compact automatique quand le contexte est presque plein
+- **Mises à jour EE** — auto-update Windows + bouton « Vérifier les mises à jour » (Réglages → Général)
+- **Config API simplifiée** — deux profils : OpenAI-compatible et Anthropic-compatible
+- **Thème VS Code**, **copier/coller** Windows, **toggle sandbox**, **pi-coding-agent 0.73.1**
 
 ---
 
@@ -55,7 +56,7 @@ Téléchargez la dernière version sur la page [Releases](https://github.com/emi
 | Windows               | `.exe`  |
 | macOS (Apple Silicon) | `.dmg`  |
 
-Sur **Windows**, l'app vérifie les mises à jour EE au démarrage et les installe à la fermeture.
+Sur **Windows**, l'app vérifie les mises à jour EE au démarrage. Sinon, utilisez **Réglages → Général → Vérifier les mises à jour**.
 
 ### Depuis les sources
 
@@ -73,12 +74,12 @@ Pour construire un installeur local : `npm run build`
 ## Démarrage rapide
 
 1. Ouvrez l'app et allez dans **Réglages** (icône ⚙️ en bas à gauche).
-2. Collez votre **clé API** et configurez l'**URL de base** selon votre fournisseur (OpenRouter, Anthropic, GLM, MiniMax, Kimi…).
+2. Configurez un fournisseur **OpenAI-compatible** ou **Anthropic-compatible** (clé API + URL de base).
 3. Installez des extensions dans **Réglages → Extensions** (MCP, skills, plugins).
 4. Choisissez un **dossier workspace** — l'agent ne travaillera que dans ce répertoire.
-5. Envoyez un prompt ou tapez `/` pour les commandes slash.
+5. Envoyez un prompt, tapez `/` pour les commandes slash, ou activez le **Chat LAN** pour accéder au chat via le navigateur.
 
-Pour plus de détails (sandbox, MCP, changelog), voir [`CHANGELOG.md`](CHANGELOG.md) et le [README upstream](https://github.com/OpenCoworkAI/open-cowork/blob/main/readme.md).
+Pour le détail des releases, voir [`CHANGELOG.md`](CHANGELOG.md).
 
 ---
 
