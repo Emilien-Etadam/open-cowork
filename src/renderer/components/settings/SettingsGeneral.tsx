@@ -92,12 +92,13 @@ export function SettingsGeneral() {
       const result = await window.electronAPI.checkForUpdates();
       applyUpdateResult(result);
     } catch (error) {
-      setIsCheckingUpdate(false);
       setUpdateMessage(
         t('general.updateError', {
           error: error instanceof Error ? error.message : t('common.error'),
         })
       );
+    } finally {
+      setIsCheckingUpdate(false);
     }
   }, [applyUpdateResult, t]);
 
@@ -147,6 +148,10 @@ export function SettingsGeneral() {
   ];
 
   const canInstallUpdate = Boolean(updateState?.canInstall);
+  const showManualDownloadHint =
+    updateState?.status === 'update-available' &&
+    !canInstallUpdate &&
+    !updateState.autoUpdateSupported;
 
   return (
     <div className="space-y-6">
@@ -248,8 +253,8 @@ export function SettingsGeneral() {
           </button>
         </div>
         {updateMessage && <p className="text-xs text-text-muted">{updateMessage}</p>}
-        {updateState?.status === 'update-available' && !canInstallUpdate && (
-          <p className="text-xs text-text-muted">{t('general.updateWindowsOnly')}</p>
+        {showManualDownloadHint && (
+          <p className="text-xs text-text-muted">{t('general.updateManualDownload')}</p>
         )}
       </div>
 

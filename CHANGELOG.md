@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.93] - 2026-06-25
+
+### Fixed
+
+- **Mises à jour Windows** : attendre le téléchargement `electron-updater` avant d’afficher le résultat (bouton « Redémarrer et installer »)
+- **UI mises à jour** : ne plus afficher « Windows uniquement » sur Windows ; message manuel réservé à macOS/Linux
+
 ## [3.3.1-EE4.92] - 2026-06-25
 
 ### Added

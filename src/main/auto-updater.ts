@@ -7,6 +7,7 @@
 import { createRequire } from 'node:module';
 import { app } from 'electron';
 import type { UpdateCheckResult } from '../shared/update-check';
+import { buildUpdateCheckResult } from '../shared/update-check';
 import { isEeVersionNewer, normalizeVersionTag } from '../shared/app-version';
 import { isDev } from './main-app-bootstrap';
 import { sendToRenderer } from './main-renderer-bridge';
@@ -23,7 +24,10 @@ type ElectronUpdater = {
   autoDownload: boolean;
   setFeedURL: (options: { provider: 'github'; owner: string; repo: string }) => void;
   on: (event: string, listener: (...args: unknown[]) => void) => void;
-  checkForUpdates: () => Promise<{ updateInfo?: { version?: string } } | null>;
+  checkForUpdates: () => Promise<{
+    updateInfo?: { version?: string };
+    downloadPromise?: Promise<unknown>;
+  } | null>;
   checkForUpdatesAndNotify: () => Promise<unknown>;
   quitAndInstall: () => void;
 };
@@ -84,38 +88,20 @@ async function fetchLatestGitHubReleaseVersion(): Promise<string | null> {
 
 function buildResultFromVersions(
   currentVersion: string,
-  latestVersion: string | null | undefined
+  latestVersion: string | null | undefined,
+  autoUpdateSupported = false
 ): UpdateCheckResult {
-  if (!latestVersion) {
-    return {
-      status: 'error',
-      currentVersion,
-      error: 'Latest release tag not found',
-    };
-  }
-
-  if (isEeVersionNewer(latestVersion, currentVersion)) {
-    return {
-      status: 'update-available',
-      currentVersion,
-      latestVersion,
-      downloaded: downloadedVersion === latestVersion,
-      canInstall: downloadedVersion === latestVersion && canUseElectronUpdater(),
-    };
-  }
-
-  return {
-    status: 'up-to-date',
+  return buildUpdateCheckResult({
     currentVersion,
     latestVersion,
-    downloaded: false,
-    canInstall: false,
-  };
+    downloadedVersion,
+    autoUpdateSupported,
+  });
 }
 
 async function checkViaGitHub(currentVersion: string): Promise<UpdateCheckResult> {
   const latestVersion = await fetchLatestGitHubReleaseVersion();
-  return buildResultFromVersions(currentVersion, latestVersion);
+  return buildResultFromVersions(currentVersion, latestVersion, false);
 }
 
 async function ensureUpdaterReady(): Promise<ElectronUpdater | null> {
@@ -163,6 +149,7 @@ async function ensureUpdaterReady(): Promise<ElectronUpdater | null> {
       currentVersion: app.getVersion(),
       latestVersion: version,
       downloaded: true,
+      autoUpdateSupported: true,
       canInstall: true,
     });
   });
@@ -199,7 +186,25 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
           const result = await instance.checkForUpdates();
           const latestVersion =
             result?.updateInfo?.version ?? (await fetchLatestGitHubReleaseVersion());
-          const checkResult = buildResultFromVersions(currentVersion, latestVersion);
+
+          if (
+            latestVersion &&
+            isEeVersionNewer(latestVersion, currentVersion) &&
+            result?.downloadPromise
+          ) {
+            try {
+              await result.downloadPromise;
+              downloadedVersion = latestVersion;
+            } catch (downloadError) {
+              logError('[AutoUpdater] Update download failed:', downloadError);
+            }
+          }
+
+          const checkResult = buildResultFromVersions(
+            currentVersion,
+            latestVersion,
+            true
+          );
           notifyRenderer(checkResult);
           return checkResult;
         }
