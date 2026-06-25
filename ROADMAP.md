@@ -47,6 +47,8 @@
 
 | Tag            | Date       | Highlights                                                  |
 | -------------- | ---------- | ----------------------------------------------------------- |
+| `v3.3.1-EE4.7` | 2026-06-25 | Fix fond opaque menu slash                                  |
+| `v3.3.1-EE4.6` | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`              |
 | `v3.3.1-EE4.5` | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests |
 | `v3.3.1-EE4.4` | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests     |
 | `v3.3.1-EE4.3` | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                     |
@@ -55,7 +57,7 @@
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)            |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration     |
 
-Current stable fork baseline: **`3.3.1-EE4.5`** — see [CHANGELOG.md](CHANGELOG.md).
+Current stable fork baseline: **`3.3.1-EE4.7`** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## 🚧 In Progress
 
