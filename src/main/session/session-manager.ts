@@ -65,6 +65,7 @@ export class SessionManager {
     private readonly extensionManager?: AgentRuntimeExtensionManager
   ) {
     this.store = new SessionManagerStore(db);
+    this.store.resetStaleRunningSessions();
     this.sendToRenderer = (event) => {
       if (event.type === 'trace.step') {
         this.store.saveTraceStep(event.payload.sessionId, event.payload.step);

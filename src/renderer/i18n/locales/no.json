@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Kommandoer",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Komprimer konteksten i gjeldende økt"
       },
