@@ -675,6 +675,7 @@
     },
     "slashCommands": {
       "menuLabel": "Команди",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Стиснути контекст у поточній сесії"
       },

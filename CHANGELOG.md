@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.91] - 2026-06-25
+
+### Fixed
+
+- **Vérification des mises à jour** : chargement `electron-updater` corrigé (`autoUpdater` undefined en import ESM) + repli API GitHub
+
+## [3.3.1-EE4.9] - 2026-06-25
+
+### Added
+
+- **Bouton « Vérifier les mises à jour »** dans Paramètres → Général
+- Affichage de la version au format **EE4.9** dans l’interface
+- Vérification via `electron-updater` (Windows) ou API GitHub Releases (macOS/Linux)
+
+### Fixed
+
+- **Chat** : correction du blocage infini « Traitement… » après intégration des commandes plugin
+- **Commandes slash** : rejet des commandes inconnues et normalisation `/plugin:cmd` pour le SDK Pi
+- **CI** : test `session-manager-crud` aligné avec le reset des sessions `running` au démarrage
+
 ## [3.3.1-EE4.8] - 2026-06-25
 
 ### Added
@@ -14,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bouton « Vérifier les mises à jour »** dans Paramètres → Général
 - Affichage de la version au format **EE4.8** dans l’interface
 - Vérification via `electron-updater` (Windows) ou API GitHub Releases (macOS/Linux)
+
+### Fixed
+
+- **Chat** : correction du blocage infini « Traitement… » après intégration des commandes plugin
+- **Commandes slash** : rejet des commandes inconnues et normalisation `/plugin:cmd` pour le SDK Pi
 
 ## [3.3.1-EE4.7] - 2026-06-25
 

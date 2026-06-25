@@ -21,9 +21,11 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.8`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.91`)
 
-- **EE4.8**: Bouton de vérification des mises à jour, affichage version EE dans Paramètres
+- **EE4.91**: Hotfix vérification des mises à jour (`allowPrerelease` / import electron-updater)
+- **EE4.9**: Release stable — mises à jour, fix chat/slash, CI release débloquée
+- **EE4.8**: Bouton vérification mises à jour, fix blocage chat « Traitement… », commandes slash plugin alignées
 - **EE4.7**: Menu slash fond opaque (fix transparence sur l'historique)
 - **EE4.6**: Auto-update Windows, commandes plugin dans le menu `/`
 
@@ -46,9 +48,11 @@
 
 ## 📦 EE releases
 
-| Tag            | Date       | Highlights                                                  |
-| -------------- | ---------- | ----------------------------------------------------------- |
-| `v3.3.1-EE4.8` | 2026-06-25 | Bouton vérification mises à jour, affichage version EE      |
+| Tag              | Date       | Highlights                                                  |
+| ---------------- | ---------- | ----------------------------------------------------------- |
+| `v3.3.1-EE4.91`  | 2026-06-25 | Hotfix bouton vérification mises à jour                     |
+| `v3.3.1-EE4.9`   | 2026-06-25 | Release EE4.9 — fix chat, slash plugin, CI release           |
+| `v3.3.1-EE4.8` | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin           |
 | `v3.3.1-EE4.7` | 2026-06-25 | Fix fond opaque menu slash                                  |
 | `v3.3.1-EE4.6` | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`              |
 | `v3.3.1-EE4.5` | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests |
@@ -59,7 +63,7 @@
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)            |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration     |
 
-Current stable fork baseline: **`3.3.1-EE4.8`** — see [CHANGELOG.md](CHANGELOG.md).
+Current stable fork baseline: **`3.3.1-EE4.91`** — see [CHANGELOG.md](CHANGELOG.md).
 
 ## 🚧 In Progress
 

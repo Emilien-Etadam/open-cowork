@@ -675,6 +675,7 @@
     },
     "slashCommands": {
       "menuLabel": "Kommandon",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Komprimera kontexten i den aktuella sessionen"
       },
