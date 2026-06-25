@@ -119,6 +119,7 @@ interface AppState {
 
   // System theme (from OS native theme)
   systemDarkMode: boolean;
+  pluginCommandsRevision: number;
 
   // Actions
   setSessions: (sessions: Session[]) => void;
@@ -190,6 +191,7 @@ interface AppState {
     sessionId: string,
     contextInfo: { contextWindow: number; maxTokens: number }
   ) => void;
+  bumpPluginCommandsRevision: () => void;
 
   // System theme actions
   setSystemDarkMode: (dark: boolean) => void;
@@ -249,6 +251,7 @@ export const useAppStore = create<AppState>((set) => ({
   skillsStorageChangedAt: 0,
   skillsStorageChangeEvent: null,
   systemDarkMode: false,
+  pluginCommandsRevision: 0,
 
   // Session actions
   setSessions: (sessions) => set({ sessions }),
@@ -617,6 +620,9 @@ export const useAppStore = create<AppState>((set) => ({
         maxTokens: contextInfo.maxTokens,
       }),
     })),
+
+  bumpPluginCommandsRevision: () =>
+    set((state) => ({ pluginCommandsRevision: state.pluginCommandsRevision + 1 })),
 
   // System theme actions
   setSystemDarkMode: (dark) => set({ systemDarkMode: dark }),

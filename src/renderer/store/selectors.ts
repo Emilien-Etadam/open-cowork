@@ -18,6 +18,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from './index';
 import type { Session, Message, TraceStep, Settings, AppConfig } from '../types';
 import type { GlobalNotice, SessionExecutionClock } from './index';
+import { computeContextUsage, formatTokenCount } from '../utils/context-usage';
 
 // ---------------------------------------------------------------------------
 // Session domain
@@ -172,6 +173,37 @@ export function useActiveTraceSteps(): TraceStep[] {
 export function useActiveContextWindow(): number | undefined {
   return useAppStore((s) =>
     s.activeSessionId ? s.sessionStates[s.activeSessionId]?.contextWindow : undefined
+  );
+}
+
+/** Returns computed context fill usage for the active session. */
+export function useActiveContextUsage():
+  | (ReturnType<typeof computeContextUsage> & { usedLabel: string; totalLabel: string })
+  | null {
+  return useAppStore(
+    useShallow((s) => {
+      const sessionId = s.activeSessionId;
+      if (!sessionId) {
+        return null;
+      }
+
+      const sessionState = s.sessionStates[sessionId];
+      const usage = computeContextUsage(
+        sessionState?.messages ?? [],
+        sessionState?.contextWindow,
+        sessionState?.maxTokens ?? 0
+      );
+
+      if (!usage) {
+        return null;
+      }
+
+      return {
+        ...usage,
+        usedLabel: formatTokenCount(usage.used),
+        totalLabel: formatTokenCount(usage.total),
+      };
+    })
   );
 }
 
