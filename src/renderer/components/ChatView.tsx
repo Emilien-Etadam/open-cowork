@@ -24,6 +24,7 @@ import {
   type SlashCommandDefinition,
 } from '../../shared/slash-commands';
 import { SlashCommandMenu } from './SlashCommandMenu';
+import { ChatContextUsageBar } from './ChatContextUsageBar';
 import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
 
 type AttachedFile = {
@@ -46,6 +47,7 @@ export function ChatView() {
   const executionClock = useActiveExecutionClock();
   const appConfig = useAppConfig();
   const setGlobalNotice = useAppStore((s) => s.setGlobalNotice);
+  const pluginCommandsRevision = useAppStore((s) => s.pluginCommandsRevision);
   const { continueSession, compactSession, handoffSession, stopSession, isElectron } = useIPC();
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -129,25 +131,7 @@ export function ChatView() {
 
   useEffect(() => {
     void refreshPluginSlashCommands();
-  }, [refreshPluginSlashCommands]);
-
-  useEffect(() => {
-    if (!isElectron || !window.electronAPI?.on) {
-      return;
-    }
-
-    const cleanup = window.electronAPI.on((event) => {
-      if (
-        event.type === 'plugins.runtimeApplied' ||
-        event.type === 'plugins.commandsChanged' ||
-        event.type === 'config.status'
-      ) {
-        void refreshPluginSlashCommands();
-      }
-    });
-
-    return cleanup;
-  }, [isElectron, refreshPluginSlashCommands]);
+  }, [refreshPluginSlashCommands, pluginCommandsRevision]);
 
   const displayedMessages = useMemo(() => {
     if (!activeSessionId) return messages;
@@ -856,6 +840,8 @@ export function ChatView() {
           <div ref={messagesEndRef} />
         </div>
       </div>
+
+      <ChatContextUsageBar />
 
       {/* Input */}
       <div className="relative border-t border-border-muted bg-background/92 backdrop-blur-md">

@@ -305,6 +305,14 @@ export function useIPC() {
             });
             break;
 
+          case 'plugins.commandsChanged':
+          case 'plugins.runtimeApplied':
+            store.bumpPluginCommandsRevision();
+            break;
+
+          case 'update.checkResult':
+            break;
+
           case 'session.notice':
             if (event.payload.sessionId === store.activeSessionId) {
               store.setGlobalNotice({

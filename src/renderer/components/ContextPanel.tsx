@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAppStore } from '../store';
 import { resolveArtifactPath } from '../utils/artifact-path';
+import { computeContextUsage, formatTokenCount } from '../utils/context-usage';
 import {
   extractFilePathFromToolInput,
   extractFilePathFromToolOutput,
@@ -115,30 +116,7 @@ export function ContextPanel() {
   // Context usage: input + reserved output vs context window
   const contextUsage = useMemo(() => {
     const sessionState = activeSessionId ? sessionStates[activeSessionId] : undefined;
-    const contextWindow = sessionState?.contextWindow;
-    const maxTokens = sessionState?.maxTokens ?? 0;
-    if (!contextWindow) return null;
-
-    let lastInput = 0;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].tokenUsage?.input) {
-        lastInput = messages[i].tokenUsage!.input;
-        break;
-      }
-    }
-    if (lastInput === 0 && maxTokens === 0) return null;
-
-    const effectiveUsed = lastInput + maxTokens;
-    const percentage = Math.min((effectiveUsed / contextWindow) * 100, 100);
-    const remaining = Math.max(0, contextWindow - effectiveUsed);
-    return {
-      inputTokens: lastInput,
-      reservedOutput: maxTokens,
-      used: effectiveUsed,
-      total: contextWindow,
-      percentage,
-      remaining,
-    };
+    return computeContextUsage(messages, sessionState?.contextWindow, sessionState?.maxTokens ?? 0);
   }, [activeSessionId, sessionStates, messages]);
 
   const completedStepCount = useMemo(
@@ -703,10 +681,4 @@ function formatPath(path: string): string {
   }
 
   return path;
-}
-
-function formatTokenCount(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}k`;
-  return String(n);
 }

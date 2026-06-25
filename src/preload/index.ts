@@ -29,10 +29,7 @@ import type {
 } from '../renderer/types';
 import type { DiagnosticInput, DiagnosticResult } from '../renderer/types';
 import type { McpServerConfig, McpTool, McpServerStatus, McpPresetsMap } from '../shared/ipc-types';
-
-// Track registered callbacks to prevent duplicate listeners
-let registeredCallback: ((event: ServerEvent) => void) | null = null;
-let ipcListener: ((event: Electron.IpcRendererEvent, data: ServerEvent) => void) | null = null;
+import { subscribeServerEvents } from './server-event-bus';
 
 // Allowlist of valid ClientEvent types to prevent spoofing arbitrary IPC channels
 const ALLOWED_CLIENT_EVENTS: ReadonlySet<string> = new Set<ClientEvent['type']>([
@@ -68,35 +65,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('client-event', event);
   },
 
-  // Receive events from main process - ensures only ONE listener
-  on: (callback: (event: ServerEvent) => void) => {
-    // Remove previous listener if exists
-    if (ipcListener) {
-      console.log('[Preload] Removing previous listener');
-      ipcRenderer.removeListener('server-event', ipcListener);
-    }
-
-    registeredCallback = callback;
-    ipcListener = (_: Electron.IpcRendererEvent, data: ServerEvent) => {
-      console.log('[Preload] Received event:', data.type);
-      if (registeredCallback) {
-        registeredCallback(data);
-      }
-    };
-
-    console.log('[Preload] Registering new listener');
-    ipcRenderer.on('server-event', ipcListener);
-
-    // Return cleanup function
-    return () => {
-      console.log('[Preload] Cleanup called');
-      if (ipcListener) {
-        ipcRenderer.removeListener('server-event', ipcListener);
-        ipcListener = null;
-        registeredCallback = null;
-      }
-    };
-  },
+  // Receive events from main process — multicast to every subscriber
+  on: (callback: (event: ServerEvent) => void) => subscribeServerEvents(ipcRenderer, callback),
 
   // Invoke and wait for response
   invoke: async <T>(event: ClientEvent): Promise<T> => {
