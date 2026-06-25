@@ -4,6 +4,7 @@
  * Windows-only auto-update from GitHub Releases on the EE fork.
  * macOS/Linux fall back to a GitHub release tag check for manual verification.
  */
+import { createRequire } from 'node:module';
 import { app } from 'electron';
 import type { UpdateCheckResult } from '../shared/update-check';
 import { isEeVersionNewer, normalizeVersionTag } from '../shared/app-version';
@@ -37,10 +38,11 @@ export function resolveAutoUpdaterExport(mod: ElectronUpdaterModule): ElectronUp
   return mod.autoUpdater ?? mod.default?.autoUpdater ?? null;
 }
 
+const nodeRequire = createRequire(import.meta.url);
+
 function loadElectronUpdater(): ElectronUpdater {
   // electron-updater is CJS; dynamic import() leaves `autoUpdater` on `default` only.
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const mod = require('electron-updater') as ElectronUpdaterModule;
+  const mod = nodeRequire('electron-updater') as ElectronUpdaterModule;
   const instance = resolveAutoUpdaterExport(mod);
   if (!instance) {
     throw new Error('electron-updater autoUpdater export unavailable');
