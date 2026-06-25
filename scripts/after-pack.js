@@ -7,7 +7,7 @@
  * Removes platform-specific binaries that don't match the build target,
  * strips build artifacts, and cleans up unnecessary locale files.
  *
- * Typical savings: ~160MB (koffi 79MB + better-sqlite3 19MB + ngrok 29MB + locales 32MB)
+ * Typical savings: ~130MB (koffi 79MB + better-sqlite3 19MB + locales 32MB)
  */
 
 const fs = require('fs');
@@ -168,30 +168,6 @@ module.exports = async function afterPack(context) {
     const keepDir = `${platform === 'darwin' ? 'darwin' : platform === 'win32' ? 'win32' : 'linux'}-${archName.replace('arm64', 'arm64').replace('x64', 'x64')}`;
     const removed = removeExcept(prebuildsDir, [keepDir]);
     if (removed > 0) console.log(`  ✓ ${pkg}: kept ${keepDir}, removed ${removed} other prebuild dirs`);
-  }
-
-  // --- 4. @ngrok/ngrok: keep only the current platform optional native package ---
-  const ngrokRoot = path.join(nmUnpacked, '@ngrok');
-  if (fs.existsSync(ngrokRoot)) {
-    const platformToken =
-      platform === 'darwin' ? 'darwin' : platform === 'win32' ? 'win32' : 'linux';
-    const archToken = archName === 'arm64' ? 'arm64' : archName === 'ia32' ? 'ia32' : 'x64';
-    const keepPrefixes = [
-      'ngrok',
-      `ngrok-${platformToken}-${archToken}`,
-      `ngrok-${platformToken}-universal`,
-    ];
-    let removedNgrok = 0;
-    for (const entry of fs.readdirSync(ngrokRoot)) {
-      if (keepPrefixes.some((prefix) => entry === prefix || entry.startsWith(`${prefix}-`))) {
-        continue;
-      }
-      fs.rmSync(path.join(ngrokRoot, entry), { recursive: true, force: true });
-      removedNgrok++;
-    }
-    if (removedNgrok > 0) {
-      console.log(`  ✓ @ngrok: removed ${removedNgrok} non-target platform packages`);
-    }
   }
 
   // --- 5. Electron locales: keep only en, zh_CN, zh_TW ---

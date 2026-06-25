@@ -5,7 +5,6 @@ import {
   Shield,
   Package,
   Clock3,
-  Wifi,
   AlertCircle,
   Globe,
   ChevronRight,
@@ -14,7 +13,6 @@ import {
 import { formatEeDisplayVersion } from '../../shared/app-version';
 import { useTranslation } from 'react-i18next';
 import { useWindowSize } from '../hooks/useWindowSize';
-import { RemoteControlPanel } from './RemoteControlPanel';
 import { useAppStore } from '../store';
 import { SettingsAPI } from './settings/SettingsAPI';
 import { SettingsSandbox } from './settings/SettingsSandbox';
@@ -34,20 +32,11 @@ interface SettingsPanelProps {
     | 'skills'
     | 'memory'
     | 'schedule'
-    | 'remote'
     | 'logs'
     | 'general';
 }
 
-type TabId =
-  | 'api'
-  | 'sandbox'
-  | 'extensions'
-  | 'memory'
-  | 'schedule'
-  | 'remote'
-  | 'logs'
-  | 'general';
+type TabId = 'api' | 'sandbox' | 'extensions' | 'memory' | 'schedule' | 'logs' | 'general';
 
 const VALID_TABS = new Set<TabId>([
   'api',
@@ -55,7 +44,6 @@ const VALID_TABS = new Set<TabId>([
   'extensions',
   'memory',
   'schedule',
-  'remote',
   'logs',
   'general',
 ]);
@@ -144,12 +132,6 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
       label: t('settings.schedule'),
       icon: Clock3,
       description: t('settings.scheduleDesc'),
-    },
-    {
-      id: 'remote' as TabId,
-      label: t('settings.remote', '远程控制'),
-      icon: Wifi,
-      description: t('settings.remoteDesc', '通过飞书等平台远程使用'),
     },
     {
       id: 'logs' as TabId,
@@ -273,11 +255,6 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
               <div className={activeTab === 'schedule' ? '' : 'hidden'}>
                 {viewedTabs.has('schedule') && (
                   <SettingsSchedule isActive={activeTab === 'schedule'} />
-                )}
-              </div>
-              <div className={activeTab === 'remote' ? '' : 'hidden'}>
-                {viewedTabs.has('remote') && (
-                  <RemoteControlPanel isActive={activeTab === 'remote'} />
                 )}
               </div>
               <div className={activeTab === 'logs' ? '' : 'hidden'}>

@@ -26,7 +26,6 @@ const VALID_TABS = new Set([
   'extensions',
   'memory',
   'schedule',
-  'remote',
   'logs',
   'general',
 ]);

@@ -9,7 +9,7 @@ function readProjectFile(relativePath: string): string {
 describe('memory integration wiring', () => {
   it('registers the memory extension in the main process and exposes IPC handlers', () => {
     const mainIndex = readProjectFile('src/main/index.ts');
-    const ipcSource = readProjectFile('src/main/ipc/ipc-remote-schedule-memory.ts');
+    const ipcSource = readProjectFile('src/main/ipc/ipc-schedule-memory.ts');
     expect(mainIndex).toContain('new MemoryExtension(mainAppState.memoryService)');
     expect(ipcSource).toContain("ipcMain.handle('memory.getOverview'");
     expect(ipcSource).toContain("'memory.search'");

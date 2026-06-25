@@ -24,7 +24,7 @@
 
 ## C'est quoi ?
 
-**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), isole les commandes dans un **sandbox** (WSL2 / Lima), et peut être pilotée à distance via **Slack**.
+**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), et isole les commandes dans un **sandbox** (WSL2 / Lima).
 
 > [!NOTE]
 > Ce dépôt est un **fork personnel**. Les releases `EE*` sont des builds **alpha** expérimentales. Pour la version stable officielle, voir [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
