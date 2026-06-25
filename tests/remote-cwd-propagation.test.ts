@@ -14,7 +14,7 @@ import type { RemoteMessage } from '../src/main/remote/types';
 function buildMessage(text: string): RemoteMessage {
   return {
     id: `msg-${Math.random()}`,
-    channelType: 'feishu',
+    channelType: 'slack',
     channelId: 'channel-1',
     sender: { id: 'user-1', isBot: false },
     content: { type: 'text', text },

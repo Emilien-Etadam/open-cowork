@@ -50,7 +50,7 @@ vi.mock('../src/main/remote/remote-config-store', () => ({
         defaultWorkingDirectory: '',
       },
       channels: {
-        feishu: {},
+        slack: { botToken: 'xoxb-test' },
       },
     })),
     getPairedUsers: vi.fn(() => []),
@@ -65,10 +65,6 @@ vi.mock('../src/main/remote/tunnel-manager', () => ({
     getWebhookUrl: vi.fn(() => null),
   },
   TunnelStatus: {},
-}));
-
-vi.mock('../src/main/remote/channels/feishu', () => ({
-  FeishuChannel: vi.fn(),
 }));
 
 vi.mock('../src/main/remote/message-router', () => ({

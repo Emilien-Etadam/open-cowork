@@ -146,11 +146,11 @@ class TunnelManager {
   }
 
   /**
-   * Get webhook URL for Feishu
+   * Get webhook URL for Slack
    */
   getWebhookUrl(): string | null {
     if (!this.currentUrl) return null;
-    return `${this.currentUrl}/webhook/feishu`;
+    return `${this.currentUrl}/webhook/slack`;
   }
 
   /**

@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import { configStore } from '../config/config-store';
 import { remoteManager } from '../remote/remote-manager';
 import { remoteConfigStore } from '../remote/remote-config-store';
-import type { GatewayConfig, FeishuChannelConfig, ChannelType } from '../remote/types';
+import type { GatewayConfig, SlackChannelConfig, ChannelType } from '../remote/types';
 import {
   ScheduledTaskManager,
   type ScheduledTaskCreateInput,
@@ -69,12 +69,12 @@ export function registerRemoteScheduleMemoryIpc(): void {
     }
   });
 
-  ipcMain.handle('remote.updateFeishuConfig', async (_event, config: FeishuChannelConfig) => {
+  ipcMain.handle('remote.updateSlackConfig', async (_event, config: SlackChannelConfig) => {
     try {
-      await remoteManager.updateFeishuConfig(config);
+      await remoteManager.updateSlackConfig(config);
       return { success: true };
     } catch (error) {
-      logError('[Remote] Error updating Feishu config:', error);
+      logError('[Remote] Error updating Slack config:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
   });
@@ -157,7 +157,7 @@ export function registerRemoteScheduleMemoryIpc(): void {
 
   ipcMain.handle('remote.getWebhookUrl', () => {
     try {
-      return remoteManager.getFeishuWebhookUrl();
+      return remoteManager.getSlackWebhookUrl();
     } catch (error) {
       logError('[Remote] Error getting webhook URL:', error);
       return null;

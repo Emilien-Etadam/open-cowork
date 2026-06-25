@@ -35,14 +35,6 @@ export interface RemoteConfig {
     bind: string;
     defaultWorkingDirectory?: string;
     autoApproveSafeTools?: boolean;
-    tunnel?: {
-      enabled: boolean;
-      type: 'ngrok' | 'cloudflare' | 'frp';
-      ngrok?: {
-        authToken: string;
-        region?: string;
-      };
-    };
     auth: {
       mode: string;
       token?: string;
@@ -50,14 +42,6 @@ export interface RemoteConfig {
     };
   };
   channels: {
-    feishu?: {
-      appId: string;
-      appSecret: string;
-      useWebSocket?: boolean;
-      dm: {
-        policy: string;
-      };
-    };
     slack?: {
       botToken: string;
       appToken?: string;
@@ -69,13 +53,6 @@ export interface RemoteConfig {
   };
 }
 
-export interface TunnelStatus {
-  connected: boolean;
-  url: string | null;
-  provider: string;
-  error?: string;
-}
-
-export type ConfigStep = 'feishu' | 'connection' | 'advanced';
+export type ConfigStep = 'slack' | 'advanced';
 
 export type LocalizedBanner = { key?: string; text?: string | null };
