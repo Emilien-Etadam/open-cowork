@@ -21,7 +21,7 @@ export function SlashCommandMenu({
     <div
       role="listbox"
       aria-label={t('chat.slashCommands.menuLabel')}
-      className="absolute bottom-full left-0 right-0 mb-2 rounded-2xl border border-border-muted bg-surface/95 backdrop-blur shadow-soft overflow-hidden z-20"
+      className="absolute bottom-full left-0 right-0 mb-2 rounded-2xl border border-border-muted bg-surface shadow-elevated overflow-hidden z-30"
     >
       <div className="px-3 py-2 border-b border-border-muted/80 text-xs font-medium text-text-muted">
         {t('chat.slashCommands.menuLabel')}
