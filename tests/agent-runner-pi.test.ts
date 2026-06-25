@@ -251,4 +251,11 @@ describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
     expect(agentRunnerRunContent).toContain('export { type AgentRunnerRunContext }');
     expect(agentRunnerContextContent).toContain('export interface AgentRunnerRunContext');
   });
+
+  it('runs proactive compaction before prompt when context would overflow', () => {
+    expect(agentRunnerStreamHandlerContent).toContain('runProactiveCompaction');
+    expect(agentRunnerStreamHandlerContent).toContain(
+      'if (compactionEnabled && contextWouldOverflow)'
+    );
+  });
 });

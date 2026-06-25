@@ -130,7 +130,11 @@ export function resolveAssistantStreamErrorText(
 
 export function buildTerminalErrorMessage(errorText: string, partialText = ''): string {
   const normalizedPartial = partialText.trimEnd();
-  const hint = FOUR_XX_ERROR_RE.test(errorText) ? mt('errCheckConfigHint') : mt('errRetryingHint');
+  const hint = isContextOverflowError(errorText)
+    ? mt('errContextCompactionHint')
+    : FOUR_XX_ERROR_RE.test(errorText)
+      ? mt('errCheckConfigHint')
+      : mt('errRetryingHint');
   const errorBlock = `**Error**: ${errorText}\n\n${hint}`;
   return normalizedPartial ? `${normalizedPartial}\n\n${errorBlock}` : errorBlock;
 }
