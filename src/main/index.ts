@@ -26,6 +26,7 @@ import { remoteManager } from './remote/remote-manager';
 import { remoteConfigStore } from './remote/remote-config-store';
 import { startNavServer } from './nav-server';
 import { createScheduledTaskStore } from './schedule/scheduled-task-store';
+import { initAutoUpdater } from './auto-updater';
 import { log, logWarn, logError, setDevLogsEnabled } from './utils/logger';
 import { mainAppState } from './main-app-state';
 import { sendToRenderer } from './main-renderer-bridge';
@@ -38,7 +39,7 @@ import {
   getSavedThemePreset,
   applyWindowBackground,
 } from './main-app-window';
-import { registerAppBootstrap, isDev } from './main-app-bootstrap';
+import { registerAppBootstrap } from './main-app-bootstrap';
 import { registerAppLifecycle } from './main-app-lifecycle';
 import { registerMainIpc } from './ipc/register-main-ipc';
 import { createScheduledTaskManager, createAgentExecutor } from './ipc/ipc-remote-schedule-memory';
@@ -184,17 +185,7 @@ app
       }
     });
 
-    if (!isDev) {
-      import('electron-updater')
-        .then(({ autoUpdater }) => {
-          autoUpdater.checkForUpdatesAndNotify().catch((err: unknown) => {
-            log('[AutoUpdater] Update check failed:', err);
-          });
-        })
-        .catch((err: unknown) => {
-          log('[AutoUpdater] Failed to load electron-updater:', err);
-        });
-    }
+    initAutoUpdater();
 
     startNavServer(() => mainAppState.mainWindow);
 

@@ -297,9 +297,21 @@ jobs:
             exit 1
           }
 
+      - name: Verify Windows update metadata
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "release\latest.yml")) {
+            Write-Host "::error::Missing release\latest.yml — required for Windows auto-update"
+            exit 1
+          }
+          Write-Host "Update metadata found:"
+          Get-Content "release\latest.yml"
+
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
         with:
           files: |
             release/*.exe
+            release/latest.yml
+            release/*.blockmap
           draft: true
