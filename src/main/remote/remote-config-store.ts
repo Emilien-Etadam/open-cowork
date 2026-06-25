@@ -16,7 +16,7 @@ import {
 import type {
   RemoteConfig,
   GatewayConfig,
-  FeishuChannelConfig,
+  SlackChannelConfig,
   WechatChannelConfig,
   TelegramChannelConfig,
   DingtalkChannelConfig,
@@ -62,9 +62,7 @@ class RemoteConfigStore {
 
     // Migrate: change pairing mode to allowlist (allow everyone by default)
     this.migrateAuthMode();
-
-    // Migrate: sync gateway auth mode to match Feishu DM policy for existing installs
-    this.migrateFeishuDmPolicySync();
+    this.migrateRemoveFeishu();
   }
 
   /**
@@ -92,29 +90,25 @@ class RemoteConfigStore {
   }
 
   /**
-   * Migrate: sync gateway auth mode to match Feishu DM policy.
-   * Fixes issue #92 for existing installs where channels.feishu.dm.policy was
-   * set to 'open' but gateway.auth.mode remained at default 'allowlist'.
-   * Also handles the case where syncAllowlist() already populated the allowlist
-   * with paired users — if all entries are from paired users, the mode was never
-   * explicitly configured and should still be migrated.
+   * Drop legacy Feishu channel config and paired users from persisted remote settings.
    */
-  private migrateFeishuDmPolicySync(): void {
-    const feishu = this.store.get('channels.feishu') as FeishuChannelConfig | undefined;
-    if (!feishu?.dm?.policy) return;
-    if (feishu.dm.policy !== 'open' && feishu.dm.policy !== 'pairing') return;
+  private migrateRemoveFeishu(): void {
+    const channels = this.store.get('channels') as Record<string, unknown>;
+    if (channels?.feishu) {
+      const rest = { ...channels };
+      delete rest.feishu;
+      this.store.set('channels', rest as RemoteConfig['channels']);
+      log('[RemoteConfig] Removed legacy Feishu channel config');
+    }
 
-    const gateway = this.store.get('gateway');
-    if (gateway?.auth?.mode !== 'allowlist') return;
-
-    const allowlist = gateway.auth.allowlist ?? [];
-    const pairedEntries = new Set(this.getPairedUsers().map((u) => `${u.channelType}:${u.userId}`));
-    const onlyPairedEntries =
-      allowlist.length === 0 || allowlist.every((e) => pairedEntries.has(e));
-
-    if (onlyPairedEntries) {
-      log('[RemoteConfig] Syncing gateway auth mode to match Feishu DM policy:', feishu.dm.policy);
-      this.store.set('gateway.auth.mode', feishu.dm.policy);
+    const pairedUsers = this.getPairedUsers();
+    const withoutFeishu = pairedUsers.filter(
+      (user) => (user.channelType as string) !== 'feishu'
+    );
+    if (withoutFeishu.length !== pairedUsers.length) {
+      this.store.set('pairedUsers', withoutFeishu);
+      this.syncAllowlist(withoutFeishu);
+      log('[RemoteConfig] Removed legacy Feishu paired users');
     }
   }
 
@@ -159,18 +153,18 @@ class RemoteConfigStore {
   }
 
   /**
-   * Get feishu channel config
+   * Get slack channel config
    */
-  getFeishuConfig(): FeishuChannelConfig | undefined {
-    return this.store.get('channels.feishu');
+  getSlackConfig(): SlackChannelConfig | undefined {
+    return this.store.get('channels.slack');
   }
 
   /**
-   * Set feishu channel config
+   * Set slack channel config
    */
-  setFeishuConfig(config: FeishuChannelConfig): void {
-    this.store.set('channels.feishu', config);
-    log('[RemoteConfig] Feishu config updated');
+  setSlackConfig(config: SlackChannelConfig): void {
+    this.store.set('channels.slack', config);
+    log('[RemoteConfig] Slack config updated');
   }
 
   /**

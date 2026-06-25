@@ -35,7 +35,7 @@ import type {
   McpPresetsMap,
   RemoteConfig,
   GatewayConfig,
-  FeishuChannelConfig,
+  SlackChannelConfig,
   PairedUser,
   PairingRequest,
   RemoteSessionMapping,
@@ -375,10 +375,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
       config: Partial<GatewayConfig>
     ): Promise<{ success: boolean; error?: string }> =>
       ipcRenderer.invoke('remote.updateGatewayConfig', config),
-    updateFeishuConfig: (
-      config: FeishuChannelConfig
+    updateSlackConfig: (
+      config: SlackChannelConfig
     ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.updateFeishuConfig', config),
+      ipcRenderer.invoke('remote.updateSlackConfig', config),
     getPairedUsers: (): Promise<PairedUser[]> => ipcRenderer.invoke('remote.getPairedUsers'),
     getPendingPairings: (): Promise<PairingRequest[]> =>
       ipcRenderer.invoke('remote.getPendingPairings'),
@@ -648,8 +648,8 @@ declare global {
         updateGatewayConfig: (
           config: Partial<GatewayConfig>
         ) => Promise<{ success: boolean; error?: string }>;
-        updateFeishuConfig: (
-          config: FeishuChannelConfig
+        updateSlackConfig: (
+          config: SlackChannelConfig
         ) => Promise<{ success: boolean; error?: string }>;
         getPairedUsers: () => Promise<PairedUser[]>;
         getPendingPairings: () => Promise<PairingRequest[]>;
