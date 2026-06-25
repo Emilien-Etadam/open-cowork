@@ -475,6 +475,14 @@ export type ClientEvent =
       type: 'session.handoff';
       payload: { sessionId: string; customInstructions?: string };
     }
+  | {
+      type: 'session.forkFromMessage';
+      payload: { sessionId: string; messageId: string };
+    }
+  | {
+      type: 'session.rewindToMessage';
+      payload: { sessionId: string; messageId: string };
+    }
   | { type: 'session.delete'; payload: { sessionId: string } }
   | { type: 'session.batchDelete'; payload: { sessionIds: string[] } }
   | { type: 'session.list'; payload: Record<string, never> }

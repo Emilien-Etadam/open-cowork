@@ -685,7 +685,18 @@
         "description": "Rozpocznij nową sesję z podsumowaniem kontynuacji"
       }
     },
-    "scrollToBottom": "Przewiń na dół"
+    "scrollToBottom": "Przewiń na dół",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Postęp",
@@ -737,7 +748,9 @@
     "compactionTitle": "Kontekst skompresowany",
     "compactionHandoffTitle": "Kontynuacja z «{{sourceTitle}}»",
     "compactionMeta": "Podsumowano {{tokensBefore}} tokenów",
-    "compactionInstructions": "Fokus: {{instructions}}"
+    "compactionInstructions": "Fokus: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Utwórz harmonogram",

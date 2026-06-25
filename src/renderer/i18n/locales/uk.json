@@ -685,7 +685,18 @@
         "description": "Розпочати нову сесію з підсумком для продовження"
       }
     },
-    "scrollToBottom": "Прокрутити вниз"
+    "scrollToBottom": "Прокрутити вниз",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Прогрес",
@@ -737,7 +748,9 @@
     "compactionTitle": "Контекст стиснуто",
     "compactionHandoffTitle": "Продовження з «{{sourceTitle}}»",
     "compactionMeta": "Підсумовано {{tokensBefore}} токенів",
-    "compactionInstructions": "Фокус: {{instructions}}"
+    "compactionInstructions": "Фокус: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Створити розклад",

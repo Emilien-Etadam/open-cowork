@@ -2,16 +2,23 @@
 // Delegates block rendering to ContentBlockView and its sub-components.
 import { useState, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Clock, XCircle } from 'lucide-react';
+import { Copy, Check, Clock, XCircle, GitBranch, Pencil } from 'lucide-react';
 import type { Message, ContentBlock, ToolUseContent, ToolResultContent } from '../types';
 import { ContentBlockView } from './message/ContentBlockView';
 
 interface MessageCardProps {
   message: Message;
   isStreaming?: boolean;
+  onFork?: () => void;
+  onEditPrompt?: () => void;
 }
 
-export const MessageCard = memo(function MessageCard({ message, isStreaming }: MessageCardProps) {
+export const MessageCard = memo(function MessageCard({
+  message,
+  isStreaming,
+  onFork,
+  onEditPrompt,
+}: MessageCardProps) {
   const { t } = useTranslation();
   const isUser = message.role === 'user';
   const isSystem = message.role === 'system';
@@ -95,17 +102,39 @@ export const MessageCard = memo(function MessageCard({ message, isStreaming }: M
               ))
             )}
           </div>
-          <button
-            onClick={handleCopy}
-            className="mt-1 w-6 h-6 flex items-center justify-center rounded-md bg-surface-muted hover:bg-surface-active transition-all opacity-0 group-hover:opacity-100 flex-shrink-0"
-            title={t('messageCard.copyMessage')}
-          >
-            {copied ? (
-              <Check className="w-3 h-3 text-success" />
-            ) : (
-              <Copy className="w-3 h-3 text-text-muted" />
+          <div className="mt-1 flex flex-col gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+            <button
+              onClick={handleCopy}
+              className="w-6 h-6 flex items-center justify-center rounded-md bg-surface-muted hover:bg-surface-active transition-colors"
+              title={t('messageCard.copyMessage')}
+            >
+              {copied ? (
+                <Check className="w-3 h-3 text-success" />
+              ) : (
+                <Copy className="w-3 h-3 text-text-muted" />
+              )}
+            </button>
+            {onFork && (
+              <button
+                type="button"
+                onClick={onFork}
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-surface-muted hover:bg-surface-active transition-colors"
+                title={t('messageCard.forkFromMessage')}
+              >
+                <GitBranch className="w-3 h-3 text-text-muted" />
+              </button>
             )}
-          </button>
+            {onEditPrompt && (
+              <button
+                type="button"
+                onClick={onEditPrompt}
+                className="w-6 h-6 flex items-center justify-center rounded-md bg-surface-muted hover:bg-surface-active transition-colors"
+                title={t('messageCard.editPrompt')}
+              >
+                <Pencil className="w-3 h-3 text-text-muted" />
+              </button>
+            )}
+          </div>
         </div>
       ) : isSystem ? (
         <div className="space-y-1.5">

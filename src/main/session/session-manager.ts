@@ -224,6 +224,32 @@ export class SessionManager {
     return this.facadeSupport.handoffSession(sessionId, customInstructions);
   }
 
+  async forkSessionFromMessage(
+    sessionId: string,
+    messageId: string
+  ): Promise<{
+    success: boolean;
+    newSession?: Session;
+    messages?: Message[];
+    errorKey?: string;
+    error?: string;
+  }> {
+    return this.facadeSupport.forkSessionFromMessage(sessionId, messageId);
+  }
+
+  async rewindSessionForEdit(
+    sessionId: string,
+    messageId: string
+  ): Promise<{
+    success: boolean;
+    promptText?: string;
+    messages?: Message[];
+    errorKey?: string;
+    error?: string;
+  }> {
+    return this.facadeSupport.rewindSessionForEdit(sessionId, messageId);
+  }
+
   async generateSessionTitleFromPrompt(prompt: string): Promise<string> {
     const normalizedPrompt = prompt.trim();
     if (!normalizedPrompt) {

@@ -12,6 +12,8 @@ export function eventRequiresSessionManager(event: ClientEvent): boolean {
     case 'session.getTraceSteps':
     case 'session.compact':
     case 'session.handoff':
+    case 'session.forkFromMessage':
+    case 'session.rewindToMessage':
     case 'permission.response':
       return true;
     default:

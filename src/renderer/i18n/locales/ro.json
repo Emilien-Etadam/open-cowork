@@ -685,7 +685,18 @@
         "description": "Pornește o sesiune nouă cu un rezumat de continuare"
       }
     },
-    "scrollToBottom": "Derulează la final"
+    "scrollToBottom": "Derulează la final",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Progres",
@@ -737,7 +748,9 @@
     "compactionTitle": "Context compactat",
     "compactionHandoffTitle": "Continuare din «{{sourceTitle}}»",
     "compactionMeta": "{{tokensBefore}} tokeni rezumați",
-    "compactionInstructions": "Focus: {{instructions}}"
+    "compactionInstructions": "Focus: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Creează programare",

@@ -811,6 +811,130 @@ export function useIPC() {
     [invoke, addSession, addMessage, setLoading, startActiveTurn, startExecutionClock]
   );
 
+  const forkSessionFromMessage = useCallback(
+    async (
+      sessionId: string,
+      messageId: string
+    ): Promise<{ success: boolean; newSessionId?: string; errorKey?: string }> => {
+      if (!isElectron) {
+        return { success: false, errorKey: 'errForkFailed' };
+      }
+
+      try {
+        const result = await invoke<{
+          success: boolean;
+          newSession?: Session;
+          messages?: Message[];
+          errorKey?: string;
+          error?: string;
+        }>({
+          type: 'session.forkFromMessage',
+          payload: { sessionId, messageId },
+        });
+
+        if (!result?.success || !result.newSession) {
+          const noticeKey = result?.errorKey || 'errForkFailed';
+          useAppStore.getState().setGlobalNotice({
+            id: `notice-fork-${Date.now()}`,
+            type: 'warning',
+            message: i18n.t(`chat.forkErrors.${noticeKey}`, {
+              defaultValue: result?.error || noticeKey,
+            }),
+            messageKey: `chat.forkErrors.${noticeKey}`,
+          });
+          return { success: false, errorKey: noticeKey };
+        }
+
+        const store = useAppStore.getState();
+        store.addSession(result.newSession);
+        if (result.messages) {
+          store.setMessages(result.newSession.id, result.messages);
+        }
+        store.setShowSettings(false);
+        store.setActiveSession(result.newSession.id);
+        store.setGlobalNotice({
+          id: `notice-fork-${Date.now()}`,
+          type: 'success',
+          message: i18n.t('chat.forkSuccess'),
+          messageKey: 'chat.forkSuccess',
+        });
+
+        return { success: true, newSessionId: result.newSession.id };
+      } catch (error) {
+        useAppStore.getState().setGlobalNotice({
+          id: `notice-fork-${Date.now()}`,
+          type: 'error',
+          message: error instanceof Error ? error.message : i18n.t('chat.forkErrors.errForkFailed'),
+          messageKey: 'chat.forkErrors.errForkFailed',
+        });
+        return { success: false, errorKey: 'errForkFailed' };
+      }
+    },
+    [invoke]
+  );
+
+  const rewindSessionForEdit = useCallback(
+    async (
+      sessionId: string,
+      messageId: string
+    ): Promise<{ success: boolean; promptText?: string; errorKey?: string }> => {
+      if (!isElectron) {
+        return { success: false, errorKey: 'errRewindFailed' };
+      }
+
+      try {
+        const result = await invoke<{
+          success: boolean;
+          promptText?: string;
+          messages?: Message[];
+          errorKey?: string;
+          error?: string;
+        }>({
+          type: 'session.rewindToMessage',
+          payload: { sessionId, messageId },
+        });
+
+        if (!result?.success) {
+          const noticeKey = result?.errorKey || 'errRewindFailed';
+          useAppStore.getState().setGlobalNotice({
+            id: `notice-rewind-${Date.now()}`,
+            type: 'warning',
+            message: i18n.t(`chat.rewindErrors.${noticeKey}`, {
+              defaultValue: result?.error || noticeKey,
+            }),
+            messageKey: `chat.rewindErrors.${noticeKey}`,
+          });
+          return { success: false, errorKey: noticeKey };
+        }
+
+        const store = useAppStore.getState();
+        if (result.messages) {
+          store.setMessages(sessionId, result.messages);
+        }
+        store.setTraceSteps(sessionId, []);
+        store.clearPartialMessage(sessionId);
+        store.clearPartialThinking(sessionId);
+        store.clearActiveTurn(sessionId);
+        store.clearPendingTurns(sessionId);
+        store.clearExecutionClock(sessionId);
+        store.clearQueuedMessages(sessionId);
+        store.setLoading(false);
+
+        return { success: true, promptText: result.promptText ?? '' };
+      } catch (error) {
+        useAppStore.getState().setGlobalNotice({
+          id: `notice-rewind-${Date.now()}`,
+          type: 'error',
+          message:
+            error instanceof Error ? error.message : i18n.t('chat.rewindErrors.errRewindFailed'),
+          messageKey: 'chat.rewindErrors.errRewindFailed',
+        });
+        return { success: false, errorKey: 'errRewindFailed' };
+      }
+    },
+    [invoke]
+  );
+
   const stopSession = useCallback(
     (sessionId: string) => {
       cancelQueuedMessages(sessionId);
@@ -960,6 +1084,8 @@ export function useIPC() {
     continueSession,
     compactSession,
     handoffSession,
+    forkSessionFromMessage,
+    rewindSessionForEdit,
     stopSession,
     deleteSession,
     batchDeleteSessions,

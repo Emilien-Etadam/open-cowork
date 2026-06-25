@@ -685,7 +685,18 @@
         "description": "Iniciar una nueva sesión con un resumen de continuación"
       }
     },
-    "scrollToBottom": "Ir al final"
+    "scrollToBottom": "Ir al final",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Progreso",
@@ -737,7 +748,9 @@
     "compactionTitle": "Contexto compactado",
     "compactionHandoffTitle": "Continuación de «{{sourceTitle}}»",
     "compactionMeta": "{{tokensBefore}} tokens resumidos",
-    "compactionInstructions": "Enfoque: {{instructions}}"
+    "compactionInstructions": "Enfoque: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Crear programación",

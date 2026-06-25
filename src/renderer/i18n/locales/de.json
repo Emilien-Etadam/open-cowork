@@ -685,7 +685,18 @@
         "description": "Neue Sitzung mit Fortsetzungszusammenfassung starten"
       }
     },
-    "scrollToBottom": "Nach unten scrollen"
+    "scrollToBottom": "Nach unten scrollen",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Fortschritt",
@@ -737,7 +748,9 @@
     "compactionTitle": "Kontext komprimiert",
     "compactionHandoffTitle": "Fortsetzung von „{{sourceTitle}}“",
     "compactionMeta": "{{tokensBefore}} Tokens zusammengefasst",
-    "compactionInstructions": "Fokus: {{instructions}}"
+    "compactionInstructions": "Fokus: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Zeitplan erstellen",
