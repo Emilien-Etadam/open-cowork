@@ -221,6 +221,21 @@ describe('SessionState unified store', () => {
       expect(ss.activeTurn).toEqual({ stepId: 'step1', userMessageId: 'msg1' });
     });
 
+    it('should start an active turn for a specific user message', () => {
+      useAppStore.getState().addSession(makeSession('s1'));
+      useAppStore.getState().addMessage('s1', {
+        id: 'msg1',
+        sessionId: 's1',
+        role: 'user',
+        content: [{ type: 'text', text: 'test' }],
+        timestamp: Date.now(),
+      });
+      useAppStore.getState().startActiveTurn('s1', 'step1', 'msg1');
+      const ss = useAppStore.getState().sessionStates['s1'];
+      expect(ss.pendingTurns).toEqual([]);
+      expect(ss.activeTurn).toEqual({ stepId: 'step1', userMessageId: 'msg1' });
+    });
+
     it('should set activeTurn to null when no pending turns', () => {
       useAppStore.getState().addSession(makeSession('s1'));
       useAppStore.getState().activateNextTurn('s1', 'step1');

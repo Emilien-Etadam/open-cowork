@@ -168,6 +168,9 @@ export function useIPC() {
             // Clear thinking buffer too — final thinking is in the message content blocks
             delete pendingThinking[event.payload.sessionId];
             store.addMessage(event.payload.sessionId, event.payload.message);
+            if (event.payload.message.role === 'assistant') {
+              store.clearActiveTurn(event.payload.sessionId);
+            }
             break;
 
           case 'stream.partial':
@@ -189,6 +192,17 @@ export function useIPC() {
               } else if (activeTurn) {
                 // 绑定真实 stepId，避免 mock stepId 导致无法清理
                 store.updateActiveTurnStep(event.payload.sessionId, event.payload.step.id);
+              } else {
+                const latestUserMessage = [...(ss?.messages ?? [])]
+                  .reverse()
+                  .find((message) => message.role === 'user');
+                if (latestUserMessage) {
+                  store.startActiveTurn(
+                    event.payload.sessionId,
+                    event.payload.step.id,
+                    latestUserMessage.id
+                  );
+                }
               }
             }
             bufferTrace({
@@ -414,6 +428,7 @@ export function useIPC() {
   const setPendingPermission = useAppStore((s) => s.setPendingPermission);
   const clearActiveTurn = useAppStore((s) => s.clearActiveTurn);
   const activateNextTurn = useAppStore((s) => s.activateNextTurn);
+  const startActiveTurn = useAppStore((s) => s.startActiveTurn);
   const clearPendingTurns = useAppStore((s) => s.clearPendingTurns);
   const cancelQueuedMessages = useAppStore((s) => s.cancelQueuedMessages);
   const startExecutionClock = useAppStore((s) => s.startExecutionClock);
@@ -492,7 +507,7 @@ export function useIPC() {
         addMessage(sessionId, userMessage);
         startExecutionClock(sessionId, userMessage.timestamp);
         const mockStepId = `mock-step-${Date.now()}`;
-        activateNextTurn(sessionId, mockStepId);
+        startActiveTurn(sessionId, mockStepId, userMessage.id);
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -540,7 +555,7 @@ export function useIPC() {
 
           // Immediately activate turn to show processing indicator while waiting for API
           const mockStepId = `pending-step-${Date.now()}`;
-          activateNextTurn(session.id, mockStepId);
+          startActiveTurn(session.id, mockStepId, userMessage.id);
         }
         // Loading will be reset when we receive session.status event
         return session;
@@ -562,6 +577,7 @@ export function useIPC() {
       updateSession,
       setLoading,
       activateNextTurn,
+      startActiveTurn,
       clearActiveTurn,
       startExecutionClock,
     ]
@@ -588,9 +604,8 @@ export function useIPC() {
       const isSessionRunning =
         store.sessions.find((session) => session.id === sessionId)?.status === 'running';
       const ss = store.sessionStates[sessionId];
-      const hasActiveTurn = Boolean(ss?.activeTurn);
       const hasPending = (ss?.pendingTurns?.length ?? 0) > 0;
-      const shouldQueue = isSessionRunning || hasActiveTurn || hasPending;
+      const shouldQueue = isSessionRunning || hasPending;
       const userMessage: Message = {
         id: `msg-user-${Date.now()}`,
         sessionId,
@@ -606,7 +621,7 @@ export function useIPC() {
       if (!isElectron) {
         updateSession(sessionId, { status: 'running' });
         const mockStepId = `mock-step-${Date.now()}`;
-        activateNextTurn(sessionId, mockStepId);
+        startActiveTurn(sessionId, mockStepId, userMessage.id);
 
         await new Promise((resolve) => setTimeout(resolve, 500));
 
@@ -630,7 +645,7 @@ export function useIPC() {
       // Immediately activate turn to show processing indicator while waiting for API
       if (!shouldQueue) {
         const mockStepId = `pending-step-${Date.now()}`;
-        activateNextTurn(sessionId, mockStepId);
+        startActiveTurn(sessionId, mockStepId, userMessage.id);
       }
 
       try {
@@ -659,6 +674,7 @@ export function useIPC() {
       updateSession,
       setLoading,
       activateNextTurn,
+      startActiveTurn,
       clearActiveTurn,
       clearPendingTurns,
       startExecutionClock,
@@ -763,7 +779,7 @@ export function useIPC() {
         startExecutionClock(newSession.id, userMessage.timestamp);
 
         const mockStepId = `pending-handoff-${Date.now()}`;
-        activateNextTurn(newSession.id, mockStepId);
+        startActiveTurn(newSession.id, mockStepId, userMessage.id);
         store.setGlobalNotice({
           id: `notice-handoff-${Date.now()}`,
           type: 'success',
@@ -784,7 +800,7 @@ export function useIPC() {
         return { success: false, errorKey: 'errHandoffFailed' };
       }
     },
-    [invoke, addSession, addMessage, setLoading, activateNextTurn, startExecutionClock]
+    [invoke, addSession, addMessage, setLoading, startActiveTurn, startExecutionClock]
   );
 
   const stopSession = useCallback(
