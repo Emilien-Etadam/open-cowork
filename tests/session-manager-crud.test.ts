@@ -83,7 +83,8 @@ describe('SessionManager.listSessions', () => {
     const db = makeDb();
     const manager = new SessionManager(db, vi.fn());
     expect(manager.listSessions()).toEqual([]);
-    expect(db.sessions.getAll).toHaveBeenCalledTimes(1);
+    // Constructor resets stale running sessions, then listSessions reads again.
+    expect(db.sessions.getAll).toHaveBeenCalledTimes(2);
   });
 
   it('maps database rows to Session objects', () => {
