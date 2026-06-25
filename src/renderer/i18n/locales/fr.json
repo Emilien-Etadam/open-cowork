@@ -81,7 +81,18 @@
     "themePreset": "Style",
     "themePresetDefault": "Par défaut",
     "themePresetVscode": "VS Code",
-    "language": "Langue"
+    "language": "Langue",
+    "updates": "Mises à jour",
+    "updateCurrentVersion": "Version actuelle : {{version}}",
+    "updateCheck": "Vérifier les mises à jour",
+    "updateChecking": "Vérification des mises à jour...",
+    "updateUpToDate": "Vous avez la dernière version ({{version}})",
+    "updateAvailable": "Mise à jour disponible : {{version}}",
+    "updateDownloaded": "Mise à jour téléchargée. Redémarrez pour installer {{version}}.",
+    "updateRestartInstall": "Redémarrer et installer",
+    "updateOpenReleases": "Ouvrir la page des releases",
+    "updateError": "Échec de la vérification : {{error}}",
+    "updateWindowsOnly": "L'installation automatique est disponible uniquement sur Windows. Téléchargez le dernier installateur sur GitHub."
   },
   "memory": {
     "title": "Mémoire",

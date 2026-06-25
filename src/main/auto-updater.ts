@@ -2,55 +2,215 @@
  * @module main/auto-updater
  *
  * Windows-only auto-update from GitHub Releases on the EE fork.
- * macOS/Linux are intentionally excluded (unsigned builds, no release CI).
+ * macOS/Linux fall back to a GitHub release tag check for manual verification.
  */
 import { app } from 'electron';
+import type { UpdateCheckResult } from '../shared/update-check';
+import { isEeVersionNewer, normalizeVersionTag } from '../shared/app-version';
 import { isDev } from './main-app-bootstrap';
+import { sendToRenderer } from './main-renderer-bridge';
 import { log, logError } from './utils/logger';
 
 const EE_GITHUB_OWNER = 'Emilien-Etadam';
 const EE_GITHUB_REPO = 'open-cowork';
+const LATEST_RELEASE_URL = `https://api.github.com/repos/${EE_GITHUB_OWNER}/${EE_GITHUB_REPO}/releases/latest`;
+
+export type { UpdateCheckResult, UpdateCheckStatus } from '../shared/update-check';
+
+type ElectronUpdater = {
+  allowPrerelease: boolean;
+  autoDownload: boolean;
+  setFeedURL: (options: { provider: 'github'; owner: string; repo: string }) => void;
+  on: (event: string, listener: (...args: unknown[]) => void) => void;
+  checkForUpdates: () => Promise<{ updateInfo?: { version?: string } } | null>;
+  checkForUpdatesAndNotify: () => Promise<unknown>;
+  quitAndInstall: () => void;
+};
+
+let updater: ElectronUpdater | null = null;
+let updaterReady = false;
+let downloadedVersion: string | null = null;
+
+function canUseElectronUpdater(): boolean {
+  return !isDev && process.platform === 'win32' && app.isPackaged;
+}
+
+function notifyRenderer(result: UpdateCheckResult): void {
+  sendToRenderer({ type: 'update.checkResult', payload: result });
+}
+
+async function fetchLatestGitHubReleaseVersion(): Promise<string | null> {
+  const response = await fetch(LATEST_RELEASE_URL, {
+    headers: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': `${EE_GITHUB_REPO}-update-check`,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub API ${response.status}`);
+  }
+
+  const payload = (await response.json()) as { tag_name?: string };
+  if (!payload.tag_name) {
+    return null;
+  }
+
+  return normalizeVersionTag(payload.tag_name);
+}
+
+function buildResultFromVersions(
+  currentVersion: string,
+  latestVersion: string | null | undefined
+): UpdateCheckResult {
+  if (!latestVersion) {
+    return {
+      status: 'error',
+      currentVersion,
+      error: 'Latest release tag not found',
+    };
+  }
+
+  if (isEeVersionNewer(latestVersion, currentVersion)) {
+    return {
+      status: 'update-available',
+      currentVersion,
+      latestVersion,
+      downloaded: downloadedVersion === latestVersion,
+      canInstall: downloadedVersion === latestVersion && canUseElectronUpdater(),
+    };
+  }
+
+  return {
+    status: 'up-to-date',
+    currentVersion,
+    latestVersion,
+    downloaded: false,
+    canInstall: false,
+  };
+}
+
+async function checkViaGitHub(currentVersion: string): Promise<UpdateCheckResult> {
+  const latestVersion = await fetchLatestGitHubReleaseVersion();
+  return buildResultFromVersions(currentVersion, latestVersion);
+}
+
+async function ensureUpdaterReady(): Promise<ElectronUpdater | null> {
+  if (!canUseElectronUpdater()) {
+    return null;
+  }
+
+  if (updaterReady && updater) {
+    return updater;
+  }
+
+  const { autoUpdater } = await import('electron-updater');
+  updater = autoUpdater as ElectronUpdater;
+  updater.allowPrerelease = true;
+  updater.autoDownload = true;
+  updater.setFeedURL({
+    provider: 'github',
+    owner: EE_GITHUB_OWNER,
+    repo: EE_GITHUB_REPO,
+  });
+
+  updater.on('checking-for-update', () => {
+    log('[AutoUpdater] Checking for updates…');
+  });
+  updater.on('update-available', (info) => {
+    const version = (info as { version?: string })?.version;
+    log('[AutoUpdater] Update available:', version);
+  });
+  updater.on('update-not-available', () => {
+    log('[AutoUpdater] Already up to date');
+  });
+  updater.on('error', (err) => {
+    logError('[AutoUpdater] Error:', err);
+  });
+  updater.on('download-progress', (progress) => {
+    const percent = (progress as { percent?: number })?.percent ?? 0;
+    log(`[AutoUpdater] Download ${Math.round(percent)}%`);
+  });
+  updater.on('update-downloaded', (info) => {
+    const version = (info as { version?: string })?.version;
+    downloadedVersion = version ?? downloadedVersion;
+    log('[AutoUpdater] Update downloaded, will install on quit:', version);
+    notifyRenderer({
+      status: 'downloaded',
+      currentVersion: app.getVersion(),
+      latestVersion: version,
+      downloaded: true,
+      canInstall: true,
+    });
+  });
+
+  updaterReady = true;
+  return updater;
+}
 
 export function initAutoUpdater(): void {
-  if (isDev || process.platform !== 'win32' || !app.isPackaged) {
+  if (!canUseElectronUpdater()) {
     return;
   }
 
-  import('electron-updater')
-    .then(({ autoUpdater }) => {
-      autoUpdater.allowPrerelease = true;
-      autoUpdater.autoDownload = true;
-
-      autoUpdater.setFeedURL({
-        provider: 'github',
-        owner: EE_GITHUB_OWNER,
-        repo: EE_GITHUB_REPO,
-      });
-
-      autoUpdater.on('checking-for-update', () => {
-        log('[AutoUpdater] Checking for updates…');
-      });
-      autoUpdater.on('update-available', (info) => {
-        log('[AutoUpdater] Update available:', info.version);
-      });
-      autoUpdater.on('update-not-available', () => {
-        log('[AutoUpdater] Already up to date');
-      });
-      autoUpdater.on('error', (err) => {
-        logError('[AutoUpdater] Error:', err);
-      });
-      autoUpdater.on('download-progress', (progress) => {
-        log(`[AutoUpdater] Download ${Math.round(progress.percent)}%`);
-      });
-      autoUpdater.on('update-downloaded', (info) => {
-        log('[AutoUpdater] Update downloaded, will install on quit:', info.version);
-      });
-
-      autoUpdater.checkForUpdatesAndNotify().catch((err: unknown) => {
-        logError('[AutoUpdater] Update check failed:', err);
-      });
+  void ensureUpdaterReady()
+    .then((instance) => {
+      if (!instance) {
+        return;
+      }
+      return instance.checkForUpdatesAndNotify();
     })
     .catch((err: unknown) => {
-      logError('[AutoUpdater] Failed to load electron-updater:', err);
+      logError('[AutoUpdater] Update check failed:', err);
     });
+}
+
+export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
+  const currentVersion = app.getVersion();
+
+  try {
+    if (canUseElectronUpdater()) {
+      const instance = await ensureUpdaterReady();
+      if (instance) {
+        const result = await instance.checkForUpdates();
+        const latestVersion =
+          result?.updateInfo?.version ?? (await fetchLatestGitHubReleaseVersion());
+        const checkResult = buildResultFromVersions(currentVersion, latestVersion);
+        notifyRenderer(checkResult);
+        return checkResult;
+      }
+    }
+
+    const checkResult = await checkViaGitHub(currentVersion);
+    notifyRenderer(checkResult);
+    return checkResult;
+  } catch (error) {
+    const checkResult: UpdateCheckResult = {
+      status: 'error',
+      currentVersion,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+    notifyRenderer(checkResult);
+    return checkResult;
+  }
+}
+
+export function installDownloadedUpdate(): { success: boolean; error?: string } {
+  if (!canUseElectronUpdater() || !updater || !downloadedVersion) {
+    return { success: false, error: 'No downloaded update available' };
+  }
+
+  try {
+    updater.quitAndInstall();
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to install update',
+    };
+  }
+}
+
+export function isUpdateCheckSupported(): boolean {
+  return canUseElectronUpdater() || app.isPackaged;
 }
