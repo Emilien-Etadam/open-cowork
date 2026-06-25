@@ -184,7 +184,9 @@ dmg:
 extraMetadata:
   main: dist-electron/main/index.js
 
+# Update metadata (latest.yml) is generated on Windows builds for electron-updater.
+# Targets the EE fork releases only — macOS builds stay unsigned and skip auto-update.
 publish:
   provider: github
-  owner: OpenCoworkAI
+  owner: Emilien-Etadam
   repo: open-cowork
