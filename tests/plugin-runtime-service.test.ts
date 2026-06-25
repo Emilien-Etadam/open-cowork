@@ -56,7 +56,11 @@ function createPluginFixture(root: string, pluginName: string): string {
   );
 
   fs.mkdirSync(path.join(pluginRoot, 'commands'), { recursive: true });
-  fs.writeFileSync(path.join(pluginRoot, 'commands', 'do.md'), '# do', 'utf8');
+  fs.writeFileSync(
+    path.join(pluginRoot, 'commands', 'do.md'),
+    '---\ndescription: Do something\n---\n# do',
+    'utf8'
+  );
 
   fs.mkdirSync(path.join(pluginRoot, 'agents'), { recursive: true });
   fs.writeFileSync(path.join(pluginRoot, 'agents', 'reviewer.md'), '# reviewer', 'utf8');
@@ -158,5 +162,24 @@ describe('PluginRuntimeService', () => {
     expect(fs.existsSync(installResult.plugin.sourcePath)).toBe(false);
     expect(fs.existsSync(installResult.plugin.runtimePath)).toBe(false);
     expect(service.listInstalled()).toEqual([]);
+  });
+
+  it('lists available plugin slash commands from enabled runtime plugins', async () => {
+    const fixturesRoot = path.join(testRoot, 'fixtures');
+    const pluginRoot = createPluginFixture(fixturesRoot, 'slash-plugin');
+    const service = await createRuntimeService();
+
+    const installResult = await service.installFromDirectory(pluginRoot);
+    const commands = service.listAvailableCommands();
+
+    expect(commands).toEqual([
+      {
+        pluginId: installResult.plugin.pluginId,
+        pluginName: 'slash-plugin',
+        name: 'do',
+        command: '/do',
+        description: 'Do something',
+      },
+    ]);
   });
 });

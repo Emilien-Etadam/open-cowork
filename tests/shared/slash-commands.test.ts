@@ -1,14 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  BUILTIN_SLASH_COMMAND_DEFINITIONS,
   filterSlashCommands,
   getSlashCommandQuery,
   hasExactSlashCommandQuery,
   isCompactSlashCommand,
   isHandoffSlashCommand,
+  isPluginSlashCommand,
   parseSlashCommand,
   SLASH_COMMAND_DEFINITIONS,
 } from '../../src/shared/slash-commands';
+import type { PluginSlashCommandInfo } from '../../src/shared/plugin-slash-commands';
+
+const PLUGIN_COMMANDS: PluginSlashCommandInfo[] = [
+  {
+    pluginId: 'demo',
+    pluginName: 'Demo Plugin',
+    name: 'deploy',
+    command: '/deploy',
+    description: 'Deploy the app',
+  },
+];
 
 describe('slash command suggestions', () => {
   it('returns null when not in slash command context', () => {
@@ -24,11 +37,18 @@ describe('slash command suggestions', () => {
   });
 
   it('filters command definitions by prefix', () => {
-    expect(filterSlashCommands('')).toEqual([...SLASH_COMMAND_DEFINITIONS]);
+    expect(filterSlashCommands('')).toEqual([...BUILTIN_SLASH_COMMAND_DEFINITIONS]);
     expect(filterSlashCommands('com').map((item) => item.id)).toEqual(['compact']);
     expect(filterSlashCommands('hand').map((item) => item.id)).toEqual(['handoff']);
     expect(filterSlashCommands('handsof').map((item) => item.id)).toEqual(['handoff']);
     expect(filterSlashCommands('xyz')).toEqual([]);
+  });
+
+  it('includes plugin commands in suggestions', () => {
+    expect(filterSlashCommands('dep', PLUGIN_COMMANDS).map((item) => item.command)).toEqual([
+      '/deploy',
+    ]);
+    expect(hasExactSlashCommandQuery('deploy', PLUGIN_COMMANDS)).toBe(true);
   });
 
   it('detects exact command queries including aliases', () => {
@@ -95,5 +115,15 @@ describe('parseSlashCommand', () => {
   it('exposes handoff predicate', () => {
     expect(isHandoffSlashCommand('/handoff')).toBe(true);
     expect(isHandoffSlashCommand('not a command')).toBe(false);
+  });
+
+  it('detects plugin slash commands', () => {
+    expect(parseSlashCommand('/deploy staging', PLUGIN_COMMANDS)).toEqual({
+      kind: 'plugin',
+      command: '/deploy',
+      instructions: 'staging',
+    });
+    expect(isPluginSlashCommand('/deploy', PLUGIN_COMMANDS)).toBe(true);
+    expect(parseSlashCommand('/unknown', PLUGIN_COMMANDS)).toEqual({ kind: 'message' });
   });
 });

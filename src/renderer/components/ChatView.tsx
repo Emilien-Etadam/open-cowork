@@ -14,6 +14,7 @@ import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
+import type { PluginSlashCommandInfo } from '../../shared/plugin-slash-commands';
 import {
   parseSlashCommand,
   filterSlashCommands,
@@ -62,6 +63,7 @@ export function ChatView() {
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
   const [slashHighlightIndex, setSlashHighlightIndex] = useState(0);
+  const [pluginSlashCommands, setPluginSlashCommands] = useState<PluginSlashCommandInfo[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -87,8 +89,8 @@ export function ChatView() {
   }, [prompt, pastedImages.length, attachedFiles.length]);
 
   const slashSuggestions = useMemo(
-    () => (slashQuery === null ? [] : filterSlashCommands(slashQuery)),
-    [slashQuery]
+    () => (slashQuery === null ? [] : filterSlashCommands(slashQuery, pluginSlashCommands)),
+    [slashQuery, pluginSlashCommands]
   );
 
   const showSlashMenu = !slashMenuDismissed && slashQuery !== null && slashSuggestions.length > 0;
@@ -109,6 +111,42 @@ export function ChatView() {
   useEffect(() => {
     setSlashHighlightIndex(0);
   }, [slashQuery, slashSuggestions.length]);
+
+  const refreshPluginSlashCommands = useCallback(async () => {
+    if (!isElectron || !window.electronAPI?.plugins?.listCommands) {
+      setPluginSlashCommands([]);
+      return;
+    }
+
+    try {
+      const commands = await window.electronAPI.plugins.listCommands();
+      setPluginSlashCommands(commands);
+    } catch {
+      setPluginSlashCommands([]);
+    }
+  }, [isElectron]);
+
+  useEffect(() => {
+    void refreshPluginSlashCommands();
+  }, [refreshPluginSlashCommands]);
+
+  useEffect(() => {
+    if (!isElectron || !window.electronAPI?.on) {
+      return;
+    }
+
+    const cleanup = window.electronAPI.on((event) => {
+      if (
+        event.type === 'plugins.runtimeApplied' ||
+        event.type === 'plugins.commandsChanged' ||
+        event.type === 'config.status'
+      ) {
+        void refreshPluginSlashCommands();
+      }
+    });
+
+    return cleanup;
+  }, [isElectron, refreshPluginSlashCommands]);
 
   const displayedMessages = useMemo(() => {
     if (!activeSessionId) return messages;
@@ -626,7 +664,7 @@ export function ChatView() {
         attachedFiles.length === 0 &&
         currentPrompt.trim();
       if (textOnly) {
-        const command = parseSlashCommand(textOnly);
+        const command = parseSlashCommand(textOnly, pluginSlashCommands);
         if (command.kind === 'compact') {
           await compactSession(activeSessionId, command.instructions);
           setPrompt('');
@@ -940,7 +978,7 @@ export function ChatView() {
                     if (
                       showSlashMenu &&
                       slashQuery !== null &&
-                      !hasExactSlashCommandQuery(slashQuery)
+                      !hasExactSlashCommandQuery(slashQuery, pluginSlashCommands)
                     ) {
                       e.preventDefault();
                       const selected = slashSuggestions[slashHighlightIndex];

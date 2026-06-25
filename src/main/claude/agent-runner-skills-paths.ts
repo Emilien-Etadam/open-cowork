@@ -7,6 +7,7 @@ import { log, logWarn } from '../utils/logger';
 import type { PluginRuntimeService } from '../skills/plugin-runtime-service';
 import type { SkillsAdapter } from '../skills/skills-adapter';
 import { getBundledNodePaths, resolveBundledPythonBinDir } from './agent-runner-path-env';
+import { discoverPluginPromptTemplatePaths } from '../skills/plugin-command-catalog';
 
 export interface AgentRunnerSkillsPathsContext {
   skillsAdapter?: SkillsAdapter;
@@ -95,6 +96,43 @@ ${hints.join('\n')}
         type: 'plugins.runtimeApplied',
         payload: { sessionId, plugins: appliedPlugins },
       });
+    }
+
+    return Array.from(mergedPaths);
+  }
+
+  async resolvePluginPromptTemplatePaths(): Promise<string[]> {
+    const mergedPaths = new Set<string>();
+
+    if (!this.ctx.pluginRuntimeService) {
+      return [];
+    }
+
+    try {
+      const runtimePlugins = await this.ctx.pluginRuntimeService.getEnabledRuntimePlugins();
+      for (const plugin of runtimePlugins) {
+        if (!plugin.componentsEnabled.commands || plugin.componentCounts.commands <= 0) {
+          continue;
+        }
+
+        const manifestPath = path.join(plugin.sourcePath, '.claude-plugin', 'plugin.json');
+        let manifest: { commands?: string | string[] } | null = null;
+        if (fs.existsSync(manifestPath)) {
+          try {
+            manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+              commands?: string | string[];
+            };
+          } catch {
+            manifest = null;
+          }
+        }
+
+        for (const commandPath of discoverPluginPromptTemplatePaths(plugin.runtimePath, manifest)) {
+          mergedPaths.add(commandPath);
+        }
+      }
+    } catch (error) {
+      logWarn('[ClaudeAgentRunner] Failed to resolve runtime plugin command paths:', error);
     }
 
     return Array.from(mergedPaths);

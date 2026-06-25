@@ -30,7 +30,7 @@ export function SlashCommandMenu({
         {suggestions.map((suggestion, index) => {
           const isHighlighted = index === highlightedIndex;
           return (
-            <li key={suggestion.id}>
+            <li key={suggestion.kind === 'builtin' ? suggestion.id : suggestion.id}>
               <button
                 type="button"
                 role="option"
@@ -50,7 +50,9 @@ export function SlashCommandMenu({
                     {suggestion.command}
                   </span>
                   <span className="block text-xs text-text-muted mt-0.5">
-                    {t(suggestion.descriptionKey)}
+                    {suggestion.kind === 'builtin'
+                      ? t(suggestion.descriptionKey)
+                      : suggestion.description || suggestion.pluginName}
                   </span>
                 </span>
               </button>

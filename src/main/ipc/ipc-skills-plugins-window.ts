@@ -6,6 +6,7 @@ import { configStore } from '../config/config-store';
 import { logError } from '../utils/logger';
 import { mainAppState } from '../main-app-state';
 import { sendToRenderer } from '../main-renderer-bridge';
+import { notifyPluginCommandsChanged } from './plugin-commands-notify';
 
 export function registerSkillsPluginsWindowIpc(): void {
   ipcMain.handle('skills.getAll', async () => {
@@ -129,6 +130,18 @@ export function registerSkillsPluginsWindowIpc(): void {
     }
   });
 
+  ipcMain.handle('plugins.listCommands', async () => {
+    try {
+      if (!mainAppState.pluginRuntimeService) {
+        throw new Error('PluginRuntimeService not initialized');
+      }
+      return mainAppState.pluginRuntimeService.listAvailableCommands();
+    } catch (error) {
+      logError('[Plugins] Error listing plugin commands:', error);
+      throw error;
+    }
+  });
+
   ipcMain.handle('plugins.setEnabled', async (_event, pluginId: string, enabled: boolean) => {
     try {
       if (!mainAppState.pluginRuntimeService) {
@@ -136,6 +149,7 @@ export function registerSkillsPluginsWindowIpc(): void {
       }
       const result = await mainAppState.pluginRuntimeService.setEnabled(pluginId, enabled);
       mainAppState.sessionManager?.invalidateSkillsSetup();
+      notifyPluginCommandsChanged();
       return result;
     } catch (error) {
       logError('[Plugins] Error toggling plugin:', error);
@@ -160,8 +174,11 @@ export function registerSkillsPluginsWindowIpc(): void {
           component,
           enabled
         );
-        if (component === 'skills') {
+        if (component === 'skills' || component === 'commands') {
           mainAppState.sessionManager?.invalidateSkillsSetup();
+        }
+        if (component === 'commands') {
+          notifyPluginCommandsChanged();
         }
         return result;
       } catch (error) {
@@ -178,6 +195,7 @@ export function registerSkillsPluginsWindowIpc(): void {
       }
       const result = await mainAppState.pluginRuntimeService.uninstall(pluginId);
       mainAppState.sessionManager?.invalidateSkillsSetup();
+      notifyPluginCommandsChanged();
       return result;
     } catch (error) {
       logError('[Plugins] Error uninstalling plugin:', error);

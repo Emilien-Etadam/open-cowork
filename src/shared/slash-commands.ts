@@ -1,24 +1,42 @@
-export type SlashCommandId = 'compact' | 'handoff';
+import type { PluginSlashCommandInfo } from './plugin-slash-commands';
+
+export type BuiltinSlashCommandId = 'compact' | 'handoff';
 
 export type ParsedSlashCommand =
   | { kind: 'compact'; instructions?: string }
   | { kind: 'handoff'; instructions?: string }
+  | { kind: 'plugin'; command: string; instructions?: string }
   | { kind: 'message' };
 
-export interface SlashCommandDefinition {
-  id: SlashCommandId;
-  command: `/${SlashCommandId}`;
+export interface BuiltinSlashCommandDefinition {
+  kind: 'builtin';
+  id: BuiltinSlashCommandId;
+  command: `/${BuiltinSlashCommandId}`;
   aliases?: readonly string[];
-  descriptionKey: `chat.slashCommands.${SlashCommandId}.description`;
+  descriptionKey: `chat.slashCommands.${BuiltinSlashCommandId}.description`;
 }
 
-export const SLASH_COMMAND_DEFINITIONS: readonly SlashCommandDefinition[] = [
+export interface PluginSlashCommandDefinition {
+  kind: 'plugin';
+  id: string;
+  command: string;
+  name: string;
+  description: string;
+  pluginId: string;
+  pluginName: string;
+}
+
+export type SlashCommandDefinition = BuiltinSlashCommandDefinition | PluginSlashCommandDefinition;
+
+export const BUILTIN_SLASH_COMMAND_DEFINITIONS: readonly BuiltinSlashCommandDefinition[] = [
   {
+    kind: 'builtin',
     id: 'compact',
     command: '/compact',
     descriptionKey: 'chat.slashCommands.compact.description',
   },
   {
+    kind: 'builtin',
     id: 'handoff',
     command: '/handoff',
     aliases: ['handsoff'],
@@ -26,12 +44,48 @@ export const SLASH_COMMAND_DEFINITIONS: readonly SlashCommandDefinition[] = [
   },
 ] as const;
 
+/** @deprecated Use BUILTIN_SLASH_COMMAND_DEFINITIONS */
+export const SLASH_COMMAND_DEFINITIONS = BUILTIN_SLASH_COMMAND_DEFINITIONS;
+
 const COMPACT_COMMAND_RE = /^\/compact(?:\s+([\s\S]*))?$/i;
 const HANDOFF_COMMAND_RE = /^\/handoff(?:\s+([\s\S]*))?$/i;
 const HANDSOFF_COMMAND_RE = /^\/handsoff(?:\s+([\s\S]*))?$/i;
 
-function getSlashCommandNames(definition: SlashCommandDefinition): string[] {
+function getBuiltinCommandNames(definition: BuiltinSlashCommandDefinition): string[] {
   return [definition.command.slice(1), ...(definition.aliases ?? [])];
+}
+
+function getPluginCommandNames(definition: PluginSlashCommandDefinition): string[] {
+  return [definition.command.slice(1)];
+}
+
+export function pluginSlashCommandInfoToDefinition(
+  info: PluginSlashCommandInfo
+): PluginSlashCommandDefinition {
+  return {
+    kind: 'plugin',
+    id: `${info.pluginId}:${info.name}`,
+    command: info.command,
+    name: info.name,
+    description: info.description,
+    pluginId: info.pluginId,
+    pluginName: info.pluginName,
+  };
+}
+
+export function buildPluginSlashCommandDefinitions(
+  pluginCommands: readonly PluginSlashCommandInfo[]
+): PluginSlashCommandDefinition[] {
+  return pluginCommands.map(pluginSlashCommandInfoToDefinition);
+}
+
+export function mergeSlashCommands(
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): SlashCommandDefinition[] {
+  return [
+    ...BUILTIN_SLASH_COMMAND_DEFINITIONS,
+    ...buildPluginSlashCommandDefinitions(pluginCommands),
+  ];
 }
 
 export function getSlashCommandQuery(input: string): string | null {
@@ -47,23 +101,67 @@ export function getSlashCommandQuery(input: string): string | null {
   return firstLine.slice(1).toLowerCase();
 }
 
-export function filterSlashCommands(query: string): SlashCommandDefinition[] {
+export function filterSlashCommands(
+  query: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): SlashCommandDefinition[] {
+  const definitions = mergeSlashCommands(pluginCommands);
   if (!query) {
-    return [...SLASH_COMMAND_DEFINITIONS];
+    return [...definitions];
   }
 
-  return SLASH_COMMAND_DEFINITIONS.filter((definition) =>
-    getSlashCommandNames(definition).some((name) => name.toLowerCase().startsWith(query))
-  );
+  return definitions.filter((definition) => {
+    const names =
+      definition.kind === 'builtin'
+        ? getBuiltinCommandNames(definition)
+        : getPluginCommandNames(definition);
+    return names.some((name) => name.toLowerCase().startsWith(query));
+  });
 }
 
-export function hasExactSlashCommandQuery(query: string): boolean {
-  return SLASH_COMMAND_DEFINITIONS.some((definition) =>
-    getSlashCommandNames(definition).some((name) => name.toLowerCase() === query)
-  );
+export function hasExactSlashCommandQuery(
+  query: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): boolean {
+  const definitions = mergeSlashCommands(pluginCommands);
+  return definitions.some((definition) => {
+    const names =
+      definition.kind === 'builtin'
+        ? getBuiltinCommandNames(definition)
+        : getPluginCommandNames(definition);
+    return names.some((name) => name.toLowerCase() === query);
+  });
 }
 
-export function parseSlashCommand(input: string): ParsedSlashCommand {
+function matchPluginSlashCommand(
+  trimmed: string,
+  pluginCommands: readonly PluginSlashCommandInfo[]
+): ParsedSlashCommand | null {
+  const definitions = buildPluginSlashCommandDefinitions(pluginCommands);
+  const sorted = [...definitions].sort((a, b) => b.command.length - a.command.length);
+
+  for (const definition of sorted) {
+    const escaped = definition.command.slice(1).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const match = trimmed.match(
+      new RegExp(`^${definition.command[0]}${escaped}(?:\\s+([\\s\\S]*))?$`, 'i')
+    );
+    if (match) {
+      const instructions = match[1]?.trim();
+      return {
+        kind: 'plugin',
+        command: definition.command,
+        instructions: instructions || undefined,
+      };
+    }
+  }
+
+  return null;
+}
+
+export function parseSlashCommand(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): ParsedSlashCommand {
   const trimmed = input.trim();
   if (!trimmed.startsWith('/')) {
     return { kind: 'message' };
@@ -87,13 +185,31 @@ export function parseSlashCommand(input: string): ParsedSlashCommand {
     return { kind: 'handoff', instructions: instructions || undefined };
   }
 
+  const pluginMatch = matchPluginSlashCommand(trimmed, pluginCommands);
+  if (pluginMatch) {
+    return pluginMatch;
+  }
+
   return { kind: 'message' };
 }
 
-export function isCompactSlashCommand(input: string): boolean {
-  return parseSlashCommand(input).kind === 'compact';
+export function isCompactSlashCommand(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): boolean {
+  return parseSlashCommand(input, pluginCommands).kind === 'compact';
 }
 
-export function isHandoffSlashCommand(input: string): boolean {
-  return parseSlashCommand(input).kind === 'handoff';
+export function isHandoffSlashCommand(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): boolean {
+  return parseSlashCommand(input, pluginCommands).kind === 'handoff';
+}
+
+export function isPluginSlashCommand(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): boolean {
+  return parseSlashCommand(input, pluginCommands).kind === 'plugin';
 }
