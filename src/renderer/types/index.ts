@@ -559,6 +559,7 @@ export type ServerEvent =
       payload: { sessionId: string; plugins: Array<{ name: string; path: string }> };
     }
   | { type: 'plugins.commandsChanged'; payload: Record<string, never> }
+  | { type: 'update.checkResult'; payload: import('../../shared/update-check').UpdateCheckResult }
   | { type: 'workdir.changed'; payload: { path: string } }
   | {
       type: 'session.contextInfo';

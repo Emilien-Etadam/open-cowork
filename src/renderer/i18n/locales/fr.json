@@ -83,14 +83,16 @@
     "themePresetVscode": "VS Code",
     "language": "Langue",
     "updates": "Mises à jour",
-    "checkForUpdates": "Vérifier les mises à jour",
-    "checkingForUpdates": "Vérification…",
-    "updateAvailable": "La version {{version}} est disponible et s'installera au redémarrage.",
-    "updateDownloaded": "Version {{version}} téléchargée. Redémarrez pour installer.",
-    "updateNotAvailable": "Vous êtes à jour (v{{version}}).",
-    "updateUnavailable": "La mise à jour auto n'est disponible que sur l'installeur Windows.",
-    "updateError": "Échec de la vérification : {{message}}",
-    "restartToUpdate": "Redémarrer maintenant"
+    "updateCurrentVersion": "Version actuelle : {{version}}",
+    "updateCheck": "Vérifier les mises à jour",
+    "updateChecking": "Vérification des mises à jour...",
+    "updateUpToDate": "Vous avez la dernière version ({{version}})",
+    "updateAvailable": "Mise à jour disponible : {{version}}",
+    "updateDownloaded": "Mise à jour téléchargée. Redémarrez pour installer {{version}}.",
+    "updateRestartInstall": "Redémarrer et installer",
+    "updateOpenReleases": "Ouvrir la page des releases",
+    "updateError": "Échec de la vérification : {{error}}",
+    "updateWindowsOnly": "L'installation automatique est disponible uniquement sur Windows. Téléchargez le dernier installateur sur GitHub."
   },
   "memory": {
     "title": "Mémoire",
@@ -699,6 +701,7 @@
     },
     "slashCommands": {
       "menuLabel": "Commandes",
+      "unknownCommand": "Commande slash inconnue : {{command}}",
       "compact": {
         "description": "Compacter le contexte dans la session courante"
       },

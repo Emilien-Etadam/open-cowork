@@ -128,7 +128,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // App info
   getVersion: () => ipcRenderer.invoke('get-version'),
   checkForUpdates: () => ipcRenderer.invoke('app.checkForUpdates'),
-  quitAndInstallUpdate: () => ipcRenderer.invoke('app.quitAndInstallUpdate'),
+  installUpdate: () => ipcRenderer.invoke('app.installUpdate'),
+  isUpdateCheckSupported: () => ipcRenderer.invoke('app.isUpdateCheckSupported'),
+  openReleasesPage: () => ipcRenderer.invoke('app.openReleasesPage'),
 
   // Open links in default browser
   openExternal: (url: string) => {
@@ -465,13 +467,10 @@ declare global {
       platform: NodeJS.Platform;
       getSystemTheme: () => Promise<{ shouldUseDarkColors: boolean }>;
       getVersion: () => Promise<string>;
-      checkForUpdates: () => Promise<{
-        status: 'unavailable' | 'available' | 'not-available' | 'downloaded' | 'error';
-        currentVersion: string;
-        latestVersion?: string;
-        message?: string;
-      }>;
-      quitAndInstallUpdate: () => Promise<boolean>;
+      checkForUpdates: () => Promise<import('../shared/update-check').UpdateCheckResult>;
+      installUpdate: () => Promise<{ success: boolean; error?: string }>;
+      isUpdateCheckSupported: () => Promise<boolean>;
+      openReleasesPage: () => Promise<{ success: boolean }>;
       openExternal: (url: string) => Promise<boolean>;
       showItemInFolder: (filePath: string, cwd?: string) => Promise<boolean>;
       selectFiles: () => Promise<string[]>;

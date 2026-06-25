@@ -83,14 +83,16 @@
     "themePresetVscode": "VS Code",
     "language": "Language",
     "updates": "Updates",
-    "checkForUpdates": "Check for updates",
-    "checkingForUpdates": "Checking…",
-    "updateAvailable": "Version {{version}} is available and will install on restart.",
-    "updateDownloaded": "Version {{version}} downloaded. Restart to install.",
-    "updateNotAvailable": "You are up to date (v{{version}}).",
-    "updateUnavailable": "Auto-update is only available on the Windows installer.",
-    "updateError": "Update check failed: {{message}}",
-    "restartToUpdate": "Restart now"
+    "updateCurrentVersion": "Current version: {{version}}",
+    "updateCheck": "Check for updates",
+    "updateChecking": "Checking for updates...",
+    "updateUpToDate": "You're on the latest version ({{version}})",
+    "updateAvailable": "Update available: {{version}}",
+    "updateDownloaded": "Update downloaded. Restart to install {{version}}.",
+    "updateRestartInstall": "Restart and install",
+    "updateOpenReleases": "Open releases page",
+    "updateError": "Update check failed: {{error}}",
+    "updateWindowsOnly": "Automatic install is available on Windows builds only. Download the latest installer from GitHub."
   },
   "memory": {
     "title": "Memory",
@@ -699,6 +701,7 @@
     },
     "slashCommands": {
       "menuLabel": "Commands",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Compact context in the current session"
       },

@@ -139,6 +139,7 @@ interface AppState {
   setPartialThinking: (sessionId: string, delta: string) => void;
   clearPartialThinking: (sessionId: string) => void;
   activateNextTurn: (sessionId: string, stepId: string) => void;
+  startActiveTurn: (sessionId: string, stepId: string, userMessageId: string) => void;
   updateActiveTurnStep: (sessionId: string, stepId: string) => void;
   clearActiveTurn: (sessionId: string, stepId?: string) => void;
   clearPendingTurns: (sessionId: string) => void;
@@ -435,6 +436,22 @@ export const useAppStore = create<AppState>((set) => ({
           messages: updatedMessages,
           pendingTurns: rest,
           activeTurn: { stepId, userMessageId: nextMessageId },
+        }),
+      };
+    }),
+
+  startActiveTurn: (sessionId, stepId, userMessageId) =>
+    set((state) => {
+      const ss = getSession(state.sessionStates, sessionId);
+      const updatedMessages = ss.messages.map((message) =>
+        message.id === userMessageId ? { ...message, localStatus: undefined } : message
+      );
+
+      return {
+        sessionStates: patchSession(state.sessionStates, sessionId, {
+          messages: updatedMessages,
+          pendingTurns: ss.pendingTurns.filter((id) => id !== userMessageId),
+          activeTurn: { stepId, userMessageId },
         }),
       };
     }),
