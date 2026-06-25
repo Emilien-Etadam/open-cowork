@@ -8,6 +8,7 @@ import * as http from 'http';
 import * as os from 'os';
 import * as path from 'path';
 import { URL } from 'url';
+import { app } from 'electron';
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { PermissionResult, ServerEvent } from '../../renderer/types';
 import { log, logError } from '../utils/logger';
@@ -92,18 +93,49 @@ function broadcastSse(event: ServerEvent): void {
   }
 }
 
+/** Candidate paths for the LAN chat static UI (dev + packaged). */
+export function getChatLanUiPathCandidates(options?: {
+  isPackaged?: boolean;
+  resourcesPath?: string;
+  appPath?: string;
+  cwd?: string;
+  moduleDir?: string;
+}): string[] {
+  const isPackaged = options?.isPackaged ?? app.isPackaged;
+  const resourcesPath = options?.resourcesPath ?? process.resourcesPath;
+  const appPath = options?.appPath ?? app.getAppPath();
+  const cwd = options?.cwd ?? process.cwd();
+  const moduleDir = options?.moduleDir ?? __dirname;
+
+  const candidates: string[] = [];
+
+  if (isPackaged && resourcesPath) {
+    candidates.push(path.join(resourcesPath, 'chat-lan', 'index.html'));
+  }
+
+  if (isPackaged) {
+    candidates.push(path.join(appPath, 'resources', 'chat-lan', 'index.html'));
+  }
+
+  candidates.push(
+    path.join(cwd, 'resources', 'chat-lan', 'index.html'),
+    path.join(moduleDir, '../../../resources/chat-lan/index.html'),
+    path.join(moduleDir, '../../../../resources/chat-lan/index.html')
+  );
+
+  return candidates;
+}
+
 function resolveChatLanUiPath(): string {
-  const candidates = [
-    path.join(process.cwd(), 'resources/chat-lan/index.html'),
-    path.join(__dirname, '../../../resources/chat-lan/index.html'),
-    path.join(__dirname, '../../../../resources/chat-lan/index.html'),
-  ];
-  for (const candidate of candidates) {
+  for (const candidate of getChatLanUiPathCandidates()) {
     if (fs.existsSync(candidate)) {
+      log(`[ChatLan] UI path: ${candidate}`);
       return candidate;
     }
   }
-  throw new Error('Chat LAN UI file not found');
+  throw new Error(
+    `Chat LAN UI file not found (tried: ${getChatLanUiPathCandidates().join(', ')})`
+  );
 }
 
 function serveChatUi(res: ServerResponse): void {

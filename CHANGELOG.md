@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.94] - 2026-06-25
+
+### Fixed
+
+- **Chat LAN** : UI `index.html` introuvable en build packagé — copie via `extraResources` + résolution `process.resourcesPath`
+
 ## [3.3.1-EE4.93] - 2026-06-25
 
 ### Fixed

@@ -23,7 +23,8 @@
 
 ### EE fork (`3.3.1-EE1` → `3.3.1-EE4.93`)
 
-- **EE4.93** (release) : fix UI mises à jour Windows — téléchargement auto + bouton installer (plus de faux message « Windows uniquement »)
+- **EE4.94** (release) : fix Chat LAN « UI missing » — `resources/chat-lan` dans extraResources Windows/macOS/Linux
+- **EE4.93** (release) : fix UI mises à jour Windows — téléchargement auto + bouton installer
 - **EE4.92** (release publiée, Latest) :
   - **Chat LAN** : serveur web local, UI `resources/chat-lan/`, onglet Paramètres (#44)
   - **Config API** : deux fournisseurs (OpenAI-compatible + Anthropic-compatible), migration auto (#42)
@@ -63,7 +64,8 @@
 
 | Tag              | Date       | Highlights                                                                 |
 | ---------------- | ---------- | -------------------------------------------------------------------------- |
-| `v3.3.1-EE4.93`  | 2026-06-25 | **Latest** — fix auto-update Windows (download + bouton installer)         |
+| `v3.3.1-EE4.94`  | 2026-06-25 | **Latest** — fix Chat LAN UI missing (extraResources)                       |
+| `v3.3.1-EE4.93`  | 2026-06-25 | Fix auto-update Windows (download + bouton installer)                       |
 | `v3.3.1-EE4.92`  | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                       |
 | `v3.3.1-EE4.91`  | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API              |
 | `v3.3.1-EE4.9`   | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                         |
@@ -78,7 +80,7 @@
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)            |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration     |
 
-Current stable fork baseline: **`3.3.1-EE4.93`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.93) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`3.3.1-EE4.94`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.94) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 

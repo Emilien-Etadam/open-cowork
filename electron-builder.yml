@@ -84,6 +84,8 @@ win:
       to: skills
     - from: catalog
       to: catalog
+    - from: resources/chat-lan
+      to: chat-lan
 
 mac:
   icon: resources/icon.icns
@@ -124,6 +126,8 @@ mac:
       to: skills
     - from: catalog
       to: catalog
+    - from: resources/chat-lan
+      to: chat-lan
 
 linux:
   icon: resources/icon.png
@@ -149,6 +153,8 @@ linux:
       to: skills
     - from: catalog
       to: catalog
+    - from: resources/chat-lan
+      to: chat-lan
 
 nsis:
   oneClick: false
