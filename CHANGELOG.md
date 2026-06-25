@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.91] - 2026-06-25
+
+### Fixed
+
+- **Vérification des mises à jour** : chargement `electron-updater` corrigé (`autoUpdater` undefined en import ESM) + repli API GitHub
+
 ## [3.3.1-EE4.9] - 2026-06-25
 
 ### Added
