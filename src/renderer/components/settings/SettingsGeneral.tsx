@@ -12,6 +12,13 @@ export function SettingsGeneral() {
   const baseLang = i18n.language.split('-')[0];
   const currentLang = baseLang === 'nb' || baseLang === 'nn' ? 'no' : baseLang;
   const [appVer, setAppVer] = useState('');
+  const [updateStatus, setUpdateStatus] = useState<string | null>(null);
+  const [updateChecking, setUpdateChecking] = useState(false);
+  const [updateReady, setUpdateReady] = useState(false);
+  const isWindowsDesktop =
+    typeof window !== 'undefined' &&
+    window.electronAPI?.platform === 'win32' &&
+    !!window.electronAPI?.getVersion;
   useEffect(() => {
     try {
       const v = window.electronAPI?.getVersion?.();
@@ -21,6 +28,56 @@ export function SettingsGeneral() {
       /* ignore */
     }
   }, []);
+
+  const handleCheckForUpdates = async () => {
+    if (!window.electronAPI?.checkForUpdates) {
+      setUpdateStatus(t('general.updateUnavailable'));
+      return;
+    }
+
+    setUpdateChecking(true);
+    setUpdateStatus(t('general.checkingForUpdates'));
+    setUpdateReady(false);
+
+    try {
+      const result = await window.electronAPI.checkForUpdates();
+      switch (result.status) {
+        case 'downloaded':
+          setUpdateReady(true);
+          setUpdateStatus(
+            t('general.updateDownloaded', { version: result.latestVersion ?? '?' })
+          );
+          break;
+        case 'available':
+          setUpdateStatus(
+            t('general.updateAvailable', { version: result.latestVersion ?? '?' })
+          );
+          break;
+        case 'not-available':
+          setUpdateStatus(
+            t('general.updateNotAvailable', { version: result.latestVersion ?? result.currentVersion })
+          );
+          break;
+        case 'unavailable':
+          setUpdateStatus(t('general.updateUnavailable'));
+          break;
+        case 'error':
+        default:
+          setUpdateStatus(
+            t('general.updateError', { message: result.message ?? 'Unknown error' })
+          );
+          break;
+      }
+    } catch {
+      setUpdateStatus(t('general.updateError', { message: 'Unknown error' }));
+    } finally {
+      setUpdateChecking(false);
+    }
+  };
+
+  const handleRestartToUpdate = async () => {
+    await window.electronAPI?.quitAndInstallUpdate?.();
+  };
 
   const languages = [
     { code: 'en', nativeName: 'English' },
@@ -110,10 +167,35 @@ export function SettingsGeneral() {
         </div>
       </div>
 
-      {/* About */}
+      {/* About & updates */}
       {appVer && (
-        <div className="pt-4 border-t border-border">
+        <div className="pt-4 border-t border-border space-y-3">
           <p className="text-xs text-text-muted">Open Cowork v{appVer}</p>
+          {isWindowsDesktop && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium text-text-primary">{t('general.updates')}</h4>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => void handleCheckForUpdates()}
+                  disabled={updateChecking}
+                  className="px-3 py-1.5 rounded-lg border border-border bg-surface text-sm text-text-primary hover:border-accent/50 disabled:opacity-60"
+                >
+                  {updateChecking ? t('general.checkingForUpdates') : t('general.checkForUpdates')}
+                </button>
+                {updateReady && (
+                  <button
+                    type="button"
+                    onClick={() => void handleRestartToUpdate()}
+                    className="px-3 py-1.5 rounded-lg border border-accent bg-accent/10 text-sm text-text-primary hover:bg-accent/20"
+                  >
+                    {t('general.restartToUpdate')}
+                  </button>
+                )}
+              </div>
+              {updateStatus && <p className="text-xs text-text-secondary">{updateStatus}</p>}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
  */
 import { app, ipcMain, dialog, shell, nativeTheme } from 'electron';
 import { isAbsolute } from 'path';
+import { checkForAppUpdates, quitAndInstallUpdate } from '../auto-updater';
 import { logError, logWarn } from '../utils/logger';
 import { sendToRenderer } from '../main-renderer-bridge';
 import { handleClientEvent } from '../main-client-events';
@@ -33,6 +34,28 @@ export function registerClientShellIpc(): void {
     } catch (error) {
       logError('[IPC] Error getting version:', error);
       return 'unknown';
+    }
+  });
+
+  ipcMain.handle('app.checkForUpdates', async () => {
+    try {
+      return await checkForAppUpdates();
+    } catch (error) {
+      logError('[IPC] Error checking for updates:', error);
+      return {
+        status: 'error',
+        currentVersion: app.getVersion(),
+        message: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  });
+
+  ipcMain.handle('app.quitAndInstallUpdate', async () => {
+    try {
+      return await quitAndInstallUpdate();
+    } catch (error) {
+      logError('[IPC] Error installing update:', error);
+      return false;
     }
   });
 

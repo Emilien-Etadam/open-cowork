@@ -81,7 +81,16 @@
     "themePreset": "Style",
     "themePresetDefault": "Par défaut",
     "themePresetVscode": "VS Code",
-    "language": "Langue"
+    "language": "Langue",
+    "updates": "Mises à jour",
+    "checkForUpdates": "Vérifier les mises à jour",
+    "checkingForUpdates": "Vérification…",
+    "updateAvailable": "La version {{version}} est disponible et s'installera au redémarrage.",
+    "updateDownloaded": "Version {{version}} téléchargée. Redémarrez pour installer.",
+    "updateNotAvailable": "Vous êtes à jour (v{{version}}).",
+    "updateUnavailable": "La mise à jour auto n'est disponible que sur l'installeur Windows.",
+    "updateError": "Échec de la vérification : {{message}}",
+    "restartToUpdate": "Redémarrer maintenant"
   },
   "memory": {
     "title": "Mémoire",
