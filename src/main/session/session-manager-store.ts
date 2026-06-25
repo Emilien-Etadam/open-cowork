@@ -214,4 +214,8 @@ export class SessionManagerStore {
   clearMessageCache(sessionId: string): void {
     this.messageCache.delete(sessionId);
   }
+
+  replaceMessages(sessionId: string, messages: Message[]): void {
+    this.messageCache.set(sessionId, [...messages]);
+  }
 }

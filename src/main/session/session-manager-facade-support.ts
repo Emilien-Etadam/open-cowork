@@ -7,6 +7,7 @@ import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-e
 import type { SandboxAdapter } from '../sandbox/sandbox-adapter';
 import { log, logError } from '../utils/logger';
 import { compactSession, handoffSession } from './session-manager-compaction';
+import { forkSessionFromMessage, rewindSessionForEdit } from './session-manager-message-branch';
 import type { PromptQueues, SessionManagerAgentRunner } from './session-manager-queue';
 import {
   batchDeleteSessions,
@@ -92,6 +93,19 @@ export class SessionManagerFacadeSupport {
   }
   async handoffSession(sessionId: string, customInstructions?: string) {
     return handoffSession(this.deps, (id) => this.stopSession(id), sessionId, customInstructions);
+  }
+  async forkSessionFromMessage(sessionId: string, messageId: string) {
+    return forkSessionFromMessage(
+      this.deps,
+      (id) => this.stopSession(id),
+      (title, cwd, allowedTools, memoryEnabled) =>
+        this.createSession(title, cwd, allowedTools, memoryEnabled),
+      sessionId,
+      messageId
+    );
+  }
+  async rewindSessionForEdit(sessionId: string, messageId: string) {
+    return rewindSessionForEdit(this.deps, (id) => this.stopSession(id), sessionId, messageId);
   }
   stopSession(sessionId: string): void {
     stopSession(this.deps, sessionId, (id, status) => this.updateSessionStatus(id, status));

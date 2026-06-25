@@ -37,6 +37,8 @@ const ALLOWED_CLIENT_EVENTS: ReadonlySet<string> = new Set<ClientEvent['type']>(
   'session.continue',
   'session.compact',
   'session.handoff',
+  'session.forkFromMessage',
+  'session.rewindToMessage',
   'session.stop',
   'session.delete',
   'session.batchDelete',

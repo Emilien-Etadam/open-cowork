@@ -722,6 +722,17 @@
       "errHandoffNothingToSummarize": "Nothing to summarize yet — the conversation is still too short.",
       "errHandoffFailed": "Starting a new session from this conversation failed. Please try again."
     },
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    },
     "slashCommands": {
       "menuLabel": "Commands",
       "unknownCommand": "Unknown slash command: {{command}}",
@@ -774,6 +785,8 @@
     "emptyMessage": "Empty message",
     "emptyText": "(empty text)",
     "copyMessage": "Copy message",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt",
     "revealInFolder": "Reveal in folder",
     "pastedContentAlt": "Pasted content",
     "taskProgress": "Task Progress",

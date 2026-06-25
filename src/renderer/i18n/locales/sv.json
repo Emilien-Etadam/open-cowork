@@ -685,7 +685,18 @@
         "description": "Starta en ny session med en fortsättningssammanfattning"
       }
     },
-    "scrollToBottom": "Scrolla till botten"
+    "scrollToBottom": "Scrolla till botten",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Förlopp",
@@ -737,7 +748,9 @@
     "compactionTitle": "Kontext komprimerad",
     "compactionHandoffTitle": "Fortsättning från «{{sourceTitle}}»",
     "compactionMeta": "{{tokensBefore}} tokens sammanfattade",
-    "compactionInstructions": "Fokus: {{instructions}}"
+    "compactionInstructions": "Fokus: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Skapa schema",

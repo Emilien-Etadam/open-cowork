@@ -29,6 +29,7 @@ export interface DatabaseInstance {
     getBySessionId: (sessionId: string) => MessageRow[];
     delete: (id: string) => void;
     deleteBySessionId: (sessionId: string) => void;
+    deleteFromTimestamp: (sessionId: string, fromTimestamp: number) => void;
   };
 
   traceSteps: {
@@ -36,6 +37,7 @@ export interface DatabaseInstance {
     update: (id: string, updates: Partial<TraceStepRow>) => void;
     getBySessionId: (sessionId: string) => TraceStepRow[];
     deleteBySessionId: (sessionId: string) => void;
+    deleteFromTimestamp: (sessionId: string, fromTimestamp: number) => void;
   };
 
   scheduledTasks: {
@@ -474,6 +476,14 @@ export function initDatabase(): DatabaseInstance {
     DELETE FROM messages WHERE session_id = ?
   `);
 
+  const deleteMessagesFromTimestampStmt = rawDb.prepare(`
+    DELETE FROM messages WHERE session_id = ? AND timestamp >= ?
+  `);
+
+  const deleteTraceStepsFromTimestampStmt = rawDb.prepare(`
+    DELETE FROM trace_steps WHERE session_id = ? AND timestamp >= ?
+  `);
+
   const insertTraceStep = rawDb.prepare(`
     INSERT OR REPLACE INTO trace_steps (
       id, session_id, type, status, title, content, tool_name, tool_input, tool_output, is_error, timestamp, duration
@@ -601,6 +611,10 @@ export function initDatabase(): DatabaseInstance {
       deleteBySessionId: (sessionId: string) => {
         deleteMessagesBySessionStmt.run(sessionId);
       },
+
+      deleteFromTimestamp: (sessionId: string, fromTimestamp: number) => {
+        deleteMessagesFromTimestampStmt.run(sessionId, fromTimestamp);
+      },
     },
 
     traceSteps: {
@@ -646,6 +660,10 @@ export function initDatabase(): DatabaseInstance {
 
       deleteBySessionId: (sessionId: string) => {
         deleteTraceStepsBySessionStmt.run(sessionId);
+      },
+
+      deleteFromTimestamp: (sessionId: string, fromTimestamp: number) => {
+        deleteTraceStepsFromTimestampStmt.run(sessionId, fromTimestamp);
       },
     },
 

@@ -685,7 +685,18 @@
         "description": "创建包含续接摘要的新会话"
       }
     },
-    "scrollToBottom": "滚动到底部"
+    "scrollToBottom": "滚动到底部",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "进度",
@@ -737,7 +748,9 @@
     "compactionTitle": "上下文已压缩",
     "compactionHandoffTitle": "续接自「{{sourceTitle}}」",
     "compactionMeta": "已总结 {{tokensBefore}} 个 token",
-    "compactionInstructions": "重点：{{instructions}}"
+    "compactionInstructions": "重点：{{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "新建定时任务",

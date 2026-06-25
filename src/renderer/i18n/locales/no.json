@@ -685,7 +685,18 @@
         "description": "Start en ny økt med et fortsettelsessammendrag"
       }
     },
-    "scrollToBottom": "Rull til bunnen"
+    "scrollToBottom": "Rull til bunnen",
+    "forkSuccess": "New session created from this message.",
+    "forkErrors": {
+      "errForkSessionNotFound": "Session not found.",
+      "errForkMessageNotFound": "User message not found.",
+      "errForkFailed": "Could not fork from this message."
+    },
+    "rewindErrors": {
+      "errRewindSessionNotFound": "Session not found.",
+      "errRewindMessageNotFound": "User message not found.",
+      "errRewindFailed": "Could not edit this message."
+    }
   },
   "context": {
     "progress": "Fremdrift",
@@ -737,7 +748,9 @@
     "compactionTitle": "Kontekst komprimert",
     "compactionHandoffTitle": "Fortsettelse fra «{{sourceTitle}}»",
     "compactionMeta": "{{tokensBefore}} tokens oppsummert",
-    "compactionInstructions": "Fokus: {{instructions}}"
+    "compactionInstructions": "Fokus: {{instructions}}",
+    "forkFromMessage": "Fork from this message",
+    "editPrompt": "Edit prompt"
   },
   "schedule": {
     "createTitle": "Opprett tidsplan",
