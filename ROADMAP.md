@@ -15,7 +15,7 @@
 - **Rich Input**: File upload and image input in chat
 - **Multi-Model**: Claude, GPT, Gemini, DeepSeek, Qwen, GLM, Kimi, Grok, MiniMax, Ollama
 - **UI/UX**: Enhanced interface with English/Chinese localization
-- **Remote Control**: Feishu (Lark) bot integration with pairing mode + approval panel
+- **Remote Control**: ~~Feishu (Lark) bot integration~~ — **supprimé** en post-EE4.91 (#40, #41) ; remplacé par chat LAN (#44)
 - **CI/CD**: Automated builds, smoke tests, Codex-powered PR review bot
 - **Model Presets**: Up-to-date model catalogs for all major providers
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
