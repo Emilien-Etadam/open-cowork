@@ -92,7 +92,8 @@
     "updateRestartInstall": "Restart and install",
     "updateOpenReleases": "Open releases page",
     "updateError": "Update check failed: {{error}}",
-    "updateWindowsOnly": "Automatic install is available on Windows builds only. Download the latest installer from GitHub."
+    "updateManualDownload": "Download the latest installer from GitHub.",
+    "updateDownloading": "Downloading update…"
   },
   "memory": {
     "title": "Speicher",

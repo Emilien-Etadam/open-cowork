@@ -21,8 +21,9 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.92`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.93`)
 
+- **EE4.93** (release) : fix UI mises à jour Windows — téléchargement auto + bouton installer (plus de faux message « Windows uniquement »)
 - **EE4.92** (release publiée, Latest) :
   - **Chat LAN** : serveur web local, UI `resources/chat-lan/`, onglet Paramètres (#44)
   - **Config API** : deux fournisseurs (OpenAI-compatible + Anthropic-compatible), migration auto (#42)
@@ -62,7 +63,8 @@
 
 | Tag              | Date       | Highlights                                                                 |
 | ---------------- | ---------- | -------------------------------------------------------------------------- |
-| `v3.3.1-EE4.92`  | 2026-06-25 | **Latest** — chat LAN, 2 providers API, suppression remote/Feishu        |
+| `v3.3.1-EE4.93`  | 2026-06-25 | **Latest** — fix auto-update Windows (download + bouton installer)         |
+| `v3.3.1-EE4.92`  | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                       |
 | `v3.3.1-EE4.91`  | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API              |
 | `v3.3.1-EE4.9`   | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                         |
 | `v3.3.1-EE4.8`   | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft)   |
@@ -76,7 +78,7 @@
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)            |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration     |
 
-Current stable fork baseline: **`3.3.1-EE4.92`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.92) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`3.3.1-EE4.93`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.93) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 
@@ -114,5 +116,5 @@ Current stable fork baseline: **`3.3.1-EE4.92`** — [release](https://github.co
 
 ---
 
-_Last updated: 2026-06-25 (release EE4.92)_  
+_Last updated: 2026-06-25 (release EE4.93, fix auto-update Windows)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

@@ -92,7 +92,8 @@
     "updateRestartInstall": "Redémarrer et installer",
     "updateOpenReleases": "Ouvrir la page des releases",
     "updateError": "Échec de la vérification : {{error}}",
-    "updateWindowsOnly": "L'installation automatique est disponible uniquement sur Windows. Téléchargez le dernier installateur sur GitHub."
+    "updateManualDownload": "Téléchargez le dernier installateur sur GitHub.",
+    "updateDownloading": "Téléchargement de la mise à jour en cours…"
   },
   "chatLan": {
     "title": "Chat LAN",
