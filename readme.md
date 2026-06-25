@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
-  <img src="https://img.shields.io/badge/version-3.3.1--EE3-orange" alt="Version" />
+  <img src="https://img.shields.io/badge/version-3.3.1--EE4.6-orange" alt="Version" />
   <img src="https://img.shields.io/badge/status-alpha-yellow" alt="Status" />
 </p>
 
@@ -24,7 +24,7 @@
 
 ## C'est quoi ?
 
-**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), se connecte à des outils via **MCP**, isole les commandes dans un **sandbox** (WSL2 / Lima), et peut être pilotée à distance via **Feishu** ou **Slack**.
+**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), isole les commandes dans un **sandbox** (WSL2 / Lima), et peut être pilotée à distance via **Feishu** ou **Slack**.
 
 > [!NOTE]
 > Ce dépôt est un **fork personnel**. Les releases `EE*` sont des builds **alpha** expérimentales. Pour la version stable officielle, voir [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
@@ -34,10 +34,13 @@
 ## Ce que ce fork ajoute
 
 - **12 langues** — fr, en, zh, es, de, it, uk, pl, sv, no, nl, ro — avec localisation backend (erreurs, dialogues)
+- **Marketplace unifiée** — onglet Réglages → Extensions : skills, connecteurs MCP et plugins (catalogue curated, 21+ entrées)
+- **Commandes slash** — autocomplétion `/` dans le chat, dont les commandes des plugins installés
+- **Auto-update Windows** — mises à jour automatiques depuis les [releases GitHub](https://github.com/emilien-etadam/open-cowork/releases) du fork EE
 - **Thème VS Code** — alternative au thème Claude par défaut (Réglages → Apparence)
 - **Copier / coller** — menu contextuel et raccourcis natifs sur Windows
-- **Toggle sandbox** — activation/désactivation restaurée dans Réglages → Sandbox
-- **pi-coding-agent 0.73.1** — migration agent récente + correctifs de compaction du contexte
+- **Toggle sandbox** — activation/désactivation dans Réglages → Sandbox
+- **pi-coding-agent 0.73.1** — agent récent + correctifs de compaction du contexte
 
 ---
 
@@ -51,6 +54,8 @@ Téléchargez la dernière version sur la page [Releases](https://github.com/emi
 | --------------------- | ------- |
 | Windows               | `.exe`  |
 | macOS (Apple Silicon) | `.dmg`  |
+
+Sur **Windows**, l'app vérifie les mises à jour EE au démarrage et les installe à la fermeture.
 
 ### Depuis les sources
 
@@ -69,10 +74,11 @@ Pour construire un installeur local : `npm run build`
 
 1. Ouvrez l'app et allez dans **Réglages** (icône ⚙️ en bas à gauche).
 2. Collez votre **clé API** et configurez l'**URL de base** selon votre fournisseur (OpenRouter, Anthropic, GLM, MiniMax, Kimi…).
-3. Choisissez un **dossier workspace** — l'agent ne travaillera que dans ce répertoire.
-4. Envoyez un prompt, par exemple : _« Lis le fichier rapport.csv et crée un PowerPoint de synthèse en 5 slides. »_
+3. Installez des extensions dans **Réglages → Extensions** (MCP, skills, plugins).
+4. Choisissez un **dossier workspace** — l'agent ne travaillera que dans ce répertoire.
+5. Envoyez un prompt ou tapez `/` pour les commandes slash.
 
-Pour la documentation complète (fournisseurs API, configuration sandbox, skills, MCP), consultez le [README upstream](https://github.com/OpenCoworkAI/open-cowork/blob/main/readme.md).
+Pour plus de détails (sandbox, MCP, changelog), voir [`CHANGELOG.md`](CHANGELOG.md) et le [README upstream](https://github.com/OpenCoworkAI/open-cowork/blob/main/readme.md).
 
 ---
 
