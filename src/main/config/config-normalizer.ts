@@ -4,7 +4,13 @@
  * Normalization logic for persisted application configuration.
  */
 import { mt } from '../i18n';
-import { isOllamaLegacyCustomOpenAIConfig, normalizeOllamaBaseUrl } from './auth-utils';
+import { normalizeOllamaBaseUrl } from './auth-utils';
+import {
+  mergeLegacyProfiles,
+  migrateCustomProtocol,
+  migrateProfileKey,
+  migrateProviderType,
+} from './provider-migration';
 import {
   DEFAULT_CONFIG_SET_ID,
   PROFILE_KEYS,
@@ -57,7 +63,9 @@ export function normalizeProfile(
       ? profile.baseUrl.trim()
       : fallback.baseUrl;
   const baseUrl =
-    profileKey === 'ollama' ? normalizeOllamaBaseUrl(rawBaseUrl) || fallback.baseUrl : rawBaseUrl;
+    profileKey === 'openai' && rawBaseUrl
+      ? normalizeOllamaBaseUrl(rawBaseUrl) || rawBaseUrl
+      : rawBaseUrl;
   const result: ProviderProfile = {
     apiKey: typeof profile?.apiKey === 'string' ? profile.apiKey : '',
     baseUrl,
@@ -86,29 +94,8 @@ export function cloneProfiles(
  * Auto-fix model IDs that don't match pi-ai registry format.
  * Non-destructive: only applies known safe transformations at read time.
  */
-export function normalizeModelIds(config: AppConfig): void {
-  for (const key of ['gemini', 'custom:gemini'] as const) {
-    const profile = config.profiles?.[key];
-    if (profile?.model?.startsWith('gemini/')) {
-      profile.model = profile.model.slice('gemini/'.length);
-    }
-  }
-  const orProfile = config.profiles?.openrouter;
-  if (orProfile?.baseUrl === 'https://openrouter.ai/api') {
-    orProfile.baseUrl = 'https://openrouter.ai/api/v1';
-  }
-  if (orProfile?.model) {
-    orProfile.model = orProfile.model.replace(
-      /^(anthropic\/claude-(?:sonnet|opus|haiku)-\d+)-(\d+)/,
-      '$1.$2'
-    );
-  }
-  if (config.model?.startsWith('gemini/')) {
-    config.model = config.model.slice('gemini/'.length);
-  }
-  if (config.baseUrl === 'https://openrouter.ai/api' && config.provider === 'openrouter') {
-    config.baseUrl = 'https://openrouter.ai/api/v1';
-  }
+export function normalizeModelIds(_config: AppConfig): void {
+  // Legacy model ID normalization removed — only local/compatible providers remain.
 }
 
 function normalizeLegacyProjection(raw: Partial<AppConfig>): {
@@ -118,15 +105,25 @@ function normalizeLegacyProjection(raw: Partial<AppConfig>): {
   profiles: Record<ProviderProfileKey, ProviderProfile>;
   enableThinking: boolean;
 } {
-  const provider = isProviderType(raw.provider) ? raw.provider : defaultConfig.provider;
-  const customProtocol: CustomProtocolType = isCustomProtocol(raw.customProtocol)
-    ? raw.customProtocol
-    : defaultProtocolForProvider(provider);
+  const migratedProfiles = mergeLegacyProfiles(
+    (raw.profiles || {}) as Partial<Record<string, ProviderProfile>>
+  );
+  const provider = migrateProviderType(raw.provider, {
+    customProtocol: isCustomProtocol(raw.customProtocol) ? raw.customProtocol : undefined,
+    model:
+      typeof raw.model === 'string'
+        ? raw.model
+        : migratedProfiles[raw.activeProfileKey as ProviderProfileKey]?.model,
+  });
+  const customProtocol = migrateCustomProtocol(
+    provider,
+    isCustomProtocol(raw.customProtocol) ? raw.customProtocol : undefined
+  );
   const derivedProfileKey = profileKeyFromProvider(provider, customProtocol);
 
-  const hasAnyRawProfiles = Boolean(raw.profiles && Object.keys(raw.profiles).length > 0);
+  const hasAnyRawProfiles = Boolean(migratedProfiles && Object.keys(migratedProfiles).length > 0);
   const hasProfileUserData = PROFILE_KEYS.some((key) => {
-    const rawProfile = raw.profiles?.[key];
+    const rawProfile = migratedProfiles?.[key];
     if (!rawProfile) {
       return false;
     }
@@ -154,11 +151,13 @@ function normalizeLegacyProjection(raw: Partial<AppConfig>): {
 
   let activeProfileKey: ProviderProfileKey = shouldUseLegacyProjection
     ? derivedProfileKey
-    : isProfileKey(raw.activeProfileKey)
-      ? raw.activeProfileKey
-      : derivedProfileKey;
+    : migrateProfileKey(
+        raw.activeProfileKey,
+        migratedProfiles[raw.activeProfileKey as ProviderProfileKey],
+        provider
+      );
 
-  const profiles = cloneProfiles(raw.profiles);
+  const profiles = cloneProfiles(migratedProfiles);
   const hasLegacyProjection =
     typeof raw.apiKey === 'string' ||
     typeof raw.baseUrl === 'string' ||
@@ -171,17 +170,6 @@ function normalizeLegacyProjection(raw: Partial<AppConfig>): {
       model: typeof raw.model === 'string' ? raw.model : undefined,
     });
     activeProfileKey = derivedProfileKey;
-  }
-
-  if (
-    activeProfileKey === 'custom:openai' &&
-    isOllamaLegacyCustomOpenAIConfig({
-      provider,
-      customProtocol,
-      baseUrl: profiles['custom:openai']?.baseUrl,
-    })
-  ) {
-    profiles.ollama = normalizeProfile('ollama', profiles['custom:openai']);
   }
 
   if (!profiles[activeProfileKey]) {

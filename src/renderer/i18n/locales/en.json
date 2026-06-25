@@ -317,7 +317,15 @@
         },
         "ollama": {
           "name": "Ollama",
-          "note": "Prefer the dedicated Ollama provider tab for local model discovery and refresh."
+          "note": "Configure via the OpenAI-compatible tab with a local base URL such as http://localhost:11434/v1."
+        },
+        "vllm": {
+          "name": "vLLM",
+          "note": "Configure via the OpenAI-compatible tab with a local base URL such as http://localhost:8000/v1."
+        },
+        "genericAnthropic": {
+          "name": "Generic Anthropic-compatible",
+          "note": "Use this for local or custom gateways that expose the Anthropic Messages API."
         },
         "gemini": {
           "name": "Gemini custom endpoint",

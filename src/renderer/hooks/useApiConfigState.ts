@@ -9,9 +9,7 @@ export {
   buildApiConfigSnapshot,
 } from './api-config/api-config-builders';
 export {
-  isCustomAnthropicLoopbackGateway,
-  isCustomGeminiLoopbackGateway,
-  isCustomOpenAiLoopbackGateway,
+  isLocalOpenAiMode,
   profileKeyFromProvider,
   profileKeyToProvider,
 } from './api-config/api-config-profile-utils';

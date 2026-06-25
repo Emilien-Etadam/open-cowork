@@ -343,12 +343,9 @@ export class ConfigStore {
         const requestedProvider = isProviderType(updates.provider)
           ? updates.provider
           : nextProvider;
-        const requestedProtocol =
-          requestedProvider === 'custom'
-            ? isCustomProtocol(updates.customProtocol)
-              ? updates.customProtocol
-              : nextCustomProtocol
-            : defaultProtocolForProvider(requestedProvider);
+        const requestedProtocol = isCustomProtocol(updates.customProtocol)
+          ? updates.customProtocol
+          : defaultProtocolForProvider(requestedProvider);
         nextActiveProfileKey = profileKeyFromProvider(requestedProvider, requestedProtocol);
         const fromProfile = profileKeyToProvider(nextActiveProfileKey);
         nextProvider = fromProfile.provider;

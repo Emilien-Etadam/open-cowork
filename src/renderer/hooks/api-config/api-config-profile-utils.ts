@@ -1,7 +1,6 @@
 import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 import { normalizeOllamaBaseUrl } from '../../../shared/ollama-base-url';
 import type {
-  AppConfig,
   CustomProtocolType,
   ProviderModelInfo,
   ProviderProfile,
@@ -16,106 +15,35 @@ export function isProfileKey(value: unknown): value is ProviderProfileKey {
 }
 
 export function isProviderType(value: unknown): value is ProviderType {
-  return (
-    value === 'openrouter' ||
-    value === 'anthropic' ||
-    value === 'custom' ||
-    value === 'openai' ||
-    value === 'gemini' ||
-    value === 'ollama'
-  );
+  return value === 'openai' || value === 'anthropic';
 }
 
 export function isCustomProtocol(value: unknown): value is CustomProtocolType {
-  return value === 'anthropic' || value === 'openai' || value === 'gemini';
+  return value === 'anthropic' || value === 'openai';
 }
 
 export function profileKeyFromProvider(
   provider: ProviderType,
-  customProtocol: CustomProtocolType = 'anthropic'
+  _customProtocol: CustomProtocolType = 'anthropic'
 ): ProviderProfileKey {
-  if (provider !== 'custom') {
-    return provider;
-  }
-  if (customProtocol === 'openai') {
-    return 'custom:openai';
-  }
-  if (customProtocol === 'gemini') {
-    return 'custom:gemini';
-  }
-  return 'custom:anthropic';
+  return provider;
 }
 
 export function profileKeyToProvider(profileKey: ProviderProfileKey): {
   provider: ProviderType;
   customProtocol: CustomProtocolType;
 } {
-  if (profileKey === 'ollama') {
-    return { provider: 'ollama', customProtocol: 'openai' };
-  }
-  if (profileKey === 'custom:openai') {
-    return { provider: 'custom', customProtocol: 'openai' };
-  }
-  if (profileKey === 'custom:gemini') {
-    return { provider: 'custom', customProtocol: 'gemini' };
-  }
-  if (profileKey === 'custom:anthropic') {
-    return { provider: 'custom', customProtocol: 'anthropic' };
-  }
-  if (profileKey === 'openai') {
-    return { provider: 'openai', customProtocol: 'openai' };
-  }
-  if (profileKey === 'gemini') {
-    return { provider: 'gemini', customProtocol: 'gemini' };
-  }
-  return { provider: profileKey, customProtocol: 'anthropic' };
+  return {
+    provider: profileKey,
+    customProtocol: profileKey === 'anthropic' ? 'anthropic' : 'openai',
+  };
 }
 
-export function isCustomAnthropicLoopbackGateway(baseUrl: string): boolean {
-  return isLoopbackBaseUrl(baseUrl);
-}
-
-export function isCustomGeminiLoopbackGateway(baseUrl: string): boolean {
-  return isLoopbackBaseUrl(baseUrl);
-}
-
-export function isCustomOpenAiLoopbackGateway(baseUrl: string): boolean {
-  return isLoopbackBaseUrl(baseUrl);
-}
-
-export function isLegacyOllamaConfig(
-  config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'> | null | undefined
-): boolean {
-  if (!(config?.provider === 'custom' && config.customProtocol === 'openai')) {
-    return false;
-  }
-  const baseUrl = config.baseUrl?.trim();
-  if (!baseUrl || !isLoopbackBaseUrl(baseUrl)) {
-    return false;
-  }
-  try {
-    const parsed = new URL(baseUrl);
-    const port = parsed.port || (parsed.protocol === 'https:' ? '443' : '80');
-    const pathname = parsed.pathname.replace(/\/+$/, '');
-    return port === '11434' && (!pathname || pathname === '/v1');
-  } catch {
-    return false;
-  }
+export function isLocalOpenAiMode(provider: ProviderType, baseUrl: string): boolean {
+  return provider === 'openai' && (!baseUrl.trim() || isLoopbackBaseUrl(baseUrl));
 }
 
 export function modelPresetForProfile(profileKey: ProviderProfileKey, presets: ProviderPresets) {
-  if (profileKey === 'ollama') {
-    return presets.ollama;
-  }
-  if (profileKey === 'custom:openai') {
-    return presets.openai;
-  }
-  if (profileKey === 'custom:gemini') {
-    return presets.gemini;
-  }
-  if (profileKey === 'custom:anthropic') {
-    return presets.custom;
-  }
   return presets[profileKey];
 }
 
@@ -124,13 +52,12 @@ export function defaultProfileForKey(
   presets: ProviderPresets
 ): UIProviderProfile {
   const preset = modelPresetForProfile(profileKey, presets);
-  const prefersCustomInput = profileKey.startsWith('custom:');
   return {
     apiKey: '',
     baseUrl: preset.baseUrl,
-    model: profileKey === 'ollama' ? '' : preset.models[0]?.id || '',
+    model: profileKey === 'openai' ? '' : preset.models[0]?.id || '',
     customModel: '',
-    useCustomModel: prefersCustomInput,
+    useCustomModel: profileKey === 'openai',
     contextWindow: '',
     maxTokens: '',
   };
@@ -143,22 +70,6 @@ export function normalizeDiscoveredOllamaModels(models: string[] | undefined): P
     .map((id) => ({ id, name: id }));
 }
 
-function isPristineCustomProfile(
-  profileKey: ProviderProfileKey,
-  profile: Partial<ProviderProfile> | undefined,
-  fallback: UIProviderProfile
-): boolean {
-  if (!profileKey.startsWith('custom:') || !profile) {
-    return false;
-  }
-
-  const apiKey = profile.apiKey?.trim() || '';
-  const baseUrl = profile.baseUrl?.trim() || fallback.baseUrl;
-  const model = profile.model?.trim() || fallback.model;
-
-  return apiKey === '' && baseUrl === fallback.baseUrl && model === fallback.model;
-}
-
 export function normalizeProfile(
   profileKey: ProviderProfileKey,
   profile: Partial<ProviderProfile> | undefined,
@@ -169,18 +80,6 @@ export function normalizeProfile(
     return fallback;
   }
 
-  if (isPristineCustomProfile(profileKey, profile, fallback)) {
-    return {
-      ...fallback,
-      apiKey: '',
-      baseUrl: fallback.baseUrl,
-      customModel: '',
-      useCustomModel: true,
-      contextWindow: '',
-      maxTokens: '',
-    };
-  }
-
   const modelValue = profile?.model?.trim() || fallback.model;
   const rawBaseUrl = profile?.baseUrl?.trim() || fallback.baseUrl;
   const hasPresetModel = modelPresetForProfile(profileKey, presets).models.some(
@@ -189,10 +88,11 @@ export function normalizeProfile(
   return {
     apiKey: profile?.apiKey || '',
     baseUrl:
-      profileKey === 'ollama' ? normalizeOllamaBaseUrl(rawBaseUrl) || fallback.baseUrl : rawBaseUrl,
+      profileKey === 'openai' ? normalizeOllamaBaseUrl(rawBaseUrl) || rawBaseUrl : rawBaseUrl,
     model: hasPresetModel ? modelValue : fallback.model,
     customModel: hasPresetModel ? '' : modelValue,
-    useCustomModel: !hasPresetModel,
+    useCustomModel:
+      profileKey === 'openai' ? !hasPresetModel || fallback.useCustomModel : !hasPresetModel,
     contextWindow: profile?.contextWindow ? String(profile.contextWindow) : '',
     maxTokens: profile?.maxTokens ? String(profile.maxTokens) : '',
   };

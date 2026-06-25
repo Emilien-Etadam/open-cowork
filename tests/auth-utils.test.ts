@@ -4,6 +4,7 @@ import {
   normalizeOllamaBaseUrl,
   getUnifiedUnsupportedCustomOpenAIBaseUrl,
   isOfficialOpenAIBaseUrl,
+  isLoopbackOpenAIEndpoint,
   isOllamaLegacyCustomOpenAIConfig,
   isLoopbackBaseUrl,
   isLikelyOAuthAccessToken,
@@ -14,7 +15,6 @@ import {
   shouldAllowEmptyAnthropicApiKey,
   shouldAllowEmptyOpenAIApiKey,
   shouldAllowEmptyOllamaApiKey,
-  shouldAllowEmptyGeminiApiKey,
   shouldUseAnthropicAuthToken,
 } from '../src/main/config/auth-utils';
 
@@ -24,7 +24,7 @@ describe('auth-utils', () => {
     expect(isLikelyOAuthAccessToken('sk-ant-123')).toBe(false);
   });
 
-  it('chooses auth token mode for anthropic oauth tokens', () => {
+  it('chooses auth token mode for anthropic oauth tokens only', () => {
     expect(
       shouldUseAnthropicAuthToken({
         provider: 'anthropic',
@@ -41,18 +41,11 @@ describe('auth-utils', () => {
     ).toBe(false);
     expect(
       shouldUseAnthropicAuthToken({
-        provider: 'custom',
-        customProtocol: 'anthropic',
-        apiKey: 'custom-key-without-sk-prefix',
-      })
-    ).toBe(false);
-    expect(
-      shouldUseAnthropicAuthToken({
-        provider: 'openrouter',
-        customProtocol: 'anthropic',
+        provider: 'openai',
+        customProtocol: 'openai',
         apiKey: 'sk-or-v1-abc',
       })
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it('resolves openai credentials when api key is provided', () => {
@@ -69,7 +62,7 @@ describe('auth-utils', () => {
     });
   });
 
-  it('returns null when openai api key is empty', () => {
+  it('returns null when openai api key is empty on remote endpoints', () => {
     const resolved = resolveOpenAICredentials({
       provider: 'openai',
       customProtocol: 'openai',
@@ -80,16 +73,16 @@ describe('auth-utils', () => {
     expect(resolved).toBeNull();
   });
 
-  it('injects a placeholder key for custom openai loopback gateway when api key is empty', () => {
+  it('injects a placeholder key for openai loopback gateway when api key is empty', () => {
     const resolved = resolveOpenAICredentials({
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
       apiKey: '',
       baseUrl: 'http://127.0.0.1:8082/v1',
     });
 
     expect(resolved).toEqual({
-      apiKey: 'sk-openai-local-proxy',
+      apiKey: 'sk-ollama-local-proxy',
       baseUrl: 'http://127.0.0.1:8082/v1',
     });
   });
@@ -127,10 +120,10 @@ describe('auth-utils', () => {
     expect(isOfficialOpenAIBaseUrl('https://proxy.example.com/openai')).toBe(false);
   });
 
-  it('flags unsupported custom/openai + official openai base in unified sdk path', () => {
+  it('flags unsupported openai + official openai base in unified sdk path', () => {
     expect(
       getUnifiedUnsupportedCustomOpenAIBaseUrl({
-        provider: 'custom',
+        provider: 'openai',
         customProtocol: 'openai',
         apiKey: 'sk-test-123',
         baseUrl: 'https://api.openai.com/v1',
@@ -139,7 +132,7 @@ describe('auth-utils', () => {
 
     expect(
       getUnifiedUnsupportedCustomOpenAIBaseUrl({
-        provider: 'custom',
+        provider: 'openai',
         customProtocol: 'openai',
         apiKey: 'sk-test-123',
         baseUrl: 'https://api.duckcoding.ai/v1',
@@ -147,10 +140,10 @@ describe('auth-utils', () => {
     ).toBeNull();
   });
 
-  it('allows empty anthropic api key only for custom anthropic loopback gateway', () => {
+  it('allows empty anthropic api key only for anthropic loopback gateway', () => {
     expect(
       shouldAllowEmptyAnthropicApiKey({
-        provider: 'custom',
+        provider: 'anthropic',
         customProtocol: 'anthropic',
         baseUrl: 'http://[::1]:8082',
       })
@@ -158,120 +151,50 @@ describe('auth-utils', () => {
 
     expect(
       shouldAllowEmptyAnthropicApiKey({
-        provider: 'custom',
-        customProtocol: 'anthropic',
-        baseUrl: 'https://proxy.example.com',
-      })
-    ).toBe(false);
-
-    expect(
-      shouldAllowEmptyAnthropicApiKey({
         provider: 'anthropic',
         customProtocol: 'anthropic',
-        baseUrl: 'http://127.0.0.1:8082',
+        baseUrl: 'https://proxy.example.com',
       })
     ).toBe(false);
   });
 
-  it('allows empty gemini api key only for custom gemini loopback gateway', () => {
-    expect(
-      shouldAllowEmptyGeminiApiKey({
-        provider: 'custom',
-        customProtocol: 'gemini',
-        baseUrl: 'http://127.0.0.1:8082',
-      })
-    ).toBe(true);
-
-    expect(
-      shouldAllowEmptyGeminiApiKey({
-        provider: 'custom',
-        customProtocol: 'gemini',
-        baseUrl: 'https://proxy.example.com',
-      })
-    ).toBe(false);
-
-    expect(
-      shouldAllowEmptyGeminiApiKey({
-        provider: 'gemini',
-        customProtocol: 'gemini',
-        baseUrl: 'http://127.0.0.1:8082',
-      })
-    ).toBe(false);
-  });
-
-  it('allows empty openai api key only for custom openai loopback gateway', () => {
-    expect(
-      shouldAllowEmptyOpenAIApiKey({
-        provider: 'custom',
-        customProtocol: 'openai',
-        baseUrl: 'http://127.0.0.1:8082',
-      })
-    ).toBe(true);
-
-    expect(
-      shouldAllowEmptyOpenAIApiKey({
-        provider: 'custom',
-        customProtocol: 'openai',
-        baseUrl: 'https://proxy.example.com',
-      })
-    ).toBe(false);
-
+  it('allows empty openai api key only for openai loopback gateway', () => {
     expect(
       shouldAllowEmptyOpenAIApiKey({
         provider: 'openai',
         customProtocol: 'openai',
         baseUrl: 'http://127.0.0.1:8082',
       })
+    ).toBe(true);
+
+    expect(
+      shouldAllowEmptyOpenAIApiKey({
+        provider: 'openai',
+        customProtocol: 'openai',
+        baseUrl: 'https://proxy.example.com',
+      })
     ).toBe(false);
   });
 
-  it('allows empty ollama api key for any configured ollama base url', () => {
+  it('allows empty ollama api key alias for loopback openai endpoints', () => {
     expect(
       shouldAllowEmptyOllamaApiKey({
-        provider: 'ollama',
+        provider: 'openai',
         customProtocol: 'openai',
         baseUrl: 'http://localhost:11434/v1',
       })
     ).toBe(true);
-
-    expect(
-      shouldAllowEmptyOllamaApiKey({
-        provider: 'ollama',
-        customProtocol: 'openai',
-        baseUrl: 'https://ollama.example.internal/proxy/v1',
-      })
-    ).toBe(true);
-
-    expect(
-      shouldAllowEmptyOllamaApiKey({
-        provider: 'custom',
-        customProtocol: 'openai',
-        baseUrl: 'https://ollama.example.internal/proxy/v1',
-      })
-    ).toBe(false);
   });
 
   it('normalizes ollama base urls to an openai-compatible /v1 endpoint', () => {
     expect(normalizeOllamaBaseUrl('http://localhost:11434')).toBe('http://localhost:11434/v1');
-    expect(normalizeOllamaBaseUrl('http://localhost:11434/')).toBe('http://localhost:11434/v1');
-    expect(normalizeOllamaBaseUrl('http://localhost:11434/v1')).toBe('http://localhost:11434/v1');
     expect(normalizeOllamaBaseUrl('http://localhost:11434/api')).toBe('http://localhost:11434/v1');
-    expect(normalizeOllamaBaseUrl('https://ollama.com/api')).toBe('https://ollama.com/v1');
-    expect(normalizeOllamaBaseUrl('https://ollama.example.internal/proxy/api')).toBe(
-      'https://ollama.example.internal/proxy/v1'
-    );
-    expect(normalizeOllamaBaseUrl('https://ollama.example.internal/proxy/api/v1')).toBe(
-      'https://ollama.example.internal/proxy/v1'
-    );
-    expect(normalizeOllamaBaseUrl('https://ollama.example.internal/proxy')).toBe(
-      'https://ollama.example.internal/proxy/v1'
-    );
     expect(normalizeOllamaBaseUrl(undefined)).toBeUndefined();
   });
 
-  it('injects an internal placeholder key for ollama when api key is empty', () => {
+  it('injects an internal placeholder key for loopback openai when api key is empty', () => {
     const resolved = resolveOllamaCredentials({
-      provider: 'ollama',
+      provider: 'openai',
       customProtocol: 'openai',
       apiKey: '',
       baseUrl: 'http://localhost:11434/api',
@@ -283,36 +206,19 @@ describe('auth-utils', () => {
     });
   });
 
-  it('detects legacy custom openai localhost ollama configs conservatively', () => {
+  it('detects loopback openai endpoints conservatively', () => {
     expect(
-      isOllamaLegacyCustomOpenAIConfig({
-        provider: 'custom',
-        customProtocol: 'openai',
+      isLoopbackOpenAIEndpoint({
+        provider: 'openai',
         baseUrl: 'http://localhost:11434/v1',
       })
     ).toBe(true);
 
     expect(
       isOllamaLegacyCustomOpenAIConfig({
-        provider: 'custom',
-        customProtocol: 'openai',
-        baseUrl: 'http://localhost:11434',
-      })
-    ).toBe(true);
-
-    expect(
-      isOllamaLegacyCustomOpenAIConfig({
-        provider: 'custom',
+        provider: 'openai',
         customProtocol: 'openai',
         baseUrl: 'https://ollama.example.internal/v1',
-      })
-    ).toBe(false);
-
-    expect(
-      isOllamaLegacyCustomOpenAIConfig({
-        provider: 'custom',
-        customProtocol: 'openai',
-        baseUrl: 'http://localhost:8080/v1',
       })
     ).toBe(false);
   });

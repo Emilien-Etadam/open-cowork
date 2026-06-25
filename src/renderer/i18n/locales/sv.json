@@ -330,6 +330,14 @@
         "genericOpenAI": {
           "name": "Allmän OpenAI-kompatibel",
           "note": "Använd detta för anpassade reläer, gateways eller inferensservrar som efterliknar OpenAI-API:et."
+        },
+        "vllm": {
+          "name": "vLLM",
+          "note": "Configure via the OpenAI-compatible tab with a local base URL such as http://localhost:8000/v1."
+        },
+        "genericAnthropic": {
+          "name": "Generic Anthropic-compatible",
+          "note": "Use this for local or custom gateways that expose the Anthropic Messages API."
         }
       }
     },

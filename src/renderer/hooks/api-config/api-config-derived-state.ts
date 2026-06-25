@@ -9,12 +9,11 @@ import {
   resolveProviderGuidanceErrorHint,
   type CommonProviderSetup,
 } from '../../../shared/api-provider-guidance';
-import type { CustomProtocolType, ProviderPresets, ProviderType } from '../../types';
+import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
+import type { ProviderPresets, ProviderType } from '../../types';
 import { buildApiConfigDraftSignature } from './api-config-builders';
 import {
-  isCustomAnthropicLoopbackGateway,
-  isCustomGeminiLoopbackGateway,
-  isCustomOpenAiLoopbackGateway,
+  isLocalOpenAiMode,
   modelPresetForProfile,
   profileKeyToProvider,
 } from './api-config-profile-utils';
@@ -35,14 +34,8 @@ interface UseApiConfigDerivedStateParams {
   testDetails?: string;
 }
 
-function protocolLabel(protocol: CustomProtocolType, t: TFunction): string {
-  if (protocol === 'openai') return t('api.guidance.protocolLabels.openai');
-  if (protocol === 'gemini') return t('api.guidance.protocolLabels.gemini');
-  return t('api.guidance.protocolLabels.anthropic');
-}
-
-function providerTabLabel(provider: ProviderType, presets: ProviderPresets, t: TFunction): string {
-  return provider === 'custom' ? t('api.custom') : presets[provider]?.name || provider;
+function providerTabLabel(provider: ProviderType, presets: ProviderPresets): string {
+  return presets[provider]?.name || provider;
 }
 
 export function useApiConfigDerivedState({
@@ -67,9 +60,13 @@ export function useApiConfigDerivedState({
     () => modelPresetForProfile(activeProfileKey, presets),
     [activeProfileKey, presets]
   );
-  const modelOptions =
-    provider === 'ollama' ? discoveredModels[activeProfileKey] || [] : currentPreset.models;
-  const modelInputGuidance = getModelInputGuidance(provider, customProtocol);
+  const { apiKey, baseUrl, model, customModel, useCustomModel, contextWindow, maxTokens } =
+    currentProfile;
+  const localOpenAiMode = isLocalOpenAiMode(provider, baseUrl);
+  const modelOptions = localOpenAiMode
+    ? discoveredModels[activeProfileKey] || []
+    : currentPreset.models;
+  const modelInputGuidance = getModelInputGuidance(provider);
   const currentConfigSet = useMemo(
     () => configSets.find((set) => set.id === activeConfigSetId) || null,
     [activeConfigSetId, configSets]
@@ -81,62 +78,48 @@ export function useApiConfigDerivedState({
         : null,
     [configSets, pendingConfigSetAction]
   );
-
-  const { apiKey, baseUrl, model, customModel, useCustomModel, contextWindow, maxTokens } =
-    currentProfile;
-  const shouldShowOllamaManualModelToggle =
-    provider !== 'ollama' || useCustomModel || Boolean(error) || modelOptions.length === 0;
+  const shouldShowLocalModelToggle =
+    localOpenAiMode && (useCustomModel || Boolean(error) || modelOptions.length === 0);
   const detectedProviderSetup = useMemo(
-    () => (provider === 'custom' ? detectCommonProviderSetup(baseUrl) : null),
+    () => (provider === 'openai' ? detectCommonProviderSetup(baseUrl) : null),
     [baseUrl, provider]
   );
   const fallbackOpenAISetup = useMemo(() => getFallbackOpenAISetup(), []);
   const effectiveProviderSetup = useMemo(() => {
     if (detectedProviderSetup) return detectedProviderSetup;
-    if (
-      provider === 'custom' &&
-      customProtocol === 'openai' &&
-      baseUrl.trim() &&
-      isParsableBaseUrl(baseUrl)
-    ) {
+    if (provider === 'openai' && baseUrl.trim() && isParsableBaseUrl(baseUrl)) {
       return fallbackOpenAISetup;
     }
     return null;
-  }, [baseUrl, customProtocol, detectedProviderSetup, fallbackOpenAISetup, provider]);
+  }, [baseUrl, detectedProviderSetup, fallbackOpenAISetup, provider]);
   const setupDisplayProtocol = useCallback(
     (setup: CommonProviderSetup) =>
-      setup.protocolLabel || protocolLabel(setup.recommendedProtocol, t),
+      setup.protocolLabel ||
+      (setup.recommendedProtocol === 'openai'
+        ? t('api.guidance.protocolLabels.openai')
+        : t('api.guidance.protocolLabels.anthropic')),
     [t]
   );
   const protocolGuidanceTone = useMemo<'info' | 'warning' | undefined>(() => {
-    if (provider !== 'custom' || !detectedProviderSetup) return undefined;
-    return detectedProviderSetup.preferProviderTab
-      ? 'warning'
-      : customProtocol === detectedProviderSetup.recommendedProtocol
-        ? 'info'
-        : 'warning';
-  }, [customProtocol, detectedProviderSetup, provider]);
+    if (provider !== 'openai' || !detectedProviderSetup) return undefined;
+    return detectedProviderSetup.preferProviderTab ? 'warning' : 'info';
+  }, [detectedProviderSetup, provider]);
   const protocolGuidanceText = useMemo(() => {
-    if (provider !== 'custom' || !detectedProviderSetup) return '';
+    if (provider !== 'openai' || !detectedProviderSetup) return '';
     const service = t(detectedProviderSetup.nameKey);
     if (detectedProviderSetup.preferProviderTab) {
       return t('api.guidance.preferProviderTab', {
         service,
-        provider: providerTabLabel(detectedProviderSetup.preferProviderTab, presets, t),
+        provider: providerTabLabel(detectedProviderSetup.preferProviderTab, presets),
       });
     }
-    return customProtocol !== detectedProviderSetup.recommendedProtocol
-      ? t('api.guidance.protocolMismatch', {
-          service,
-          recommendedProtocol: setupDisplayProtocol(detectedProviderSetup),
-        })
-      : t('api.guidance.protocolLooksGood', {
-          service,
-          recommendedProtocol: setupDisplayProtocol(detectedProviderSetup),
-        });
-  }, [customProtocol, detectedProviderSetup, presets, provider, setupDisplayProtocol, t]);
+    return t('api.guidance.protocolLooksGood', {
+      service,
+      recommendedProtocol: setupDisplayProtocol(detectedProviderSetup),
+    });
+  }, [detectedProviderSetup, presets, provider, setupDisplayProtocol, t]);
   const baseUrlGuidanceText = useMemo(() => {
-    if (provider !== 'custom' || !effectiveProviderSetup) return '';
+    if (provider !== 'openai' || !effectiveProviderSetup) return '';
     if (!detectedProviderSetup && effectiveProviderSetup.id === fallbackOpenAISetup.id) {
       return t('api.guidance.genericBaseUrlHint', {
         recommendedProtocol: setupDisplayProtocol(effectiveProviderSetup),
@@ -160,7 +143,7 @@ export function useApiConfigDerivedState({
   ]);
   const commonProviderSetups = useMemo(
     () =>
-      provider === 'custom'
+      provider === 'openai'
         ? orderCommonProviderSetups(detectedProviderSetup?.id).map((setup) => ({
             id: setup.id,
             name: t(setup.nameKey),
@@ -179,7 +162,7 @@ export function useApiConfigDerivedState({
     if (hintKind === 'emptyProbePreferProvider' && detectedProviderSetup?.preferProviderTab) {
       return t('api.guidance.errorHints.emptyProbePreferProvider', {
         service: t(detectedProviderSetup.nameKey),
-        provider: providerTabLabel(detectedProviderSetup.preferProviderTab, presets, t),
+        provider: providerTabLabel(detectedProviderSetup.preferProviderTab, presets),
       });
     }
     if (hintKind === 'emptyProbeDetected' && effectiveProviderSetup) {
@@ -208,11 +191,8 @@ export function useApiConfigDerivedState({
   ]);
 
   const allowEmptyApiKey =
-    provider === 'ollama' ||
-    (provider === 'custom' &&
-      ((customProtocol === 'anthropic' && isCustomAnthropicLoopbackGateway(baseUrl)) ||
-        (customProtocol === 'openai' && isCustomOpenAiLoopbackGateway(baseUrl)) ||
-        (customProtocol === 'gemini' && isCustomGeminiLoopbackGateway(baseUrl))));
+    (provider === 'openai' && isLoopbackBaseUrl(baseUrl)) ||
+    (provider === 'anthropic' && isLoopbackBaseUrl(baseUrl));
   const currentDraftSignature = useMemo(
     () => buildApiConfigDraftSignature(activeProfileKey, profiles, enableThinking),
     [activeProfileKey, enableThinking, profiles]
@@ -233,7 +213,8 @@ export function useApiConfigDerivedState({
     maxTokens,
     modelOptions,
     modelInputGuidance,
-    shouldShowOllamaManualModelToggle,
+    isLocalOpenAiMode: localOpenAiMode,
+    shouldShowLocalModelToggle,
     detectedProviderSetup,
     protocolGuidanceTone,
     protocolGuidanceText,

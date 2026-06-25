@@ -1,3 +1,4 @@
+import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 import type { TFunction } from 'i18next';
 import type { ProviderType } from '../../types';
 
@@ -25,9 +26,10 @@ export function resolveBaseUrl(
   baseUrl: string,
   currentPresetBaseUrl?: string
 ): string {
-  return provider === 'custom' || provider === 'ollama'
-    ? baseUrl.trim()
-    : (baseUrl.trim() || currentPresetBaseUrl || '').trim();
+  if (provider === 'openai' && isLoopbackBaseUrl(baseUrl)) {
+    return baseUrl.trim();
+  }
+  return (baseUrl.trim() || currentPresetBaseUrl || '').trim();
 }
 
 export function resolveFinalModel(

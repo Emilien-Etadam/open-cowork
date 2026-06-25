@@ -1,5 +1,5 @@
 import { getModel, type Api, type Model } from '@mariozechner/pi-ai';
-import { isOfficialOpenAIBaseUrl } from '../config/auth-utils';
+import { isOfficialOpenAIBaseUrl, isLoopbackBaseUrl } from '../config/auth-utils';
 
 const COMMON_FALLBACK_PROVIDERS = ['openai', 'anthropic', 'google'] as const;
 const INVALID_REGISTRY_PROVIDERS = new Set(['', 'custom']);
@@ -41,17 +41,10 @@ export interface SyntheticPiModelFallback {
 }
 
 export function resolvePiRouteProtocol(provider?: string, customProtocol?: string): string {
-  if (provider === 'custom') {
-    if (customProtocol === 'openai' || customProtocol === 'gemini') {
-      return customProtocol;
-    }
-    return 'anthropic';
+  if (provider === 'openai' || customProtocol === 'openai') {
+    return 'openai';
   }
-  if (provider === 'ollama') return 'openai';
-  if (provider === 'openai') return 'openai';
-  if (provider === 'openrouter') return 'openai';
-  if (provider === 'gemini') return 'gemini';
-  return provider || 'anthropic';
+  return 'anthropic';
 }
 
 function shouldDisableDeveloperRoleForEndpoint(
@@ -171,22 +164,13 @@ export function resolveSyntheticPiModelFallback(
   const baseUrl = input.baseUrl?.trim() || '';
   const preservesExplicitPrefixedId =
     rawModel.includes('/') &&
-    (input.rawProvider === 'openrouter' ||
-      input.rawProvider === 'custom' ||
-      (input.rawProvider === 'openai' && !!baseUrl && !isOfficialOpenAIBaseUrl(baseUrl))) &&
+    input.rawProvider === 'openai' &&
+    !!baseUrl &&
+    !isOfficialOpenAIBaseUrl(baseUrl) &&
     input.routeProtocol === 'openai';
 
-  if (input.rawProvider === 'openrouter') {
-    return {
-      provider: 'openrouter',
-      modelId: preservesExplicitPrefixedId ? modelString : strippedModelId,
-    };
-  }
-
   const fallbackProvider =
-    input.rawProvider === 'custom' || input.rawProvider === 'ollama'
-      ? input.routeProtocol || 'anthropic'
-      : parsedProvider || input.rawProvider || input.routeProtocol || 'anthropic';
+    parsedProvider || input.rawProvider || input.routeProtocol || 'anthropic';
 
   return {
     provider: preservesExplicitPrefixedId ? parsedProvider || fallbackProvider : fallbackProvider,
@@ -236,7 +220,7 @@ export function buildPiModelLookupCandidates(
   options: Pick<PiModelLookupOptions, 'configProvider' | 'rawProvider'> = {}
 ): PiModelLookupCandidate[] {
   const keyProvider =
-    options.configProvider === 'custom' ? 'anthropic' : options.configProvider || 'anthropic';
+    options.configProvider === 'openai' ? 'openai' : options.configProvider || 'anthropic';
   const rawProvider = options.rawProvider?.trim() || '';
   const trimmedModel = modelString.trim();
   const parts = trimmedModel.split('/');
@@ -272,25 +256,20 @@ export function applyPiModelRuntimeOverrides(
   options: PiModelLookupOptions = {}
 ): Model<Api> {
   let nextModel = model;
-  const isCustomProvider = options.rawProvider === 'custom' || options.configProvider === 'custom';
-  const shouldHonorConfiguredBaseUrl = options.rawProvider === 'openai' || isCustomProvider;
+  const shouldHonorConfiguredBaseUrl = options.rawProvider === 'openai';
   const modelHasBaseUrl = Boolean(nextModel.baseUrl);
 
   if (options.customBaseUrl && (shouldHonorConfiguredBaseUrl || !modelHasBaseUrl)) {
     nextModel = { ...nextModel, baseUrl: options.customBaseUrl } as typeof nextModel;
   }
 
-  const effectiveProvider = options.rawProvider || options.configProvider;
   if (
     options.customBaseUrl &&
-    isCustomProvider &&
+    options.rawProvider === 'openai' &&
     nextModel.api === 'openai-responses' &&
     !shouldPreserveOpenAIResponsesApi(nextModel, options)
   ) {
     // Most custom OpenAI-compatible relays only implement chat/completions.
-    nextModel = { ...nextModel, api: 'openai-completions' } as typeof nextModel;
-  }
-  if (effectiveProvider === 'openrouter' && nextModel.api !== 'openai-completions') {
     nextModel = { ...nextModel, api: 'openai-completions' } as typeof nextModel;
   }
   if (shouldDisableDeveloperRoleForEndpoint(nextModel, options)) {
@@ -305,7 +284,8 @@ export function applyPiModelRuntimeOverrides(
   }
 
   if (
-    options.rawProvider === 'ollama' &&
+    options.rawProvider === 'openai' &&
+    isLoopbackBaseUrl(options.customBaseUrl) &&
     nextModel.reasoning &&
     nextModel.api === 'openai-completions'
   ) {
@@ -342,8 +322,8 @@ export function applyPiModelRuntimeOverrides(
     }
   }
 
-  // Handle custom provider with explicit protocol override
-  if (isCustomProvider && options.customProtocol) {
+  // Protocol override for non-official OpenAI-compatible endpoints
+  if (options.rawProvider === 'openai' && options.customProtocol) {
     const targetApi = inferPiApi(options.customProtocol);
     if (nextModel.api !== targetApi && !shouldPreserveOpenAIResponsesApi(nextModel, options)) {
       nextModel = { ...nextModel, api: targetApi } as typeof nextModel;

@@ -6,7 +6,7 @@ import {
 } from '@mariozechner/pi-coding-agent';
 import type { Message, Session } from '../../renderer/types';
 import { configStore } from '../config/config-store';
-import { normalizeOpenAICompatibleBaseUrl } from '../config/auth-utils';
+import { isLoopbackOpenAIEndpoint, normalizeOpenAICompatibleBaseUrl } from '../config/auth-utils';
 import { fetchOllamaModelInfo } from '../config/ollama-api';
 import type { BeforeSessionRunResult } from '../extensions/agent-runtime-extension';
 import type { SandboxAdapter } from '../sandbox/sandbox-adapter';
@@ -103,8 +103,10 @@ export async function preparePiSessionRun({
   );
   const rawBaseUrl = runtimeConfig.baseUrl?.trim() || undefined;
   const effectiveBaseUrl =
-    configProtocol === 'openai' && runtimeConfig.provider !== 'ollama'
-      ? normalizeOpenAICompatibleBaseUrl(rawBaseUrl) || rawBaseUrl
+    configProtocol === 'openai'
+      ? isLoopbackOpenAIEndpoint({ provider: runtimeConfig.provider, baseUrl: rawBaseUrl })
+        ? rawBaseUrl
+        : normalizeOpenAICompatibleBaseUrl(rawBaseUrl) || rawBaseUrl
       : rawBaseUrl;
 
   let usedSyntheticModel = false;
@@ -155,7 +157,11 @@ export async function preparePiSessionRun({
   logCtx('[ClaudeAgentRunner] Resolved pi-ai model:', piModel.provider, piModel.id);
 
   const provider = runtimeConfig.provider || 'anthropic';
-  if (provider === 'ollama' && !runtimeConfig.contextWindow) {
+  if (
+    provider === 'openai' &&
+    isLoopbackOpenAIEndpoint({ provider, baseUrl: runtimeConfig.baseUrl }) &&
+    !runtimeConfig.contextWindow
+  ) {
     const ollamaInfo = await fetchOllamaModelInfo({
       baseUrl: piModel.baseUrl || runtimeConfig.baseUrl || 'http://localhost:11434/v1',
       model: piModel.id,
@@ -187,15 +193,16 @@ export async function preparePiSessionRun({
   const authStorage = getSharedAuthStorage();
   const apiKey = runtimeConfig.apiKey?.trim();
   if (apiKey) {
-    const piProvider =
-      provider === 'custom' ? runtimeConfig.customProtocol || 'anthropic' : provider;
-    authStorage.setRuntimeApiKey(piProvider, apiKey);
-    if (piModel.provider !== piProvider) {
+    authStorage.setRuntimeApiKey(provider, apiKey);
+    if (piModel.provider !== provider) {
       authStorage.setRuntimeApiKey(piModel.provider, apiKey);
       log('[ClaudeAgentRunner] Set runtime API key for model provider:', piModel.provider);
     }
-    log('[ClaudeAgentRunner] Set runtime API key for config provider:', piProvider);
-  } else if (provider === 'ollama') {
+    log('[ClaudeAgentRunner] Set runtime API key for config provider:', provider);
+  } else if (
+    provider === 'openai' &&
+    isLoopbackOpenAIEndpoint({ provider, baseUrl: runtimeConfig.baseUrl })
+  ) {
     log(
       '[ClaudeAgentRunner] Ollama configured without explicit API key; relying on OpenAI-compatible placeholder/env auth path',
       safeStringify({
