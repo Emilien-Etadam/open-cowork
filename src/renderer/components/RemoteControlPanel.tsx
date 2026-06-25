@@ -1,6 +1,6 @@
 /**
  * Remote Control Settings Panel
- * Composes sub-components for Feishu/Lark bot remote control configuration.
+ * Slack bot remote control configuration.
  */
 
 import { useState, useEffect } from 'react';
@@ -10,8 +10,7 @@ import { GatewayControlCard } from './remote/GatewayControlCard';
 import { PairingRequestsSection } from './remote/PairingRequestsSection';
 import { PairingGuideCard } from './remote/PairingGuideCard';
 import { ConfigStepNav } from './remote/ConfigStepNav';
-import { FeishuConfigStep } from './remote/FeishuConfigStep';
-import { ConnectionConfigStep } from './remote/ConnectionConfigStep';
+import { SlackConfigStep } from './remote/SlackConfigStep';
 import { AdvancedConfigStep } from './remote/AdvancedConfigStep';
 import { AuthorizedUsersSection } from './remote/AuthorizedUsersSection';
 import { QuickStartGuide } from './remote/QuickStartGuide';
@@ -20,7 +19,6 @@ import type {
   PairedUser,
   PairingRequest,
   RemoteConfig,
-  TunnelStatus,
   ConfigStep,
   LocalizedBanner,
 } from './remote/types';
@@ -28,9 +26,8 @@ import type {
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
 export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
-  const { i18n, t } = useTranslation();
+  const { t } = useTranslation();
 
-  // Remote state
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState<GatewayStatus | null>(null);
   const [, setConfig] = useState<RemoteConfig | null>(null);
@@ -39,21 +36,16 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
   const [isTogglingGateway, setIsTogglingGateway] = useState(false);
   const [error, setError] = useState<LocalizedBanner | null>(null);
   const [success, setSuccess] = useState<LocalizedBanner | null>(null);
-  const [activeStep, setActiveStep] = useState<ConfigStep>('feishu');
+  const [activeStep, setActiveStep] = useState<ConfigStep>('slack');
 
-  // Form state
-  const [feishuAppId, setFeishuAppId] = useState('');
-  const [feishuAppSecret, setFeishuAppSecret] = useState('');
-  const [feishuDmPolicy, setFeishuDmPolicy] = useState('pairing');
+  const [slackBotToken, setSlackBotToken] = useState('');
+  const [slackAppToken, setSlackAppToken] = useState('');
+  const [slackUseSocketMode, setSlackUseSocketMode] = useState(true);
+  const [slackDmPolicy, setSlackDmPolicy] = useState('pairing');
   const [gatewayPort, setGatewayPort] = useState(18789);
   const [defaultWorkingDirectory, setDefaultWorkingDirectory] = useState('');
   const [autoApproveSafeTools, setAutoApproveSafeTools] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [useLongConnection, setUseLongConnection] = useState(true);
-  const [tunnelEnabled, setTunnelEnabled] = useState(false);
-  const [ngrokAuthToken, setNgrokAuthToken] = useState('');
-  const [tunnelStatus, setTunnelStatus] = useState<TunnelStatus | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isActive) return;
@@ -66,40 +58,27 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
     if (!isElectron) return;
     setIsLoading(true);
     try {
-      const [
-        configResult,
-        statusResult,
-        usersResult,
-        pairingsResult,
-        tunnelStatusResult,
-        webhookUrlResult,
-      ] = await Promise.all([
+      const [configResult, statusResult, usersResult, pairingsResult] = await Promise.all([
         window.electronAPI.remote.getConfig(),
         window.electronAPI.remote.getStatus(),
         window.electronAPI.remote.getPairedUsers(),
         window.electronAPI.remote.getPendingPairings(),
-        window.electronAPI.remote.getTunnelStatus(),
-        window.electronAPI.remote.getWebhookUrl(),
       ]);
 
       setConfig(configResult);
       setStatus(statusResult);
       setPairedUsers(usersResult);
       setPendingPairings(pairingsResult);
-      setTunnelStatus(tunnelStatusResult);
-      setWebhookUrl(webhookUrlResult);
 
       if (configResult) {
         setGatewayPort(configResult.gateway?.port || 18789);
         setDefaultWorkingDirectory(configResult.gateway?.defaultWorkingDirectory || '');
         setAutoApproveSafeTools(configResult.gateway?.autoApproveSafeTools !== false);
-        setTunnelEnabled(configResult.gateway?.tunnel?.enabled || false);
-        setNgrokAuthToken(configResult.gateway?.tunnel?.ngrok?.authToken || '');
-        if (configResult.channels?.feishu) {
-          setFeishuAppId(configResult.channels.feishu.appId || '');
-          setFeishuAppSecret(configResult.channels.feishu.appSecret || '');
-          setFeishuDmPolicy(configResult.channels.feishu.dm?.policy || 'pairing');
-          setUseLongConnection(configResult.channels.feishu.useWebSocket !== false);
+        if (configResult.channels?.slack) {
+          setSlackBotToken(configResult.channels.slack.botToken || '');
+          setSlackAppToken(configResult.channels.slack.appToken || '');
+          setSlackDmPolicy(configResult.channels.slack.dm?.policy || 'pairing');
+          setSlackUseSocketMode(configResult.channels.slack.useSocketMode !== false);
         }
       }
     } catch (err) {
@@ -112,17 +91,12 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
   async function refreshStatus() {
     if (!isElectron) return;
     try {
-      const [statusResult, pairingsResult, tunnelStatusResult, webhookUrlResult] =
-        await Promise.all([
-          window.electronAPI.remote.getStatus(),
-          window.electronAPI.remote.getPendingPairings(),
-          window.electronAPI.remote.getTunnelStatus(),
-          window.electronAPI.remote.getWebhookUrl(),
-        ]);
+      const [statusResult, pairingsResult] = await Promise.all([
+        window.electronAPI.remote.getStatus(),
+        window.electronAPI.remote.getPendingPairings(),
+      ]);
       setStatus(statusResult);
       setPendingPairings(pairingsResult);
-      setTunnelStatus(tunnelStatusResult);
-      setWebhookUrl(webhookUrlResult);
     } catch (err) {
       console.error('Failed to refresh status:', err);
     }
@@ -138,7 +112,7 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
       await refreshStatus();
       setSuccess({ key: newEnabled ? 'remote.started' : 'remote.stopped' });
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch {
       setError({ key: 'remote.actionFailed' });
     } finally {
       setIsTogglingGateway(false);
@@ -154,30 +128,22 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
         port: gatewayPort,
         defaultWorkingDirectory: defaultWorkingDirectory || undefined,
         autoApproveSafeTools,
-        tunnel:
-          tunnelEnabled && ngrokAuthToken
-            ? {
-                enabled: true,
-                type: 'ngrok',
-                ngrok: { authToken: ngrokAuthToken, region: 'us' },
-              }
-            : { enabled: false, type: 'ngrok' },
       });
 
-      if (feishuAppId && feishuAppSecret) {
-        await window.electronAPI.remote.updateFeishuConfig({
-          type: 'feishu',
-          appId: feishuAppId,
-          appSecret: feishuAppSecret,
-          useWebSocket: useLongConnection,
-          dm: { policy: feishuDmPolicy as 'open' | 'pairing' | 'allowlist' },
+      if (slackBotToken && (!slackUseSocketMode || slackAppToken)) {
+        await window.electronAPI.remote.updateSlackConfig({
+          type: 'slack',
+          botToken: slackBotToken,
+          appToken: slackUseSocketMode ? slackAppToken : undefined,
+          useSocketMode: slackUseSocketMode,
+          dm: { policy: slackDmPolicy as 'open' | 'pairing' | 'allowlist' },
         });
       }
 
       setSuccess({ key: 'remote.configSaved' });
       setTimeout(() => setSuccess(null), 3000);
       await loadData();
-    } catch (err) {
+    } catch {
       setError({ key: 'remote.saveFailed' });
     } finally {
       setIsSaving(false);
@@ -191,7 +157,7 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
       setSuccess({ key: 'remote.pairingApproved' });
       setTimeout(() => setSuccess(null), 3000);
       await loadData();
-    } catch (err) {
+    } catch {
       setError({ key: 'remote.approveFailed' });
     }
   }
@@ -210,7 +176,7 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
       setSuccess({ key: 'remote.pairingRejected' });
       setTimeout(() => setSuccess(null), 3000);
       await loadData();
-    } catch (err) {
+    } catch {
       setError({ key: 'remote.rejectFailed' });
     }
   }
@@ -222,29 +188,14 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
       setSuccess({ key: 'remote.userRemoved' });
       setTimeout(() => setSuccess(null), 3000);
       await loadData();
-    } catch (err) {
+    } catch {
       setError({ key: 'remote.revokeFailed' });
     }
   }
 
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text);
-    setSuccess({ key: 'remote.copied' });
-    setTimeout(() => setSuccess(null), 2000);
-  }
-
-  const isFeishuConfigured = !!(feishuAppId && feishuAppSecret);
-  const isConnectionConfigured =
-    useLongConnection || (tunnelEnabled && !!ngrokAuthToken) || !!tunnelStatus?.connected;
-  const permissionSeparator = i18n.language.startsWith('zh') ? '、' : ', ';
-  const permissionScopes = [
-    'im:resource',
-    'im:message',
-    'im:message:send_as_bot',
-    'im:message.group_at_msg:readonly',
-    'im:message.p2p_msg:readonly',
-    'contact:user.base:readonly',
-  ];
+  const isSlackConfigured = !!(
+    slackBotToken && (!slackUseSocketMode || slackAppToken)
+  );
 
   if (isLoading) {
     return (
@@ -256,7 +207,6 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      {/* Notification banners */}
       {error && (
         <div className="p-4 bg-error/10 border border-error/30 rounded-xl flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-error flex-shrink-0" />
@@ -275,50 +225,36 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
         pairedUsers={pairedUsers}
         pendingPairings={pendingPairings}
         isTogglingGateway={isTogglingGateway}
-        isFeishuConfigured={isFeishuConfigured}
+        isSlackConfigured={isSlackConfigured}
         onToggle={toggleGateway}
       />
 
-      {status?.running && feishuDmPolicy === 'pairing' && <PairingGuideCard />}
+      {status?.running && slackDmPolicy === 'pairing' && <PairingGuideCard />}
 
       <PairingRequestsSection
         pendingPairings={pendingPairings}
-        showEmpty={status?.running && feishuDmPolicy === 'pairing'}
+        showEmpty={status?.running && slackDmPolicy === 'pairing'}
         onApprove={approvePairing}
         onReject={rejectPairing}
       />
 
       <ConfigStepNav
         activeStep={activeStep}
-        isFeishuConfigured={isFeishuConfigured}
-        isConnectionConfigured={isConnectionConfigured}
+        isSlackConfigured={isSlackConfigured}
         onStepChange={setActiveStep}
       />
 
-      {/* Configuration content */}
       <div className="p-6 rounded-[2rem] border border-border-subtle bg-background/60">
-        {activeStep === 'feishu' && (
-          <FeishuConfigStep
-            feishuAppId={feishuAppId}
-            feishuAppSecret={feishuAppSecret}
-            feishuDmPolicy={feishuDmPolicy}
-            onAppIdChange={setFeishuAppId}
-            onAppSecretChange={setFeishuAppSecret}
-            onDmPolicyChange={setFeishuDmPolicy}
-          />
-        )}
-        {activeStep === 'connection' && (
-          <ConnectionConfigStep
-            useLongConnection={useLongConnection}
-            tunnelEnabled={tunnelEnabled}
-            ngrokAuthToken={ngrokAuthToken}
-            gatewayPort={gatewayPort}
-            tunnelStatus={tunnelStatus}
-            webhookUrl={webhookUrl}
-            onLongConnectionChange={setUseLongConnection}
-            onTunnelEnabledChange={setTunnelEnabled}
-            onNgrokAuthTokenChange={setNgrokAuthToken}
-            onCopy={copyToClipboard}
+        {activeStep === 'slack' && (
+          <SlackConfigStep
+            botToken={slackBotToken}
+            appToken={slackAppToken}
+            useSocketMode={slackUseSocketMode}
+            dmPolicy={slackDmPolicy}
+            onBotTokenChange={setSlackBotToken}
+            onAppTokenChange={setSlackAppToken}
+            onSocketModeChange={setSlackUseSocketMode}
+            onDmPolicyChange={setSlackDmPolicy}
           />
         )}
         {activeStep === 'advanced' && (
@@ -332,7 +268,6 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
           />
         )}
 
-        {/* Save button */}
         <div className="flex justify-end mt-6 pt-6 border-t border-border">
           <button
             onClick={saveConfig}
@@ -351,10 +286,7 @@ export function RemoteControlPanel({ isActive }: { isActive: boolean }) {
 
       <AuthorizedUsersSection pairedUsers={pairedUsers} onRevoke={revokePairing} />
 
-      <QuickStartGuide
-        permissionScopes={permissionScopes}
-        permissionSeparator={permissionSeparator}
-      />
+      <QuickStartGuide />
     </div>
   );
 }

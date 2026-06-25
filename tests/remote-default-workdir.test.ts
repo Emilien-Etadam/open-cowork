@@ -19,7 +19,7 @@ type StartSessionArgs = {
 
 const buildMessage = (): RemoteMessage => ({
   id: 'msg-1',
-  channelType: 'feishu',
+  channelType: 'slack',
   channelId: 'channel-1',
   sender: { id: 'user-1', isBot: false },
   content: { type: 'text', text: '你好' },
