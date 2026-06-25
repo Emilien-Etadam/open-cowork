@@ -21,8 +21,9 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.95`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.96`)
 
+- **EE4.96** (release) : fix chat streaming en direct (multicast IPC preload — listener plugin n’écrase plus `useIPC`) ; barre de contexte au-dessus de la zone de saisie (#45)
 - **EE4.95** (release) : fix auto-update Windows — `latest.yml` aligné sur `Open.Cowork-*.exe`, erreur téléchargement affichée dans Paramètres
 - **EE4.94** (release) : fix Chat LAN « UI missing » — `resources/chat-lan` dans extraResources Windows/macOS/Linux
 - **EE4.93** (release) : fix UI mises à jour Windows — téléchargement auto + bouton installer
@@ -63,26 +64,27 @@
 
 ## 📦 EE releases
 
-| Tag             | Date       | Highlights                                                              |
-| --------------- | ---------- | ----------------------------------------------------------------------- |
-| `v3.3.1-EE4.95` | 2026-06-25 | **Latest** — fix auto-update Windows (`latest.yml` + nom installateur)  |
-| `v3.3.1-EE4.94` | 2026-06-25 | Fix Chat LAN UI missing (extraResources)                                |
-| `v3.3.1-EE4.93` | 2026-06-25 | Fix auto-update Windows (download + bouton installer)                   |
-| `v3.3.1-EE4.92` | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                    |
-| `v3.3.1-EE4.91` | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API           |
-| `v3.3.1-EE4.9`  | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                      |
-| `v3.3.1-EE4.8`  | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft) |
-| `v3.3.1-EE4.7`  | 2026-06-25 | Fix fond opaque menu slash                                              |
-| `v3.3.1-EE4.6`  | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`                          |
-| `v3.3.1-EE4.5`  | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests             |
-| `v3.3.1-EE4.4`  | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests                 |
-| `v3.3.1-EE4.3`  | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                                 |
-| `v3.3.1-EE4.2`  | 2026-06-24 | Refactor `index.ts`, `gui-operate`, `agent-runner`                      |
-| `v3.3.1-EE4.1`  | 2026-06-23 | Sandbox sync, config-store, handoff, branding                           |
-| `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                        |
-| `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                 |
+| Tag             | Date       | Highlights                                                               |
+| --------------- | ---------- | ------------------------------------------------------------------------ |
+| `v3.3.1-EE4.96` | 2026-06-25 | **Latest** — fix chat streaming + barre de contexte au-dessus de l’input |
+| `v3.3.1-EE4.95` | 2026-06-25 | Fix auto-update Windows (`latest.yml` + nom installateur)                |
+| `v3.3.1-EE4.94` | 2026-06-25 | Fix Chat LAN UI missing (extraResources)                                 |
+| `v3.3.1-EE4.93` | 2026-06-25 | Fix auto-update Windows (download + bouton installer)                    |
+| `v3.3.1-EE4.92` | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                     |
+| `v3.3.1-EE4.91` | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API            |
+| `v3.3.1-EE4.9`  | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                       |
+| `v3.3.1-EE4.8`  | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft)  |
+| `v3.3.1-EE4.7`  | 2026-06-25 | Fix fond opaque menu slash                                               |
+| `v3.3.1-EE4.6`  | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`                           |
+| `v3.3.1-EE4.5`  | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests              |
+| `v3.3.1-EE4.4`  | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests                  |
+| `v3.3.1-EE4.3`  | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                                  |
+| `v3.3.1-EE4.2`  | 2026-06-24 | Refactor `index.ts`, `gui-operate`, `agent-runner`                       |
+| `v3.3.1-EE4.1`  | 2026-06-23 | Sandbox sync, config-store, handoff, branding                            |
+| `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                         |
+| `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                  |
 
-Current stable fork baseline: **`3.3.1-EE4.95`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.95) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`3.3.1-EE4.96`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.96) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 

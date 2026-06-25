@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.96] - 2026-06-25
+
+### Fixed
+
+- **Chat** : réflexion et réponses en streaming réaffichées en direct (multicast IPC — le listener plugin n’écrase plus `useIPC`)
+- **Barre de contexte** : réintégrée au-dessus de la zone de saisie ; visible même panneau Contexte replié
+- **Contexte** : affichage dès que la fenêtre est connue (réservation `maxTokens` incluse)
+
 ## [3.3.1-EE4.95] - 2026-06-25
 
 ### Fixed
