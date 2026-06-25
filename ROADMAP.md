@@ -21,7 +21,10 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.5`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.7`)
+
+- **EE4.7**: Menu slash fond opaque (fix transparence sur l'historique)
+- **EE4.6**: Auto-update Windows, commandes plugin dans le menu `/`
 
 - **EE4**: Slash command autocomplete, `README_en.md`, logo, first `agent-runner` module split
 - **EE4.1**: Incremental WSL/Lima sandbox sync, `config-store` split, session handoff + `/handsoff`, unified Windows branding, 30 `agent-runner` unit tests
