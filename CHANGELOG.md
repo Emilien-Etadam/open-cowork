@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.8] - 2026-06-25
+
+### Added
+
+- **Bouton « Vérifier les mises à jour »** dans Paramètres → Général
+- Affichage de la version au format **EE4.8** dans l’interface
+- Vérification via `electron-updater` (Windows) ou API GitHub Releases (macOS/Linux)
+
 ## [3.3.1-EE4.7] - 2026-06-25
 
 ### Fixed
