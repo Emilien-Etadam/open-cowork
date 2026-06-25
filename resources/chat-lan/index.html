@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Open Cowork — Chat LAN</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1117;
+      --panel: #171a22;
+      --border: #2a3040;
+      --text: #e8ecf4;
+      --muted: #9aa3b5;
+      --accent: #5b8def;
+      --danger: #e85d5d;
+      --ok: #3ecf8e;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      background: var(--panel);
+    }
+    header h1 { font-size: 1rem; margin: 0; font-weight: 600; }
+    .status { font-size: 0.8rem; color: var(--muted); }
+    .status.ok { color: var(--ok); }
+    main { flex: 1; display: grid; grid-template-columns: 220px 1fr; min-height: 0; }
+    @media (max-width: 700px) { main { grid-template-columns: 1fr; } aside { max-height: 140px; } }
+    aside {
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 8px;
+      background: var(--panel);
+    }
+    .session-item {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      font-size: 0.85rem;
+    }
+    .session-item:hover { background: #1f2430; }
+    .session-item.active { border-color: var(--accent); background: #1a2740; }
+    .chat {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .msg {
+      max-width: 90%;
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 0.92rem;
+    }
+    .msg.user { align-self: flex-end; background: #1e3a5f; }
+    .msg.assistant { align-self: flex-start; background: #222833; border: 1px solid var(--border); }
+    .msg.system { align-self: center; color: var(--muted); font-size: 0.8rem; background: transparent; }
+    .composer {
+      border-top: 1px solid var(--border);
+      padding: 12px;
+      display: flex;
+      gap: 8px;
+      background: var(--panel);
+    }
+    textarea {
+      flex: 1;
+      resize: vertical;
+      min-height: 44px;
+      max-height: 160px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+      padding: 10px;
+      font: inherit;
+    }
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    button.secondary { background: #2a3040; color: var(--text); }
+    button.danger { background: var(--danger); }
+    #login {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+    #login input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .perm-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 10;
+    }
+    .perm-overlay.open { display: flex; }
+    .perm-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      max-width: 520px;
+      width: 100%;
+    }
+    .perm-card pre {
+      background: var(--bg);
+      padding: 10px;
+      border-radius: 8px;
+      overflow: auto;
+      font-size: 0.8rem;
+      max-height: 200px;
+    }
+    .perm-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="login">
+    <h1>Open Cowork — Chat LAN</h1>
+    <p style="color:var(--muted);font-size:0.9rem">Accès réseau local uniquement. Collez le token depuis les paramètres de l’app desktop.</p>
+    <label for="token">Token</label>
+    <input id="token" type="password" autocomplete="off" placeholder="Token secret" />
+    <button id="connectBtn" style="width:100%">Se connecter</button>
+    <p id="loginError" style="color:var(--danger);font-size:0.85rem"></p>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <h1>Chat LAN</h1>
+      <span id="connStatus" class="status">Déconnecté</span>
+      <button id="newSessionBtn" class="secondary" style="margin-left:auto">Nouvelle session</button>
+    </header>
+    <main>
+      <aside id="sessionList"></aside>
+      <section class="chat">
+        <div id="messages" class="messages"></div>
+        <div class="composer">
+          <textarea id="prompt" placeholder="Votre message…" rows="2"></textarea>
+          <button id="sendBtn">Envoyer</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="permOverlay" class="perm-overlay">
+    <div class="perm-card">
+      <h2 id="permTitle">Autorisation requise</h2>
+      <p id="permTool" style="color:var(--muted)"></p>
+      <pre id="permInput"></pre>
+      <div class="perm-actions">
+        <button id="permAllow">Autoriser</button>
+        <button id="permAlways" class="secondary">Toujours autoriser</button>
+        <button id="permDeny" class="danger">Refuser</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="sudoOverlay" class="perm-overlay">
+    <div class="perm-card">
+      <h2>Mot de passe sudo</h2>
+      <p id="sudoCmd" style="color:var(--muted);font-size:0.85rem"></p>
+      <input id="sudoPassword" type="password" style="width:100%;padding:10px;margin:12px 0;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+      <div class="perm-actions">
+        <button id="sudoSubmit">Valider</button>
+        <button id="sudoCancel" class="secondary">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TOKEN_KEY = 'open-cowork-chat-lan-token';
+    let authToken = localStorage.getItem(TOKEN_KEY) || '';
+    let activeSessionId = null;
+    let eventSource = null;
+    let pendingPermission = null;
+    let pendingSudo = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json', Authorization: 'Bearer ' + authToken, ...(options.headers || {}) };
+      return fetch(path, { ...options, headers }).then(async (res) => {
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || res.statusText);
+        }
+        const ct = res.headers.get('content-type') || '';
+        return ct.includes('json') ? res.json() : res.text();
+      });
+    }
+
+    function textFromContent(content) {
+      if (!Array.isArray(content)) return String(content || '');
+      return content.filter((b) => b && b.type === 'text').map((b) => b.text).join('\n');
+    }
+
+    function appendMessage(role, text) {
+      const el = document.createElement('div');
+      el.className = 'msg ' + role;
+      el.textContent = text;
+      $('messages').appendChild(el);
+      $('messages').scrollTop = $('messages').scrollHeight;
+    }
+
+    function renderSessions(sessions) {
+      const list = $('sessionList');
+      list.innerHTML = '';
+      for (const s of sessions) {
+        const btn = document.createElement('button');
+        btn.className = 'session-item' + (s.id === activeSessionId ? ' active' : '');
+        btn.textContent = s.title || s.id.slice(0, 8);
+        btn.onclick = () => selectSession(s.id);
+        list.appendChild(btn);
+      }
+    }
+
+    async function loadSessions() {
+      const data = await api('/api/sessions');
+      renderSessions(data.sessions || []);
+    }
+
+    async function loadMessages(sessionId) {
+      $('messages').innerHTML = '';
+      const data = await api('/api/sessions/' + encodeURIComponent(sessionId) + '/messages');
+      for (const m of data.messages || []) {
+        appendMessage(m.role === 'user' ? 'user' : m.role === 'assistant' ? 'assistant' : 'system', textFromContent(m.content));
+      }
+    }
+
+    async function selectSession(sessionId) {
+      activeSessionId = sessionId;
+      await loadSessions();
+      await loadMessages(sessionId);
+    }
+
+    function connectEvents() {
+      if (eventSource) eventSource.close();
+      const url = '/api/events?token=' + encodeURIComponent(authToken);
+      eventSource = new EventSource(url);
+      $('connStatus').textContent = 'Connecté (LAN)';
+      $('connStatus').className = 'status ok';
+      eventSource.onmessage = (ev) => {
+        try {
+          const event = JSON.parse(ev.data);
+          handleServerEvent(event);
+        } catch (e) { console.warn(e); }
+      };
+      eventSource.onerror = () => {
+        $('connStatus').textContent = 'Flux interrompu';
+        $('connStatus').className = 'status';
+      };
+    }
+
+    function handleServerEvent(event) {
+      if (!event || !event.type) return;
+      if (event.type === 'stream.message' && event.payload?.message) {
+        const m = event.payload.message;
+        if (activeSessionId && m.sessionId !== activeSessionId) return;
+        if (!activeSessionId) activeSessionId = m.sessionId;
+        const role = m.role === 'user' ? 'user' : m.role === 'assistant' ? 'assistant' : 'system';
+        appendMessage(role, textFromContent(m.content));
+      }
+      if (event.type === 'stream.partial' && event.payload?.sessionId === activeSessionId) {
+        /* partial deltas omitted for simplicity */
+      }
+      if (event.type === 'permission.request') {
+        pendingPermission = event.payload;
+        $('permTitle').textContent = 'Autorisation : ' + event.payload.toolName;
+        $('permTool').textContent = 'Session ' + event.payload.sessionId;
+        $('permInput').textContent = JSON.stringify(event.payload.input, null, 2);
+        $('permOverlay').classList.add('open');
+      }
+      if (event.type === 'permission.dismiss') {
+        pendingPermission = null;
+        $('permOverlay').classList.remove('open');
+      }
+      if (event.type === 'sudo.password.request') {
+        pendingSudo = event.payload;
+        $('sudoCmd').textContent = event.payload.command;
+        $('sudoPassword').value = '';
+        $('sudoOverlay').classList.add('open');
+      }
+      if (event.type === 'sudo.password.dismiss') {
+        pendingSudo = null;
+        $('sudoOverlay').classList.remove('open');
+      }
+      if (event.type === 'session.status' || event.type === 'session.update') {
+        void loadSessions();
+      }
+      if (event.type === 'error' && event.payload?.message) {
+        appendMessage('system', 'Erreur : ' + event.payload.message);
+      }
+    }
+
+    async function sendMessage() {
+      const prompt = $('prompt').value.trim();
+      if (!prompt) return;
+      $('prompt').value = '';
+      appendMessage('user', prompt);
+      if (!activeSessionId) {
+        const data = await api('/api/sessions', { method: 'POST', body: JSON.stringify({ prompt }) });
+        activeSessionId = data.session?.id;
+        await loadSessions();
+        return;
+      }
+      await api('/api/sessions/' + encodeURIComponent(activeSessionId) + '/messages', {
+        method: 'POST',
+        body: JSON.stringify({ prompt }),
+      });
+    }
+
+    $('connectBtn').onclick = async () => {
+      authToken = $('token').value.trim();
+      if (!authToken) return;
+      try {
+        await api('/api/health');
+        localStorage.setItem(TOKEN_KEY, authToken);
+        $('login').classList.add('hidden');
+        $('app').classList.remove('hidden');
+        connectEvents();
+        await loadSessions();
+      } catch (e) {
+        $('loginError').textContent = 'Connexion refusée : ' + e.message;
+      }
+    };
+
+    $('sendBtn').onclick = () => void sendMessage();
+    $('prompt').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void sendMessage(); }
+    });
+    $('newSessionBtn').onclick = () => { activeSessionId = null; $('messages').innerHTML = ''; };
+
+    $('permAllow').onclick = () => void respondPermission('allow');
+    $('permAlways').onclick = () => void respondPermission('allow_always');
+    $('permDeny').onclick = () => void respondPermission('deny');
+
+    async function respondPermission(result) {
+      if (!pendingPermission) return;
+      await api('/api/permissions/' + encodeURIComponent(pendingPermission.toolUseId), {
+        method: 'POST',
+        body: JSON.stringify({ result }),
+      });
+      pendingPermission = null;
+      $('permOverlay').classList.remove('open');
+    }
+
+    $('sudoSubmit').onclick = async () => {
+      if (!pendingSudo) return;
+      await api('/api/sudo/' + encodeURIComponent(pendingSudo.toolUseId), {
+        method: 'POST',
+        body: JSON.stringify({ password: $('sudoPassword').value }),
+      });
+      pendingSudo = null;
+      $('sudoOverlay').classList.remove('open');
+    };
+    $('sudoCancel').onclick = async () => {
+      if (!pendingSudo) return;
+      await api('/api/sudo/' + encodeURIComponent(pendingSudo.toolUseId), {
+        method: 'POST',
+        body: JSON.stringify({ password: null }),
+      });
+      pendingSudo = null;
+      $('sudoOverlay').classList.remove('open');
+    };
+
+    if (authToken) $('token').value = authToken;
+  </script>
+</body>
+</html>

@@ -94,6 +94,19 @@
     "updateError": "Échec de la vérification : {{error}}",
     "updateWindowsOnly": "L'installation automatique est disponible uniquement sur Windows. Téléchargez le dernier installateur sur GitHub."
   },
+  "chatLan": {
+    "title": "Chat LAN",
+    "description": "Interface web locale pour discuter avec l’agent depuis votre réseau (WireGuard/LAN). Aucun relais externe.",
+    "enable": "Activer le chat LAN",
+    "port": "Port",
+    "token": "Token d’accès",
+    "regenerateToken": "Régénérer le token",
+    "tokenCopied": "Token copié",
+    "tokenRegenerated": "Nouveau token généré",
+    "urls": "Ouvrir dans le navigateur (réseau local)",
+    "wireguardHint": "Depuis un autre appareil sur WireGuard, utilisez l’adresse IP affichée ci-dessus.",
+    "saved": "Paramètres enregistrés"
+  },
   "memory": {
     "title": "Mémoire",
     "description": "La mémoire centrale globale stocke les préférences stables, tandis que la mémoire d'expérience de l'espace de travail stocke les connaissances multi-tours propres au projet.",

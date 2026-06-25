@@ -8,6 +8,7 @@ import { closeDatabase } from './db/database';
 import { SandboxSync } from './sandbox/sandbox-sync';
 import { shutdownSandbox } from './sandbox/sandbox-adapter';
 import { stopNavServer } from './nav-server';
+import { stopChatLanServer } from './chat-lan-server';
 import { log, logError, closeLogFile } from './utils/logger';
 import { mainAppState } from './main-app-state';
 
@@ -35,6 +36,7 @@ async function cleanupSandboxResources(): Promise<void> {
   mainAppState.isCleaningUp = true;
 
   stopNavServer();
+  await stopChatLanServer();
   mainAppState.skillsManager?.stopStorageMonitoring();
   mainAppState.scheduledTaskManager?.stop();
   mainAppState.tray?.destroy();
@@ -96,6 +98,7 @@ export function registerAppLifecycle(): void {
     if (!mainAppState.isCleaningUp) {
       if (process.env.VITE_DEV_SERVER_URL) {
         stopNavServer();
+        await stopChatLanServer();
         try {
           closeDatabase();
         } catch {

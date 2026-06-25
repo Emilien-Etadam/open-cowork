@@ -23,6 +23,7 @@ import { AgentRuntimeExtensionManager } from './extensions/agent-runtime-extensi
 import { configStore } from './config/config-store';
 import { mt } from './i18n';
 import { startNavServer } from './nav-server';
+import { applyChatLanConfig } from './chat-lan-server';
 import { createScheduledTaskStore } from './schedule/scheduled-task-store';
 import { initAutoUpdater } from './auto-updater';
 import { log, logWarn, logError, setDevLogsEnabled } from './utils/logger';
@@ -185,6 +186,7 @@ app
     initAutoUpdater();
 
     startNavServer(() => mainAppState.mainWindow);
+    await applyChatLanConfig();
 
     const scheduledTaskStore = createScheduledTaskStore(db);
     mainAppState.scheduledTaskManager = createScheduledTaskManager(scheduledTaskStore);

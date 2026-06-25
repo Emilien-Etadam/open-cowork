@@ -360,6 +360,29 @@ contextBridge.exposeInMainWorld('electronAPI', {
     runNow: (id: string): Promise<ScheduleTask | null> => ipcRenderer.invoke('schedule.runNow', id),
   },
 
+  chatLan: {
+    getConfig: (): Promise<{ enabled: boolean; port: number; token: string }> =>
+      ipcRenderer.invoke('chatLan.getConfig'),
+    getStatus: (): Promise<{
+      running: boolean;
+      port: number;
+      enabled: boolean;
+      urls: string[];
+    }> => ipcRenderer.invoke('chatLan.getStatus'),
+    setConfig: (payload: {
+      enabled?: boolean;
+      port?: number;
+    }): Promise<{
+      ok: boolean;
+      status: { running: boolean; port: number; enabled: boolean; urls: string[] };
+      config: { enabled: boolean; port: number; token: string };
+    }> => ipcRenderer.invoke('chatLan.setConfig', payload),
+    regenerateToken: (): Promise<{
+      token: string;
+      status: { running: boolean; port: number; enabled: boolean; urls: string[] };
+    }> => ipcRenderer.invoke('chatLan.regenerateToken'),
+  },
+
   memory: {
     getOverview: (cwd?: string): Promise<MemoryOverview> =>
       ipcRenderer.invoke('memory.getOverview', cwd),
@@ -576,6 +599,24 @@ declare global {
         delete: (id: string) => Promise<{ success: boolean }>;
         toggle: (id: string, enabled: boolean) => Promise<ScheduleTask | null>;
         runNow: (id: string) => Promise<ScheduleTask | null>;
+      };
+      chatLan: {
+        getConfig: () => Promise<{ enabled: boolean; port: number; token: string }>;
+        getStatus: () => Promise<{
+          running: boolean;
+          port: number;
+          enabled: boolean;
+          urls: string[];
+        }>;
+        setConfig: (payload: { enabled?: boolean; port?: number }) => Promise<{
+          ok: boolean;
+          status: { running: boolean; port: number; enabled: boolean; urls: string[] };
+          config: { enabled: boolean; port: number; token: string };
+        }>;
+        regenerateToken: () => Promise<{
+          token: string;
+          status: { running: boolean; port: number; enabled: boolean; urls: string[] };
+        }>;
       };
       memory: {
         getOverview: (cwd?: string) => Promise<MemoryOverview>;
