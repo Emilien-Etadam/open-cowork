@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Opdrachten",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Comprimeer de context in de huidige sessie"
       },

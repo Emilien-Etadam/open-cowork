@@ -4,6 +4,7 @@
  * Windows-only auto-update from GitHub Releases on the EE fork.
  * macOS/Linux fall back to a GitHub release tag check for manual verification.
  */
+import { createRequire } from 'node:module';
 import { app } from 'electron';
 import type { UpdateCheckResult } from '../shared/update-check';
 import { isEeVersionNewer, normalizeVersionTag } from '../shared/app-version';
@@ -26,6 +27,28 @@ type ElectronUpdater = {
   checkForUpdatesAndNotify: () => Promise<unknown>;
   quitAndInstall: () => void;
 };
+
+type ElectronUpdaterModule = {
+  autoUpdater?: ElectronUpdater;
+  default?: { autoUpdater?: ElectronUpdater };
+};
+
+/** Resolve autoUpdater from electron-updater (CJS getter export breaks ESM destructuring). */
+export function resolveAutoUpdaterExport(mod: ElectronUpdaterModule): ElectronUpdater | null {
+  return mod.autoUpdater ?? mod.default?.autoUpdater ?? null;
+}
+
+const nodeRequire = createRequire(import.meta.url);
+
+function loadElectronUpdater(): ElectronUpdater {
+  // electron-updater is CJS; dynamic import() leaves `autoUpdater` on `default` only.
+  const mod = nodeRequire('electron-updater') as ElectronUpdaterModule;
+  const instance = resolveAutoUpdaterExport(mod);
+  if (!instance) {
+    throw new Error('electron-updater autoUpdater export unavailable');
+  }
+  return instance;
+}
 
 let updater: ElectronUpdater | null = null;
 let updaterReady = false;
@@ -104,8 +127,8 @@ async function ensureUpdaterReady(): Promise<ElectronUpdater | null> {
     return updater;
   }
 
-  const { autoUpdater } = await import('electron-updater');
-  updater = autoUpdater as ElectronUpdater;
+  const instance = loadElectronUpdater();
+  updater = instance;
   updater.allowPrerelease = true;
   updater.autoDownload = true;
   updater.setFeedURL({
@@ -170,14 +193,21 @@ export async function checkForAppUpdates(): Promise<UpdateCheckResult> {
 
   try {
     if (canUseElectronUpdater()) {
-      const instance = await ensureUpdaterReady();
-      if (instance) {
-        const result = await instance.checkForUpdates();
-        const latestVersion =
-          result?.updateInfo?.version ?? (await fetchLatestGitHubReleaseVersion());
-        const checkResult = buildResultFromVersions(currentVersion, latestVersion);
-        notifyRenderer(checkResult);
-        return checkResult;
+      try {
+        const instance = await ensureUpdaterReady();
+        if (instance) {
+          const result = await instance.checkForUpdates();
+          const latestVersion =
+            result?.updateInfo?.version ?? (await fetchLatestGitHubReleaseVersion());
+          const checkResult = buildResultFromVersions(currentVersion, latestVersion);
+          notifyRenderer(checkResult);
+          return checkResult;
+        }
+      } catch (electronUpdaterError) {
+        logError(
+          '[AutoUpdater] electron-updater unavailable, falling back to GitHub API:',
+          electronUpdaterError
+        );
       }
     }
 

@@ -5,7 +5,8 @@ export type BuiltinSlashCommandId = 'compact' | 'handoff';
 export type ParsedSlashCommand =
   | { kind: 'compact'; instructions?: string }
   | { kind: 'handoff'; instructions?: string }
-  | { kind: 'plugin'; command: string; instructions?: string }
+  | { kind: 'plugin'; command: string; name: string; instructions?: string }
+  | { kind: 'unknown'; token: string }
   | { kind: 'message' };
 
 export interface BuiltinSlashCommandDefinition {
@@ -150,6 +151,7 @@ function matchPluginSlashCommand(
       return {
         kind: 'plugin',
         command: definition.command,
+        name: definition.name,
         instructions: instructions || undefined,
       };
     }
@@ -190,7 +192,46 @@ export function parseSlashCommand(
     return pluginMatch;
   }
 
+  const unknownToken = extractSlashCommandToken(trimmed);
+  if (unknownToken) {
+    return { kind: 'unknown', token: unknownToken };
+  }
+
   return { kind: 'message' };
+}
+
+function extractSlashCommandToken(trimmed: string): string | null {
+  const firstLine = trimmed.split('\n')[0] ?? '';
+  const match = firstLine.match(/^\/(\S+)/);
+  return match?.[1] ?? null;
+}
+
+/**
+ * Rewrite namespaced plugin commands (/pluginId:name) to the template name (/name)
+ * expected by the Pi SDK prompt-template expander.
+ */
+export function normalizePluginSlashPromptForExpansion(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): string {
+  const parsed = parseSlashCommand(input, pluginCommands);
+  if (parsed.kind !== 'plugin') {
+    return input;
+  }
+
+  const suffix = parsed.instructions ? ` ${parsed.instructions}` : '';
+  if (parsed.command.toLowerCase() === `/${parsed.name.toLowerCase()}`) {
+    return input.trim();
+  }
+
+  return `/${parsed.name}${suffix}`;
+}
+
+export function isUnknownSlashCommand(
+  input: string,
+  pluginCommands: readonly PluginSlashCommandInfo[] = []
+): boolean {
+  return parseSlashCommand(input, pluginCommands).kind === 'unknown';
 }
 
 export function isCompactSlashCommand(

@@ -667,6 +667,7 @@
     },
     "slashCommands": {
       "menuLabel": "Befehle",
+      "unknownCommand": "Unknown slash command: {{command}}",
       "compact": {
         "description": "Kontext in der aktuellen Sitzung komprimieren"
       },
