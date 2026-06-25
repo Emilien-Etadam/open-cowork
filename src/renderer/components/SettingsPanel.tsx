@@ -11,6 +11,7 @@ import {
   ChevronRight,
   BrainCircuit,
 } from 'lucide-react';
+import { formatEeDisplayVersion } from '../../shared/app-version';
 import { useTranslation } from 'react-i18next';
 import { useWindowSize } from '../hooks/useWindowSize';
 import { RemoteControlPanel } from './RemoteControlPanel';
@@ -219,7 +220,7 @@ export function SettingsPanel({ onClose, initialTab = 'api' }: SettingsPanelProp
           </button>
           {!compactSidebar && (
             <p className="text-[10px] text-text-muted text-center mt-2 select-text">
-              v{appVersion}
+              {appVersion ? formatEeDisplayVersion(appVersion) : ''}
             </p>
           )}
         </div>
