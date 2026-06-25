@@ -23,11 +23,18 @@
 
 ### EE fork (`3.3.1-EE1` → `3.3.1-EE4.91`)
 
-- **EE4.91**: Hotfix vérification des mises à jour (`allowPrerelease` / import electron-updater)
-- **EE4.9**: Release stable — mises à jour, fix chat/slash, CI release débloquée
-- **EE4.8**: Bouton vérification mises à jour, fix blocage chat « Traitement… », commandes slash plugin alignées
-- **EE4.7**: Menu slash fond opaque (fix transparence sur l'historique)
-- **EE4.6**: Auto-update Windows, commandes plugin dans le menu `/`
+- **EE4.91** (release publiée, Latest) :
+  - Hotfix bouton « Vérifier les mises à jour » (`Cannot set properties of undefined (setting 'allowPrerelease')`)
+  - Chargement `electron-updater` via `createRequire` (interop CJS — `autoUpdater` absent en `import()` ESM)
+  - Repli API GitHub Releases si `electron-updater` indisponible (macOS/Linux + secours Windows)
+  - `allowPrerelease = false` pour ignorer les releases draft/prerelease sur le feed GitHub
+- **EE4.9** :
+  - Fix blocage chat infini « Traitement… » (timeout `preparePiSessionRun` / `resourceLoader.reload`, cycle `activeTurn`, reset sessions `running` orphelines)
+  - Commandes slash : rejet des inconnues, normalisation `/plugin:cmd` → `/cmd`
+  - CI release débloquée (test `session-manager-crud`)
+- **EE4.8** : bouton vérification mises à jour, mêmes correctifs chat/slash (supersédé par EE4.9)
+- **EE4.7** : menu slash fond opaque (fix transparence sur l'historique)
+- **EE4.6** : auto-update Windows, commandes plugin dans le menu `/`
 
 - **EE4**: Slash command autocomplete, `README_en.md`, logo, first `agent-runner` module split
 - **EE4.1**: Incremental WSL/Lima sandbox sync, `config-store` split, session handoff + `/handsoff`, unified Windows branding, 30 `agent-runner` unit tests
@@ -48,13 +55,13 @@
 
 ## 📦 EE releases
 
-| Tag              | Date       | Highlights                                                  |
-| ---------------- | ---------- | ----------------------------------------------------------- |
-| `v3.3.1-EE4.91`  | 2026-06-25 | Hotfix bouton vérification mises à jour                     |
-| `v3.3.1-EE4.9`   | 2026-06-25 | Release EE4.9 — fix chat, slash plugin, CI release           |
-| `v3.3.1-EE4.8` | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin           |
-| `v3.3.1-EE4.7` | 2026-06-25 | Fix fond opaque menu slash                                  |
-| `v3.3.1-EE4.6` | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`              |
+| Tag              | Date       | Highlights                                                                 |
+| ---------------- | ---------- | -------------------------------------------------------------------------- |
+| `v3.3.1-EE4.91`  | 2026-06-25 | **Latest** — hotfix vérification mises à jour, `createRequire`, GitHub API   |
+| `v3.3.1-EE4.9`   | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                         |
+| `v3.3.1-EE4.8`   | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft)   |
+| `v3.3.1-EE4.7`   | 2026-06-25 | Fix fond opaque menu slash                                                 |
+| `v3.3.1-EE4.6`   | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`                             |
 | `v3.3.1-EE4.5` | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests |
 | `v3.3.1-EE4.4` | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests     |
 | `v3.3.1-EE4.3` | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                     |
@@ -63,11 +70,27 @@
 | `v3.3.1-EE4`   | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)            |
 | `v3.3.1-EE3.x` | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration     |
 
-Current stable fork baseline: **`3.3.1-EE4.91`** — see [CHANGELOG.md](CHANGELOG.md).
+Current stable fork baseline: **`3.3.1-EE4.91`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.91) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 
-- **Post-EE4.5 validation**: Windows smoke test (sandbox, GUI MCP, handoff, encrypted config, marketplace install)
+### PRs ouvertes (CI verte, en attente de revue / merge)
+
+| PR   | Branche                         | Description                                              | CI    |
+| ---- | ------------------------------- | -------------------------------------------------------- | ----- |
+| #44  | `cursor/lan-chat-webui-2d3f`    | UI web chat locale avec permissions (LAN / WireGuard)    | ✅    |
+| #42  | `cursor/local-providers-only-2d3f` | Deux fournisseurs seulement (OpenAI + Anthropic compat.) | ✅    |
+| #41  | `cursor/remove-remote-external-2d3f` | Suppression du module contrôle à distance             | ✅    |
+| #40  | `cursor/remove-feishu-remote-2d3f`   | Suppression intégration Feishu (Slack only)           | ✅    |
+| #36  | `cursor/fix-auto-update-ee-1345`  | Auto-update Windows — drafts + bouton (supersédée par main, à fermer ou merger) | ✅ |
+
+> Les PR #40–#42 ont été rebasées sur `main` (fix test `session-manager-crud`, correctifs EE4.9+).
+
+### Validation post-release
+
+- Smoke test EE4.91 : bouton « Vérifier les mises à jour » (Windows + macOS)
+- Auto-update Windows depuis `latest.yml` GitHub Releases
+- Régression chat : envoi message, commandes slash plugin, pas de blocage « Traitement… »
 
 ## 📋 Planned
 
@@ -97,5 +120,5 @@ Current stable fork baseline: **`3.3.1-EE4.91`** — see [CHANGELOG.md](CHANGELO
 
 ---
 
-_Last updated: 2026-06-24 (phase 4 god-file cleanup)_  
+_Last updated: 2026-06-25 (release EE4.91, PRs rebasées, CI verte)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._
