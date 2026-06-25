@@ -1,6 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
 import type { Message, Session } from '../../renderer/types';
-import { mt } from '../i18n';
 import { log, logCtx, logWarn } from '../utils/logger';
 import { buildTerminalErrorMessage } from './agent-runner-message-end';
 import { LoopGuard, type LoopGuardDecision } from './agent-runner-loop-guard';
@@ -30,6 +29,7 @@ import {
   getLastInputTokenCount,
   shouldBlockForContextOverflow,
 } from './context-budget';
+import { runProactiveCompaction } from './agent-runner-proactive-compaction';
 
 export interface StreamHandlingResult {
   abortedByTimeout: boolean;
@@ -139,9 +139,6 @@ export async function runPromptWithStreamHandling({
       contextOverflowHandled: true,
     };
   }
-  if (contextWouldOverflow && compactionEnabled) {
-    ctx.renderer.sendSessionNotice(session.id, mt('noticeCompactionStart'), 'info');
-  }
 
   const eventDeps = {
     ctx,
@@ -213,6 +210,9 @@ export async function runPromptWithStreamHandling({
 
   try {
     resetActivityTimeout();
+    if (compactionEnabled && contextWouldOverflow) {
+      await runProactiveCompaction(piSession, ctx, session.id);
+    }
     if (provider === 'ollama') {
       log(
         '[ClaudeAgentRunner] Starting Ollama prompt',

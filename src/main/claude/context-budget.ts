@@ -59,7 +59,10 @@ export function isContextOverflowError(errorText: string): boolean {
     lower.includes('input_tokens') ||
     lower.includes('reduce the length of the input prompt') ||
     lower.includes('too many tokens') ||
-    lower.includes('max context')
+    lower.includes('max context') ||
+    lower.includes('context overflow') ||
+    lower.includes('conversation context is full') ||
+    lower.includes('contexte de la conversation est plein')
   );
 }
 

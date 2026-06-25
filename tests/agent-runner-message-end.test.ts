@@ -246,6 +246,15 @@ describe('buildTerminalErrorMessage', () => {
     const result = buildTerminalErrorMessage('connection reset');
     expect(result).toContain('Agent 正在自动重试');
   });
+
+  it('uses the compaction hint for context overflow errors', () => {
+    const result = buildTerminalErrorMessage(
+      'Le contexte de la conversation est plein. (Limite : 131072 tokens, utilisé : 114689 input + 16384 output)'
+    );
+    expect(result).toContain('/compact');
+    expect(result).not.toContain('réessaie automatiquement');
+    expect(result).not.toContain('自动重试');
+  });
 });
 
 describe('buildTerminalErrorEmissionDetails', () => {

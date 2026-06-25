@@ -21,6 +21,7 @@ export type BackendMessageKey =
   | 'errNetworkInterrupted'
   | 'errCheckConfigHint'
   | 'errRetryingHint'
+  | 'errContextCompactionHint'
   | 'errConfigRequired'
   | 'noticeCompactionStart'
   | 'noticeCompactionFailed'
@@ -70,6 +71,7 @@ export const backendCatalog: Record<string, BackendMessages> = {
     errNetworkInterrupted: '网络连接中断（{{error}}），可能是代理/网关不稳定，SDK 将自动重试。',
     errCheckConfigHint: '_请检查配置后重试。_',
     errRetryingHint: '_Agent 正在自动重试，请稍候..._',
+    errContextCompactionHint: '_上下文已满。正在自动压缩，或使用 /compact 释放空间。_',
     errConfigRequired: '当前方案未配置可用凭证，请先在 API 设置中完成配置',
     noticeCompactionStart: '正在压缩对话上下文以释放空间...',
     noticeCompactionFailed: '上下文压缩失败：{{error}}',
@@ -101,6 +103,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'The network connection was interrupted ({{error}}). The proxy/gateway may be unstable. The SDK will retry automatically.',
     errCheckConfigHint: '_Please check your configuration and retry._',
     errRetryingHint: '_The agent is retrying automatically, please wait..._',
+    errContextCompactionHint:
+      '_Context is full. Compacting automatically, or use /compact to free space._',
     errConfigRequired:
       'The current configuration set has no usable credentials. Please complete the setup in API Settings first.',
     noticeCompactionStart: 'Compacting conversation context to free space...',
@@ -133,6 +137,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Se interrumpió la conexión de red ({{error}}). Puede que el proxy o la pasarela sean inestables. El SDK reintentará automáticamente.',
     errCheckConfigHint: '_Comprueba tu configuración y vuelve a intentarlo._',
     errRetryingHint: '_El agente está reintentando automáticamente, espera un momento..._',
+    errContextCompactionHint:
+      '_El contexto está lleno. Comprimiendo automáticamente, o usa /compact para liberar espacio._',
     errConfigRequired:
       'El conjunto de configuración actual no tiene credenciales utilizables. Completa primero la configuración en los Ajustes de la API.',
     noticeCompactionStart: 'Compactando el contexto de la conversación para liberar espacio...',
@@ -165,6 +171,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'La connexion réseau a été interrompue ({{error}}). Le proxy ou la passerelle sont peut-être instables. Le SDK réessaiera automatiquement.',
     errCheckConfigHint: '_Veuillez vérifier votre configuration et réessayer._',
     errRetryingHint: "_L'agent réessaie automatiquement, veuillez patienter..._",
+    errContextCompactionHint:
+      '_Contexte plein. Compression automatique en cours, ou utilisez /compact pour libérer de l’espace._',
     errConfigRequired:
       "Le jeu de configuration actuel ne contient aucun identifiant utilisable. Veuillez d'abord finaliser la configuration dans les Paramètres de l'API.",
     noticeCompactionStart: 'Compaction du contexte de la conversation en cours...',
@@ -197,6 +205,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Die Netzwerkverbindung wurde unterbrochen ({{error}}). Möglicherweise ist der Proxy bzw. das Gateway instabil. Das SDK wiederholt den Vorgang automatisch.',
     errCheckConfigHint: '_Bitte überprüfen Sie Ihre Konfiguration und versuchen Sie es erneut._',
     errRetryingHint: '_Der Agent wiederholt den Vorgang automatisch, bitte warten ..._',
+    errContextCompactionHint:
+      '_Kontext voll. Automatische Komprimierung läuft, oder verwenden Sie /compact, um Platz zu schaffen._',
     errConfigRequired:
       'Der aktuelle Konfigurationssatz enthält keine verwendbaren Anmeldedaten. Bitte schließen Sie zunächst die Einrichtung in den API-Einstellungen ab.',
     noticeCompactionStart: 'Gesprächskontext wird komprimiert, um Speicher freizugeben...',
@@ -229,6 +239,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'La connessione di rete si è interrotta ({{error}}). Il proxy/gateway potrebbe essere instabile. L’SDK riproverà automaticamente.',
     errCheckConfigHint: '_Controlla la configurazione e riprova._',
     errRetryingHint: "_L'agente sta riprovando automaticamente, attendi..._",
+    errContextCompactionHint:
+      '_Contesto pieno. Compressione automatica in corso, oppure usa /compact per liberare spazio._',
     errConfigRequired:
       'Il set di configurazione attuale non ha credenziali utilizzabili. Completa prima la configurazione in Impostazioni API.',
     noticeCompactionStart: 'Compressione del contesto della conversazione in corso...',
@@ -262,6 +274,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       "Мережеве з'єднання було перервано ({{error}}). Можливо, проксі чи шлюз працює нестабільно. SDK повторить спробу автоматично.",
     errCheckConfigHint: '_Перевірте конфігурацію та повторіть спробу._',
     errRetryingHint: '_Агент повторює спробу автоматично, зачекайте..._',
+    errContextCompactionHint:
+      '_Контекст заповнений. Триває автоматичне стиснення або скористайтеся /compact._',
     errConfigRequired:
       'Поточний набір конфігурації не має придатних облікових даних. Спершу завершіть налаштування в розділі параметрів API.',
     noticeCompactionStart: 'Стискаємо контекст розмови, щоб звільнити місце...',
@@ -294,6 +308,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Połączenie sieciowe zostało przerwane ({{error}}). Serwer proxy/brama mogą być niestabilne. SDK ponowi próbę automatycznie.',
     errCheckConfigHint: '_Sprawdź konfigurację i spróbuj ponownie._',
     errRetryingHint: '_Agent automatycznie ponawia próbę, proszę czekać..._',
+    errContextCompactionHint:
+      '_Kontekst jest pełny. Trwa automatyczna kompresja lub użyj /compact._',
     errConfigRequired:
       'Bieżący zestaw konfiguracji nie zawiera użytecznych poświadczeń. Najpierw dokończ konfigurację w ustawieniach API.',
     noticeCompactionStart: 'Kompresowanie kontekstu rozmowy w celu zwolnienia miejsca...',
@@ -326,6 +342,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Nätverksanslutningen avbröts ({{error}}). Proxyn/gatewayen kan vara instabil. SDK gör automatiskt ett nytt försök.',
     errCheckConfigHint: '_Kontrollera din konfiguration och försök igen._',
     errRetryingHint: '_Agenten försöker igen automatiskt, vänta..._',
+    errContextCompactionHint:
+      '_Kontexten är full. Komprimerar automatiskt, eller använd /compact för att frigöra utrymme._',
     errConfigRequired:
       'Den aktuella konfigurationsuppsättningen saknar användbara autentiseringsuppgifter. Slutför först konfigurationen i API-inställningarna.',
     noticeCompactionStart: 'Komprimerar konversationskontexten för att frigöra utrymme...',
@@ -358,6 +376,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Nettverkstilkoblingen ble avbrutt ({{error}}). Proxyen/gatewayen kan være ustabil. SDK prøver automatisk på nytt.',
     errCheckConfigHint: '_Sjekk konfigurasjonen og prøv igjen._',
     errRetryingHint: '_Agenten prøver automatisk på nytt, vent litt …_',
+    errContextCompactionHint:
+      '_Konteksten er full. Komprimerer automatisk, eller bruk /compact for å frigjøre plass._',
     errConfigRequired:
       'Gjeldende konfigurasjonssett har ingen brukbare legitimasjoner. Fullfør oppsettet i API-innstillinger først.',
     noticeCompactionStart: 'Komprimerer samtalekonteksten for å frigjøre plass...',
@@ -390,6 +410,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'De netwerkverbinding werd onderbroken ({{error}}). De proxy/gateway is mogelijk instabiel. De SDK probeert het automatisch opnieuw.',
     errCheckConfigHint: '_Controleer je configuratie en probeer het opnieuw._',
     errRetryingHint: '_De agent probeert het automatisch opnieuw, even geduld..._',
+    errContextCompactionHint:
+      '_Context is vol. Automatisch comprimeren, of gebruik /compact om ruimte vrij te maken._',
     errConfigRequired:
       'De huidige configuratieset bevat geen bruikbare inloggegevens. Voltooi eerst de installatie in de API-instellingen.',
     noticeCompactionStart: 'Gesprekscontext wordt gecomprimeerd om ruimte vrij te maken...',
@@ -422,6 +444,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
       'Conexiunea la rețea a fost întreruptă ({{error}}). Este posibil ca proxy-ul/gateway-ul să fie instabil. SDK va reîncerca automat.',
     errCheckConfigHint: '_Verifică configurația și reîncearcă._',
     errRetryingHint: '_Agentul reîncearcă automat, te rugăm să aștepți..._',
+    errContextCompactionHint:
+      '_Contextul este plin. Se compactează automat, sau folosește /compact pentru a elibera spațiu._',
     errConfigRequired:
       'Setul de configurație curent nu are credențiale utilizabile. Finalizează mai întâi configurarea în Setări API.',
     noticeCompactionStart: 'Se compactează contextul conversației pentru a elibera spațiu...',
