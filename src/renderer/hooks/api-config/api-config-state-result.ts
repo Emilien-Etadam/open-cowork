@@ -41,6 +41,7 @@ export function buildApiConfigStateResult({
   isDiagnosing,
   isDiscoveringLocalOllama,
   isLoadingConfig,
+  isLocalOpenAiMode,
   isMutatingConfigSet,
   isRefreshingModels,
   isSaving,
@@ -71,13 +72,12 @@ export function buildApiConfigStateResult({
   setMaxTokens,
   setModel,
   setSuccessMessage,
-  shouldShowOllamaManualModelToggle,
+  shouldShowLocalModelToggle,
   successMessage,
   testResult,
   toggleCustomModel,
   useCustomModel,
   changeProvider,
-  changeProtocol,
   cancelPendingConfigSetAction,
   discoverLocalOllama,
 }: {
@@ -118,6 +118,7 @@ export function buildApiConfigStateResult({
   isDiagnosing: boolean;
   isDiscoveringLocalOllama: boolean;
   isLoadingConfig: boolean;
+  isLocalOpenAiMode: boolean;
   isMutatingConfigSet: boolean;
   isRefreshingModels: boolean;
   isSaving: boolean;
@@ -148,13 +149,12 @@ export function buildApiConfigStateResult({
   setMaxTokens: (value: string) => void;
   setModel: (value: string) => void;
   setSuccessMessage: (text: string) => void;
-  shouldShowOllamaManualModelToggle: boolean;
+  shouldShowLocalModelToggle: boolean;
   successMessage: string;
   testResult: ApiTestResult | null;
   toggleCustomModel: () => void;
   useCustomModel: boolean;
   changeProvider: (provider: ProviderType) => void;
-  changeProtocol: (protocol: CustomProtocolType) => void;
   cancelPendingConfigSetAction: () => void;
   discoverLocalOllama: (options?: { silent?: boolean }) => Promise<unknown>;
 }) {
@@ -188,8 +188,12 @@ export function buildApiConfigStateResult({
     isDiagnosing,
     handleDiagnose,
     handleDeepDiagnose,
-    isOllamaMode: provider === 'ollama',
-    shouldShowOllamaManualModelToggle,
+    isLocalOpenAiMode,
+    /** @deprecated Use isLocalOpenAiMode */
+    isOllamaMode: isLocalOpenAiMode,
+    shouldShowLocalModelToggle,
+    /** @deprecated Use shouldShowLocalModelToggle */
+    shouldShowOllamaManualModelToggle: shouldShowLocalModelToggle,
     requiresApiKey,
     detectedProviderSetup,
     protocolGuidanceText,
@@ -217,7 +221,6 @@ export function buildApiConfigStateResult({
     setEnableThinking,
     applyCommonProviderSetup,
     changeProvider,
-    changeProtocol,
     requestConfigSetSwitch,
     requestCreateBlankConfigSet,
     cancelPendingConfigSetAction,

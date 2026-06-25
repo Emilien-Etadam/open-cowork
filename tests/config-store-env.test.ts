@@ -43,43 +43,25 @@ describe('ConfigStore applyToEnv', () => {
     COWORK_WORKDIR: process.env.COWORK_WORKDIR,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     ANTHROPIC_BASE_URL: process.env.ANTHROPIC_BASE_URL,
-    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-    GEMINI_BASE_URL: process.env.GEMINI_BASE_URL,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_BASE_URL: process.env.OPENAI_BASE_URL,
   };
 
   beforeEach(() => {
     delete process.env.COWORK_WORKDIR;
     delete process.env.ANTHROPIC_API_KEY;
     delete process.env.ANTHROPIC_BASE_URL;
-    delete process.env.GEMINI_API_KEY;
-    delete process.env.GEMINI_BASE_URL;
+    delete process.env.OPENAI_API_KEY;
+    delete process.env.OPENAI_BASE_URL;
   });
 
   afterEach(() => {
-    if (originalEnv.COWORK_WORKDIR === undefined) {
-      delete process.env.COWORK_WORKDIR;
-    } else {
-      process.env.COWORK_WORKDIR = originalEnv.COWORK_WORKDIR;
-    }
-    if (originalEnv.ANTHROPIC_API_KEY === undefined) {
-      delete process.env.ANTHROPIC_API_KEY;
-    } else {
-      process.env.ANTHROPIC_API_KEY = originalEnv.ANTHROPIC_API_KEY;
-    }
-    if (originalEnv.ANTHROPIC_BASE_URL === undefined) {
-      delete process.env.ANTHROPIC_BASE_URL;
-    } else {
-      process.env.ANTHROPIC_BASE_URL = originalEnv.ANTHROPIC_BASE_URL;
-    }
-    if (originalEnv.GEMINI_API_KEY === undefined) {
-      delete process.env.GEMINI_API_KEY;
-    } else {
-      process.env.GEMINI_API_KEY = originalEnv.GEMINI_API_KEY;
-    }
-    if (originalEnv.GEMINI_BASE_URL === undefined) {
-      delete process.env.GEMINI_BASE_URL;
-    } else {
-      process.env.GEMINI_BASE_URL = originalEnv.GEMINI_BASE_URL;
+    for (const [key, value] of Object.entries(originalEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
     }
   });
 
@@ -103,26 +85,26 @@ describe('ConfigStore applyToEnv', () => {
     expect(process.env.COWORK_WORKDIR).toBeUndefined();
   });
 
-  it('exports loopback placeholder key for custom anthropic profile when api key is empty', () => {
+  it('exports loopback placeholder key for anthropic profile when api key is empty', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'custom',
+      provider: 'anthropic',
       customProtocol: 'anthropic',
       apiKey: '',
       baseUrl: 'http://127.0.0.1:8082',
-      model: 'openai/gpt-4.1-mini',
+      model: 'claude-sonnet-4-6',
     });
     store.applyToEnv();
 
     expect(process.env.ANTHROPIC_API_KEY).toBe('sk-ant-local-proxy');
   });
 
-  it('exports loopback placeholder key for custom openai profile when api key is empty', () => {
+  it('exports loopback placeholder key for openai profile when api key is empty', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
       apiKey: '',
       baseUrl: 'http://127.0.0.1:8082/v1',
@@ -130,22 +112,22 @@ describe('ConfigStore applyToEnv', () => {
     });
     store.applyToEnv();
 
-    expect(process.env.OPENAI_API_KEY).toBe('sk-openai-local-proxy');
+    expect(process.env.OPENAI_API_KEY).toBe('sk-ollama-local-proxy');
     expect(process.env.OPENAI_BASE_URL).toBe('http://127.0.0.1:8082/v1');
   });
 
-  it('exports ollama placeholder key and normalized base url when api key is empty', () => {
+  it('exports openai credentials for remote compatible endpoints when api key is provided', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'ollama',
-      apiKey: '',
+      provider: 'openai',
+      apiKey: 'sk-remote',
       baseUrl: 'https://ollama.example.internal/proxy/api',
       model: 'qwen3.5:0.8b',
     });
     store.applyToEnv();
 
-    expect(process.env.OPENAI_API_KEY).toBe('sk-ollama-local-proxy');
+    expect(process.env.OPENAI_API_KEY).toBe('sk-remote');
     expect(process.env.OPENAI_BASE_URL).toBe('https://ollama.example.internal/proxy/v1');
     expect(process.env.OPENAI_MODEL).toBe('qwen3.5:0.8b');
   });
@@ -154,31 +136,31 @@ describe('ConfigStore applyToEnv', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'custom',
+      provider: 'anthropic',
       customProtocol: 'anthropic',
       apiKey: 'sk-test',
       baseUrl: 'https://api.duckcoding.ai/v1',
-      model: 'gpt-5.3-codex',
+      model: 'claude-sonnet-4-6',
     });
     store.applyToEnv();
 
     expect(process.env.ANTHROPIC_BASE_URL).toBe('https://api.duckcoding.ai');
   });
 
-  it('exports gemini credentials without leaking anthropic auth env', () => {
+  it('exports openai credentials without leaking anthropic auth env', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'gemini',
-      customProtocol: 'gemini',
-      apiKey: 'AIza-test',
-      baseUrl: 'https://generativelanguage.googleapis.com/',
-      model: 'gemini/gemini-2.5-flash',
+      provider: 'openai',
+      customProtocol: 'openai',
+      apiKey: 'sk-openai-test',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4',
     });
     store.applyToEnv();
 
-    expect(process.env.GEMINI_API_KEY).toBe('AIza-test');
-    expect(process.env.GEMINI_BASE_URL).toBe('https://generativelanguage.googleapis.com');
+    expect(process.env.OPENAI_API_KEY).toBe('sk-openai-test');
+    expect(process.env.OPENAI_BASE_URL).toBe('https://api.openai.com/v1');
     expect(process.env.ANTHROPIC_AUTH_TOKEN).toBeUndefined();
   });
 });

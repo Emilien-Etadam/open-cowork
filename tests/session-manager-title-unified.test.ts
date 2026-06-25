@@ -119,13 +119,13 @@ describe('SessionManager unified title generation', () => {
     );
   });
 
-  it('routes gemini title generation through Claude SDK even when unified mode flag is disabled', async () => {
+  it('routes openai title generation through Claude SDK even when unified mode flag is disabled', async () => {
     process.env.COWORK_DISABLE_CLAUDE_UNIFIED = '1';
-    configStore.set('provider', 'gemini');
-    configStore.set('customProtocol', 'gemini');
-    configStore.set('apiKey', 'AIza-test');
-    configStore.set('baseUrl', 'https://generativelanguage.googleapis.com');
-    configStore.set('model', 'gemini/gemini-2.5-flash');
+    configStore.set('provider', 'openai');
+    configStore.set('customProtocol', 'openai');
+    configStore.set('apiKey', 'sk-test');
+    configStore.set('baseUrl', 'https://api.openai.com/v1');
+    configStore.set('model', 'gpt-5.4');
 
     const proto = SessionManager.prototype as unknown as {
       generateTitleWithConfig(titlePrompt: string): Promise<string | null>;
@@ -138,9 +138,9 @@ describe('SessionManager unified title generation', () => {
     expect(mockedGenerateTitleWithClaudeSdk).toHaveBeenCalledWith(
       'Please generate title',
       expect.objectContaining({
-        provider: 'gemini',
-        customProtocol: 'gemini',
-        model: 'gemini-2.5-flash',
+        provider: 'openai',
+        customProtocol: 'openai',
+        model: 'gpt-5.4',
       })
     );
   });

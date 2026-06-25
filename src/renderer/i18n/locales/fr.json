@@ -317,7 +317,15 @@
         },
         "ollama": {
           "name": "Ollama",
-          "note": "Préférez l'onglet fournisseur Ollama dédié pour la découverte et l'actualisation des modèles locaux."
+          "note": "Configurez via l'onglet compatible OpenAI avec une URL locale telle que http://localhost:11434/v1."
+        },
+        "vllm": {
+          "name": "vLLM",
+          "note": "Configurez via l'onglet compatible OpenAI avec une URL locale telle que http://localhost:8000/v1."
+        },
+        "genericAnthropic": {
+          "name": "Compatible Anthropic générique",
+          "note": "Utilisez ceci pour les passerelles locales ou personnalisées qui exposent l'API Messages Anthropic."
         },
         "gemini": {
           "name": "Point de terminaison Gemini personnalisé",

@@ -11,12 +11,12 @@ import { MemoryLLMClient } from '../../main/memory/memory-llm-client';
 
 function makeConfig(timeoutMs: number): AppConfig {
   return {
-    provider: 'custom',
+    provider: 'openai',
     customProtocol: 'openai',
     apiKey: 'test-key',
     baseUrl: 'https://example.test/v1',
     model: 'test-model',
-    activeProfileKey: 'custom:openai',
+    activeProfileKey: 'openai',
     profiles: {},
     activeConfigSetId: 'default',
     configSets: [],

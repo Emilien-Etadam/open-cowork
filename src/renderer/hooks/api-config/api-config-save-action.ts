@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 import type { Dispatch } from 'react';
 import type { TFunction } from 'i18next';
 import type {
@@ -81,7 +82,7 @@ export function useApiConfigSaveAction({
         showErrorKey('api.selectModelRequired');
         return false;
       }
-      if (provider === 'ollama' && !baseUrl.trim()) {
+      if (provider === 'openai' && isLoopbackBaseUrl(baseUrl) && !baseUrl.trim()) {
         showErrorKey('api.testError.missing_base_url');
         return false;
       }

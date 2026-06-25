@@ -23,14 +23,14 @@ describe('api config set helpers', () => {
           id: 'default',
           name: '\u9ED8\u8BA4\u65B9\u6848',
           isSystem: true,
-          provider: 'openrouter',
+          provider: 'anthropic',
           customProtocol: 'anthropic',
-          activeProfileKey: 'openrouter',
+          activeProfileKey: 'anthropic',
           profiles: {
-            openrouter: {
-              apiKey: 'sk-or',
-              baseUrl: 'https://openrouter.ai/api',
-              model: 'anthropic/claude-sonnet-4.5',
+            anthropic: {
+              apiKey: 'sk-ant',
+              baseUrl: '',
+              model: 'claude-sonnet-4-6',
             },
           },
           enableThinking: false,
@@ -72,17 +72,17 @@ describe('api config set helpers', () => {
 
   it('builds fallback default set when configSets are missing', () => {
     const config = {
-      provider: 'openrouter',
-      customProtocol: 'anthropic',
-      activeProfileKey: 'openrouter',
-      apiKey: 'sk-or',
-      baseUrl: 'https://openrouter.ai/api',
-      model: 'anthropic/claude-sonnet-4.5',
+      provider: 'openai',
+      customProtocol: 'openai',
+      activeProfileKey: 'openai',
+      apiKey: 'sk-openai',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4',
       profiles: {
-        openrouter: {
-          apiKey: 'sk-or',
-          baseUrl: 'https://openrouter.ai/api',
-          model: 'anthropic/claude-sonnet-4.5',
+        openai: {
+          apiKey: 'sk-openai',
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'gpt-5.4',
         },
       },
       isConfigured: true,
@@ -91,13 +91,21 @@ describe('api config set helpers', () => {
     const sets = buildApiConfigSets(config, FALLBACK_PROVIDER_PRESETS);
     expect(sets.length).toBe(1);
     expect(sets[0].isSystem).toBe(true);
-    expect(sets[0].provider).toBe('openrouter');
+    expect(sets[0].provider).toBe('openai');
   });
 
   it('generates stable draft signature and detects material changes', () => {
     const snapshot = buildApiConfigSnapshot(undefined, FALLBACK_PROVIDER_PRESETS);
-    const signatureA = buildApiConfigDraftSignature(snapshot.activeProfileKey, snapshot.profiles, snapshot.enableThinking);
-    const signatureB = buildApiConfigDraftSignature(snapshot.activeProfileKey, snapshot.profiles, snapshot.enableThinking);
+    const signatureA = buildApiConfigDraftSignature(
+      snapshot.activeProfileKey,
+      snapshot.profiles,
+      snapshot.enableThinking
+    );
+    const signatureB = buildApiConfigDraftSignature(
+      snapshot.activeProfileKey,
+      snapshot.profiles,
+      snapshot.enableThinking
+    );
     expect(signatureA).toBe(signatureB);
 
     const changedProfiles = {
@@ -107,7 +115,11 @@ describe('api config set helpers', () => {
         apiKey: 'sk-new',
       },
     };
-    const signatureC = buildApiConfigDraftSignature(snapshot.activeProfileKey, changedProfiles, snapshot.enableThinking);
+    const signatureC = buildApiConfigDraftSignature(
+      snapshot.activeProfileKey,
+      changedProfiles,
+      snapshot.enableThinking
+    );
     expect(signatureC).not.toBe(signatureA);
   });
 
@@ -125,9 +137,9 @@ describe('api config set helpers', () => {
           id: 'default',
           name: '默认方案',
           isSystem: true,
-          provider: 'openrouter',
+          provider: 'anthropic',
           customProtocol: 'anthropic',
-          activeProfileKey: 'openrouter',
+          activeProfileKey: 'anthropic',
           profiles: {},
           enableThinking: false,
           updatedAt: '2026-01-01T00:00:00.000Z',
@@ -142,11 +154,11 @@ describe('api config set helpers', () => {
     expect(bootstrap.activeConfigSetId).toBe('default');
   });
 
-  it('upgrades legacy localhost ollama config sets to ollama in UI bootstrap', () => {
+  it('keeps loopback openai config sets on the openai profile in UI bootstrap', () => {
     const config = {
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'custom:openai',
+      activeProfileKey: 'openai',
       activeConfigSetId: 'legacy-ollama',
       apiKey: '',
       baseUrl: 'http://localhost:11434/v1',
@@ -156,11 +168,11 @@ describe('api config set helpers', () => {
           id: 'legacy-ollama',
           name: 'Legacy Ollama',
           isSystem: false,
-          provider: 'custom',
+          provider: 'openai',
           customProtocol: 'openai',
-          activeProfileKey: 'custom:openai',
+          activeProfileKey: 'openai',
           profiles: {
-            'custom:openai': {
+            openai: {
               apiKey: '',
               baseUrl: 'http://localhost:11434/v1',
               model: 'qwen3.5:0.8b',
@@ -174,17 +186,17 @@ describe('api config set helpers', () => {
     } as AppConfig;
 
     const bootstrap = buildApiConfigBootstrap(config, FALLBACK_PROVIDER_PRESETS);
-    expect(bootstrap.snapshot.activeProfileKey).toBe('ollama');
-    expect(bootstrap.configSets[0].provider).toBe('ollama');
-    expect(bootstrap.configSets[0].activeProfileKey).toBe('ollama');
-    expect(bootstrap.configSets[0].profiles.ollama?.baseUrl).toBe('http://localhost:11434/v1');
+    expect(bootstrap.snapshot.activeProfileKey).toBe('openai');
+    expect(bootstrap.configSets[0].provider).toBe('openai');
+    expect(bootstrap.configSets[0].activeProfileKey).toBe('openai');
+    expect(bootstrap.configSets[0].profiles.openai?.baseUrl).toBe('http://localhost:11434/v1');
   });
 
-  it('normalizes ollama config-set base urls to /v1 in UI bootstrap', () => {
+  it('normalizes openai loopback config-set base urls to /v1 in UI bootstrap', () => {
     const config = {
-      provider: 'ollama',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'ollama',
+      activeProfileKey: 'openai',
       activeConfigSetId: 'ollama-remote',
       apiKey: '',
       baseUrl: 'https://ollama.example.internal/proxy',
@@ -194,11 +206,11 @@ describe('api config set helpers', () => {
           id: 'ollama-remote',
           name: 'Remote Ollama',
           isSystem: false,
-          provider: 'ollama',
+          provider: 'openai',
           customProtocol: 'openai',
-          activeProfileKey: 'ollama',
+          activeProfileKey: 'openai',
           profiles: {
-            ollama: {
+            openai: {
               apiKey: '',
               baseUrl: 'https://ollama.example.internal/proxy',
               model: 'qwen3.5:0.8b',
@@ -212,7 +224,7 @@ describe('api config set helpers', () => {
     } as AppConfig;
 
     const bootstrap = buildApiConfigBootstrap(config, FALLBACK_PROVIDER_PRESETS);
-    expect(bootstrap.configSets[0].profiles.ollama?.baseUrl).toBe(
+    expect(bootstrap.configSets[0].profiles.openai?.baseUrl).toBe(
       'https://ollama.example.internal/proxy/v1'
     );
   });

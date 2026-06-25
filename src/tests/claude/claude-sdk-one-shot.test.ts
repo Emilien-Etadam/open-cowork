@@ -19,12 +19,12 @@ import { runPiAiOneShot } from '../../main/claude/claude-sdk-one-shot';
 
 function makeConfig(): AppConfig {
   return {
-    provider: 'custom',
+    provider: 'openai',
     customProtocol: 'openai',
     apiKey: 'test-key',
     baseUrl: 'https://example.test/v1',
     model: 'test-model',
-    activeProfileKey: 'custom:openai',
+    activeProfileKey: 'openai',
     profiles: {},
     activeConfigSetId: 'default',
     configSets: [],

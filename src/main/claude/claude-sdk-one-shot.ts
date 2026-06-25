@@ -2,13 +2,12 @@ import { completeSimple, type UserMessage as PiUserMessage } from '@mariozechner
 import type { ApiTestInput, ApiTestResult } from '../../renderer/types';
 import { PROVIDER_PRESETS, type AppConfig, type CustomProtocolType } from '../config/config-store';
 import {
+  isLoopbackOpenAIEndpoint,
   normalizeAnthropicBaseUrl,
   normalizeOllamaBaseUrl,
   normalizeOpenAICompatibleBaseUrl,
-  resolveOllamaCredentials,
   resolveOpenAICredentials,
   shouldAllowEmptyAnthropicApiKey,
-  shouldAllowEmptyGeminiApiKey,
 } from '../config/auth-utils';
 import { log, logWarn } from '../utils/logger';
 import { normalizeGeneratedTitle } from '../session/session-title-utils';
@@ -31,15 +30,11 @@ const RATE_LIMIT_RE = /rate[_\s-]?limit|too\s+many\s+requests|429/i;
 const SERVER_ERROR_RE = /server[_\s-]?error|internal\s+server\s+error|\b5\d\d\b/i;
 const PROBE_ACK = 'sdk_probe_ok';
 const LOCAL_ANTHROPIC_PLACEHOLDER_KEY = 'sk-ant-local-proxy';
-const LOCAL_GEMINI_PLACEHOLDER_KEY = 'sk-gemini-local-proxy';
 
 function resolveProbeBaseUrl(input: ApiTestInput): string | undefined {
   const configured = input.baseUrl?.trim();
   if (configured) return configured;
-  if (input.provider !== 'custom') {
-    return PROVIDER_PRESETS[input.provider]?.baseUrl;
-  }
-  return undefined;
+  return PROVIDER_PRESETS[input.provider]?.baseUrl;
 }
 
 function resolveProbeApiKey(
@@ -54,22 +49,7 @@ function resolveProbeApiKey(
     return candidateApiKey;
   }
 
-  if (input.provider === 'ollama') {
-    return (
-      resolveOllamaCredentials({
-        provider: input.provider,
-        customProtocol: resolvedCustomProtocol,
-        apiKey: '',
-        baseUrl: effectiveBaseUrl,
-      })?.apiKey || ''
-    );
-  }
-
-  if (
-    input.provider === 'openai' ||
-    input.provider === 'openrouter' ||
-    (input.provider === 'custom' && resolvedCustomProtocol === 'openai')
-  ) {
+  if (input.provider === 'openai') {
     return (
       resolveOpenAICredentials({
         provider: input.provider,
@@ -90,16 +70,6 @@ function resolveProbeApiKey(
     return LOCAL_ANTHROPIC_PLACEHOLDER_KEY;
   }
 
-  if (
-    shouldAllowEmptyGeminiApiKey({
-      provider: input.provider,
-      customProtocol: resolvedCustomProtocol,
-      baseUrl: effectiveBaseUrl,
-    })
-  ) {
-    return LOCAL_GEMINI_PLACEHOLDER_KEY;
-  }
-
   return '';
 }
 
@@ -112,13 +82,14 @@ function buildProbeConfig(input: ApiTestInput, config: AppConfig): AppConfig {
   ) as CustomProtocolType;
   const effectiveRawBaseUrl = resolvedBaseUrl || '';
   const effectiveBaseUrl =
-    input.provider === 'ollama'
-      ? normalizeOllamaBaseUrl(effectiveRawBaseUrl) || effectiveRawBaseUrl
-      : resolvedCustomProtocol === 'openai'
-        ? normalizeOpenAICompatibleBaseUrl(effectiveRawBaseUrl) || effectiveRawBaseUrl
-        : resolvedCustomProtocol === 'gemini'
-          ? effectiveRawBaseUrl
-          : normalizeAnthropicBaseUrl(effectiveRawBaseUrl);
+    resolvedCustomProtocol === 'openai'
+      ? isLoopbackOpenAIEndpoint({
+          provider: input.provider,
+          baseUrl: effectiveRawBaseUrl,
+        })
+        ? normalizeOllamaBaseUrl(effectiveRawBaseUrl) || effectiveRawBaseUrl
+        : normalizeOpenAICompatibleBaseUrl(effectiveRawBaseUrl) || effectiveRawBaseUrl
+      : normalizeAnthropicBaseUrl(effectiveRawBaseUrl);
   const effectiveApiKey = resolveProbeApiKey(
     input,
     resolvedCustomProtocol,
@@ -149,7 +120,7 @@ function mapPiAiError(errorText: string, durationMs: number, provider?: string):
   if (SERVER_ERROR_RE.test(lowered)) {
     return { ok: false, latencyMs: durationMs, errorType: 'server_error', details };
   }
-  if (provider === 'ollama' && /econnrefused/i.test(lowered)) {
+  if (provider === 'openai' && /econnrefused/i.test(lowered)) {
     return { ok: false, latencyMs: durationMs, errorType: 'ollama_not_running', details };
   }
   if (NETWORK_ERROR_RE.test(lowered)) {
@@ -180,8 +151,10 @@ export async function runPiAiOneShot(
   const routeProtocol = resolvePiRouteProtocol(config.provider, config.customProtocol);
   const rawBaseUrl = config.baseUrl?.trim() || undefined;
   const effectiveBaseUrl =
-    routeProtocol === 'openai' && config.provider !== 'ollama'
-      ? normalizeOpenAICompatibleBaseUrl(rawBaseUrl) || rawBaseUrl
+    routeProtocol === 'openai'
+      ? isLoopbackOpenAIEndpoint({ provider: config.provider, baseUrl: rawBaseUrl })
+        ? normalizeOllamaBaseUrl(rawBaseUrl) || rawBaseUrl
+        : normalizeOpenAICompatibleBaseUrl(rawBaseUrl) || rawBaseUrl
       : rawBaseUrl;
 
   let piModel = resolvePiRegistryModel(modelString, {
@@ -306,7 +279,11 @@ export async function probeWithClaudeSdk(
 ): Promise<ApiTestResult> {
   const probeConfig = buildProbeConfig(input, config);
 
-  if (input.provider === 'custom' && !probeConfig.baseUrl?.trim()) {
+  if (
+    input.provider === 'openai' &&
+    !probeConfig.baseUrl?.trim() &&
+    isLoopbackOpenAIEndpoint(probeConfig)
+  ) {
     return { ok: false, errorType: 'missing_base_url' };
   }
 

@@ -2,12 +2,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockConfigState = vi.hoisted(() => ({
   config: {
-    provider: 'openrouter',
+    provider: 'openai',
     apiKey: '',
     baseUrl: 'https://openrouter.ai/api/v1',
     customProtocol: 'anthropic',
     model: 'anthropic/claude-sonnet-4-6',
-    activeProfileKey: 'openrouter',
+    activeProfileKey: 'openai',
     profiles: {},
     activeConfigSetId: 'default',
     configSets: [],

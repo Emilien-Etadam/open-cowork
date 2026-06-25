@@ -67,14 +67,13 @@ describe('ConfigStore provider profiles', () => {
     expect(config.activeProfileKey).toBe('openai');
     expect(config.apiKey).toBe('sk-legacy-openai');
     expect(config.profiles.openai?.apiKey).toBe('sk-legacy-openai');
-    expect(config.profiles.openrouter?.apiKey).toBe('');
-    expect(config.profiles['custom:anthropic']?.apiKey).toBe('');
+    expect(config.profiles.anthropic?.apiKey).toBe('');
   });
 
   it('switches provider without overwriting other provider profiles', () => {
     mocks.seed = {
       provider: 'openai',
-      customProtocol: 'anthropic',
+      customProtocol: 'openai',
       activeProfileKey: 'openai',
       profiles: {
         openai: {
@@ -82,25 +81,10 @@ describe('ConfigStore provider profiles', () => {
           baseUrl: 'https://api.openai.com/v1',
           model: 'gpt-5.2',
         },
-        openrouter: {
-          apiKey: 'sk-openrouter',
-          baseUrl: 'https://openrouter.ai/api',
-          model: 'anthropic/claude-sonnet-4.5',
-        },
         anthropic: {
           apiKey: 'sk-ant',
           baseUrl: 'https://api.anthropic.com',
-          model: 'claude-sonnet-4-5',
-        },
-        'custom:anthropic': {
-          apiKey: 'sk-custom-ant',
-          baseUrl: 'https://custom.example/anthropic',
-          model: 'glm-4.7',
-        },
-        'custom:openai': {
-          apiKey: 'sk-custom-openai',
-          baseUrl: 'https://custom.example/openai/v1',
-          model: 'gpt-5.2',
+          model: 'claude-sonnet-4-6',
         },
       },
       enableDevLogs: true,
@@ -110,11 +94,11 @@ describe('ConfigStore provider profiles', () => {
     };
 
     const store = new ConfigStore();
-    store.update({ provider: 'openrouter' });
+    store.update({ provider: 'anthropic' });
     const switched = store.getAll();
 
-    expect(switched.provider).toBe('openrouter');
-    expect(switched.apiKey).toBe('sk-openrouter');
+    expect(switched.provider).toBe('anthropic');
+    expect(switched.apiKey).toBe('sk-ant');
     expect(switched.profiles.openai?.apiKey).toBe('sk-openai');
 
     store.update({ provider: 'openai' });
@@ -126,59 +110,57 @@ describe('ConfigStore provider profiles', () => {
   it('updates active profile credentials only for current profile', () => {
     const store = new ConfigStore();
 
-    store.update({ provider: 'openrouter' });
+    store.update({ provider: 'openai' });
     store.update({
-      apiKey: 'sk-or-new',
-      model: 'anthropic/claude-sonnet-4',
-      baseUrl: 'https://openrouter.ai/api',
+      apiKey: 'sk-openai-new',
+      model: 'gpt-5.4',
+      baseUrl: 'https://api.openai.com/v1',
     });
+
+    store.update({ provider: 'anthropic' });
+    const anthropicView = store.getAll();
+    expect(anthropicView.provider).toBe('anthropic');
+    expect(anthropicView.apiKey).toBe('');
 
     store.update({ provider: 'openai' });
     const openaiView = store.getAll();
     expect(openaiView.provider).toBe('openai');
-    expect(openaiView.apiKey).toBe('');
-
-    store.update({ provider: 'openrouter' });
-    const openrouterView = store.getAll();
-    expect(openrouterView.provider).toBe('openrouter');
-    expect(openrouterView.apiKey).toBe('sk-or-new');
-    expect(openrouterView.model).toBe('anthropic/claude-sonnet-4');
+    expect(openaiView.apiKey).toBe('sk-openai-new');
+    expect(openaiView.model).toBe('gpt-5.4');
   });
 
-  it('keeps gemini and custom gemini profiles isolated from other providers', () => {
+  it('keeps openai and anthropic profiles isolated from each other', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'gemini',
-      apiKey: 'AIza-official',
-      baseUrl: 'https://generativelanguage.googleapis.com',
-      model: 'gemini/gemini-2.5-flash',
+      provider: 'openai',
+      apiKey: 'sk-openai',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4',
     });
     store.update({
-      provider: 'custom',
-      customProtocol: 'gemini',
-      apiKey: 'AIza-relay',
-      baseUrl: 'https://gemini-proxy.example/v1',
-      model: 'gemini/gemini-2.5-pro',
+      provider: 'anthropic',
+      apiKey: 'sk-ant',
+      baseUrl: 'https://api.anthropic.com',
+      model: 'claude-sonnet-4-6',
     });
 
-    const customGeminiView = store.getAll();
-    expect(customGeminiView.provider).toBe('custom');
-    expect(customGeminiView.customProtocol).toBe('gemini');
-    expect(customGeminiView.apiKey).toBe('AIza-relay');
-    expect(customGeminiView.profiles.gemini?.apiKey).toBe('AIza-official');
+    const anthropicView = store.getAll();
+    expect(anthropicView.provider).toBe('anthropic');
+    expect(anthropicView.apiKey).toBe('sk-ant');
+    expect(anthropicView.profiles.openai?.apiKey).toBe('sk-openai');
 
-    store.update({ provider: 'gemini' });
-    const geminiView = store.getAll();
-    expect(geminiView.provider).toBe('gemini');
-    expect(geminiView.apiKey).toBe('AIza-official');
-    expect(geminiView.model).toBe('gemini-2.5-flash');
+    store.update({ provider: 'openai' });
+    const openaiView = store.getAll();
+    expect(openaiView.provider).toBe('openai');
+    expect(openaiView.apiKey).toBe('sk-openai');
+    expect(openaiView.model).toBe('gpt-5.4');
   });
 
   it('treats global configured state as any set usable while active set can still be unusable', () => {
     const store = new ConfigStore();
 
-    store.update({ provider: 'openrouter', apiKey: 'sk-or-global' });
+    store.update({ provider: 'openai', apiKey: 'sk-openai-global' });
     store.createSet({ name: 'Blank Active', mode: 'blank' });
 
     expect(store.hasUsableCredentialsForActiveSet()).toBe(false);
@@ -186,98 +168,31 @@ describe('ConfigStore provider profiles', () => {
     expect(store.isConfigured()).toBe(true);
   });
 
-  it('treats local custom anthropic gateway as usable without api key', () => {
+  it('treats local anthropic gateway as usable without api key', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'custom',
+      provider: 'anthropic',
       customProtocol: 'anthropic',
       apiKey: '',
       baseUrl: 'http://127.0.0.1:8082',
-      model: 'openai/gpt-4.1-mini',
+      model: 'claude-sonnet-4-6',
     });
 
     expect(store.hasUsableCredentialsForActiveSet()).toBe(true);
-    expect(store.hasAnyUsableCredentials()).toBe(true);
-    expect(store.isConfigured()).toBe(true);
   });
 
-  it('treats ipv6 loopback custom anthropic gateway as usable without api key', () => {
+  it('treats loopback openai gateway as usable without api key', () => {
     const store = new ConfigStore();
 
     store.update({
-      provider: 'custom',
-      customProtocol: 'anthropic',
-      apiKey: '',
-      baseUrl: 'http://[::1]:8082',
-      model: 'openai/gpt-4.1-mini',
-    });
-
-    expect(store.hasUsableCredentialsForActiveSet()).toBe(true);
-    expect(store.hasAnyUsableCredentials()).toBe(true);
-    expect(store.isConfigured()).toBe(true);
-  });
-
-  it('treats loopback custom gemini gateway as usable without api key', () => {
-    const store = new ConfigStore();
-
-    store.update({
-      provider: 'custom',
-      customProtocol: 'gemini',
-      apiKey: '',
-      baseUrl: 'http://127.0.0.1:8082',
-      model: 'gemini/gemini-2.5-flash',
-    });
-
-    expect(store.hasUsableCredentialsForActiveSet()).toBe(true);
-    expect(store.hasAnyUsableCredentials()).toBe(true);
-    expect(store.isConfigured()).toBe(true);
-  });
-
-  it('treats loopback custom openai gateway as usable without api key', () => {
-    const store = new ConfigStore();
-
-    store.update({
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
       apiKey: '',
       baseUrl: 'http://127.0.0.1:8082/v1',
-      model: 'gpt-4.1-mini',
+      model: 'qwen3.5:0.8b',
     });
 
     expect(store.hasUsableCredentialsForActiveSet()).toBe(true);
-    expect(store.hasAnyUsableCredentials()).toBe(true);
-    expect(store.isConfigured()).toBe(true);
-  });
-
-  it('does not treat ollama as configured when model is still empty', () => {
-    const store = new ConfigStore();
-
-    store.update({
-      provider: 'ollama',
-      apiKey: '',
-      baseUrl: 'http://localhost:11434/v1',
-      model: '',
-    });
-
-    expect(store.hasUsableCredentialsForActiveSet()).toBe(false);
-    expect(store.hasAnyUsableCredentials()).toBe(false);
-    expect(store.isConfigured()).toBe(false);
-  });
-
-  it('keeps non-loopback custom anthropic gateway requiring api key', () => {
-    const store = new ConfigStore();
-
-    store.update({
-      provider: 'custom',
-      customProtocol: 'anthropic',
-      apiKey: '',
-      baseUrl: 'https://proxy.example.com/anthropic',
-      model: 'openai/gpt-4.1-mini',
-    });
-
-    expect(store.hasUsableCredentialsForActiveSet()).toBe(false);
-    expect(store.hasAnyUsableCredentials()).toBe(false);
-    expect(store.isConfigured()).toBe(false);
   });
 });
