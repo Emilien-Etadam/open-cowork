@@ -23,7 +23,7 @@
 
 ### EE fork (`3.3.1-EE1` → `3.3.1-EE4.8`)
 
-- **EE4.8**: Bouton de vérification des mises à jour, affichage version EE dans Paramètres
+- **EE4.8**: Bouton vérification mises à jour, fix blocage chat « Traitement… », commandes slash plugin alignées
 - **EE4.7**: Menu slash fond opaque (fix transparence sur l'historique)
 - **EE4.6**: Auto-update Windows, commandes plugin dans le menu `/`
 
@@ -48,7 +48,7 @@
 
 | Tag            | Date       | Highlights                                                  |
 | -------------- | ---------- | ----------------------------------------------------------- |
-| `v3.3.1-EE4.8` | 2026-06-25 | Bouton vérification mises à jour, affichage version EE      |
+| `v3.3.1-EE4.8` | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin           |
 | `v3.3.1-EE4.7` | 2026-06-25 | Fix fond opaque menu slash                                  |
 | `v3.3.1-EE4.6` | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`              |
 | `v3.3.1-EE4.5` | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests |

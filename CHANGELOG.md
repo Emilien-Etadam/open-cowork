@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Affichage de la version au format **EE4.8** dans l’interface
 - Vérification via `electron-updater` (Windows) ou API GitHub Releases (macOS/Linux)
 
+### Fixed
+
+- **Chat** : correction du blocage infini « Traitement… » après intégration des commandes plugin
+- **Commandes slash** : rejet des commandes inconnues et normalisation `/plugin:cmd` pour le SDK Pi
+
 ## [3.3.1-EE4.7] - 2026-06-25
 
 ### Fixed
