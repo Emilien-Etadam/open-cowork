@@ -129,7 +129,7 @@ async function ensureUpdaterReady(): Promise<ElectronUpdater | null> {
 
   const instance = loadElectronUpdater();
   updater = instance;
-  updater.allowPrerelease = true;
+  updater.allowPrerelease = false;
   updater.autoDownload = true;
   updater.setFeedURL({
     provider: 'github',
