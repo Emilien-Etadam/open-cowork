@@ -6,7 +6,7 @@
  * Responsibilities:
  * - App lifecycle: ready, activate, before-quit, window-will-close
  * - Central IPC hub: ~60 handlers namespaced as config.*, mcp.*, session.*,
- *   sandbox.*, logs.*, remote.*, schedule.*, etc.
+ *   sandbox.*, logs.*, schedule.*, etc.
  * - BrowserWindow creation and deep-link / protocol handling
  */
 import { app, BrowserWindow, dialog, Menu, nativeTheme } from 'electron';
@@ -22,8 +22,6 @@ import { MemoryExtension } from './memory/memory-extension';
 import { AgentRuntimeExtensionManager } from './extensions/agent-runtime-extension-manager';
 import { configStore } from './config/config-store';
 import { mt } from './i18n';
-import { remoteManager } from './remote/remote-manager';
-import { remoteConfigStore } from './remote/remote-config-store';
 import { startNavServer } from './nav-server';
 import { createScheduledTaskStore } from './schedule/scheduled-task-store';
 import { initAutoUpdater } from './auto-updater';
@@ -42,7 +40,7 @@ import {
 import { registerAppBootstrap } from './main-app-bootstrap';
 import { registerAppLifecycle } from './main-app-lifecycle';
 import { registerMainIpc } from './ipc/register-main-ipc';
-import { createScheduledTaskManager, createAgentExecutor } from './ipc/ipc-remote-schedule-memory';
+import { createScheduledTaskManager } from './ipc/ipc-schedule-memory';
 
 const envPath = resolve(__dirname, '../../.env');
 log('[dotenv] Loading from:', envPath);
@@ -103,7 +101,6 @@ app
 
     initializeDefaultWorkingDir();
     log('Working directory:', mainAppState.currentWorkingDir);
-    remoteManager.setDefaultWorkingDirectory(mainAppState.currentWorkingDir || undefined);
 
     const db = initDatabase();
 
@@ -192,15 +189,6 @@ app
     const scheduledTaskStore = createScheduledTaskStore(db);
     mainAppState.scheduledTaskManager = createScheduledTaskManager(scheduledTaskStore);
     mainAppState.scheduledTaskManager.start();
-
-    remoteManager.setRendererCallback(sendToRenderer);
-    remoteManager.setAgentExecutor(createAgentExecutor());
-
-    if (remoteConfigStore.isEnabled()) {
-      remoteManager.start().catch((error) => {
-        logError('[App] Failed to start remote control:', error);
-      });
-    }
 
     app.on('activate', () => {
       const hasVisibleWindow = BrowserWindow.getAllWindows().some((w) => !w.isDestroyed());

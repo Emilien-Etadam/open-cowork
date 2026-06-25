@@ -7,7 +7,6 @@ import { app } from 'electron';
 import { closeDatabase } from './db/database';
 import { SandboxSync } from './sandbox/sandbox-sync';
 import { shutdownSandbox } from './sandbox/sandbox-adapter';
-import { remoteManager } from './remote/remote-manager';
 import { stopNavServer } from './nav-server';
 import { log, logError, closeLogFile } from './utils/logger';
 import { mainAppState } from './main-app-state';
@@ -40,14 +39,6 @@ async function cleanupSandboxResources(): Promise<void> {
   mainAppState.scheduledTaskManager?.stop();
   mainAppState.tray?.destroy();
   mainAppState.tray = null;
-
-  try {
-    log('[App] Stopping remote control...');
-    await withTimeout(remoteManager.stop(), 5000, 'Remote control shutdown');
-    log('[App] Remote control stopped');
-  } catch (error) {
-    logError('[App] Error stopping remote control:', error);
-  }
 
   try {
     log('[App] Cleaning up all sandbox sessions...');

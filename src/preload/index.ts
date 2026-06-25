@@ -28,18 +28,7 @@ import type {
   MemoryInspectSessionResult,
 } from '../renderer/types';
 import type { DiagnosticInput, DiagnosticResult } from '../renderer/types';
-import type {
-  McpServerConfig,
-  McpTool,
-  McpServerStatus,
-  McpPresetsMap,
-  RemoteConfig,
-  GatewayConfig,
-  SlackChannelConfig,
-  PairedUser,
-  PairingRequest,
-  RemoteSessionMapping,
-} from '../shared/ipc-types';
+import type { McpServerConfig, McpTool, McpServerStatus, McpPresetsMap } from '../shared/ipc-types';
 
 // Track registered callbacks to prevent duplicate listeners
 let registeredCallback: ((event: ServerEvent) => void) | null = null;
@@ -358,60 +347,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       ipcRenderer.invoke('logs.write', level, ...args),
   },
 
-  // Remote control methods
-  remote: {
-    getConfig: (): Promise<RemoteConfig> => ipcRenderer.invoke('remote.getConfig'),
-    getStatus: (): Promise<{
-      running: boolean;
-      port?: number;
-      publicUrl?: string;
-      channels: Array<{ type: string; connected: boolean; error?: string }>;
-      activeSessions: number;
-      pendingPairings: number;
-    }> => ipcRenderer.invoke('remote.getStatus'),
-    setEnabled: (enabled: boolean): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.setEnabled', enabled),
-    updateGatewayConfig: (
-      config: Partial<GatewayConfig>
-    ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.updateGatewayConfig', config),
-    updateSlackConfig: (
-      config: SlackChannelConfig
-    ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.updateSlackConfig', config),
-    getPairedUsers: (): Promise<PairedUser[]> => ipcRenderer.invoke('remote.getPairedUsers'),
-    getPendingPairings: (): Promise<PairingRequest[]> =>
-      ipcRenderer.invoke('remote.getPendingPairings'),
-    approvePairing: (
-      channelType: string,
-      userId: string
-    ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.approvePairing', channelType, userId),
-    revokePairing: (
-      channelType: string,
-      userId: string
-    ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.revokePairing', channelType, userId),
-    rejectPairing: (
-      channelType: string,
-      userId: string
-    ): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.rejectPairing', channelType, userId),
-    getRemoteSessions: (): Promise<RemoteSessionMapping[]> =>
-      ipcRenderer.invoke('remote.getRemoteSessions'),
-    clearRemoteSession: (sessionId: string): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.clearRemoteSession', sessionId),
-    getTunnelStatus: (): Promise<{
-      connected: boolean;
-      url: string | null;
-      provider: string;
-      error?: string;
-    }> => ipcRenderer.invoke('remote.getTunnelStatus'),
-    getWebhookUrl: (): Promise<string | null> => ipcRenderer.invoke('remote.getWebhookUrl'),
-    restart: (): Promise<{ success: boolean; error?: string }> =>
-      ipcRenderer.invoke('remote.restart'),
-  },
-
   schedule: {
     list: (): Promise<ScheduleTask[]> => ipcRenderer.invoke('schedule.list'),
     create: (payload: ScheduleCreateInput): Promise<ScheduleTask> =>
@@ -633,48 +568,6 @@ declare global {
           level: 'info' | 'warn' | 'error',
           ...args: unknown[]
         ) => Promise<{ success: boolean; error?: string }>;
-      };
-      remote: {
-        getConfig: () => Promise<RemoteConfig>;
-        getStatus: () => Promise<{
-          running: boolean;
-          port?: number;
-          publicUrl?: string;
-          channels: Array<{ type: string; connected: boolean; error?: string }>;
-          activeSessions: number;
-          pendingPairings: number;
-        }>;
-        setEnabled: (enabled: boolean) => Promise<{ success: boolean; error?: string }>;
-        updateGatewayConfig: (
-          config: Partial<GatewayConfig>
-        ) => Promise<{ success: boolean; error?: string }>;
-        updateSlackConfig: (
-          config: SlackChannelConfig
-        ) => Promise<{ success: boolean; error?: string }>;
-        getPairedUsers: () => Promise<PairedUser[]>;
-        getPendingPairings: () => Promise<PairingRequest[]>;
-        approvePairing: (
-          channelType: string,
-          userId: string
-        ) => Promise<{ success: boolean; error?: string }>;
-        revokePairing: (
-          channelType: string,
-          userId: string
-        ) => Promise<{ success: boolean; error?: string }>;
-        rejectPairing: (
-          channelType: string,
-          userId: string
-        ) => Promise<{ success: boolean; error?: string }>;
-        getRemoteSessions: () => Promise<RemoteSessionMapping[]>;
-        clearRemoteSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>;
-        getTunnelStatus: () => Promise<{
-          connected: boolean;
-          url: string | null;
-          provider: string;
-          error?: string;
-        }>;
-        getWebhookUrl: () => Promise<string | null>;
-        restart: () => Promise<{ success: boolean; error?: string }>;
       };
       schedule: {
         list: () => Promise<ScheduleTask[]>;
