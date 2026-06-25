@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1-EE4.97] - 2026-06-25
+
+### Added
+
+- **Messages utilisateur** : icônes fork (nouvelle session depuis ce message) et édition prompt (rewind + zone de saisie)
+- IPC `session.forkFromMessage` et `session.rewindToMessage`
+
+### Fixed
+
+- **Compaction auto** : appel explicite à `compact()` avant `prompt()` quand le contexte est plein (~98 %+)
+- **Barre de contexte** : une seule barre dans le panneau Contexte (sidebar) — suppression du doublon au-dessus de l’input
+- **Erreur contexte plein** : hint `/compact` au lieu du message trompeur « réessaie automatiquement »
+
 ## [3.3.1-EE4.96] - 2026-06-25
 
 ### Fixed
