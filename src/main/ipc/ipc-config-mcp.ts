@@ -9,6 +9,7 @@ import {
   type CreateConfigSetPayload,
 } from '../config/config-store';
 import { runConfigApiTest } from '../config/config-test-routing';
+import { isLoopbackBaseUrl } from '../../shared/network/loopback';
 import { listOllamaModels } from '../config/ollama-api';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
 import type { MCPServerConfig } from '../mcp/mcp-manager';
@@ -182,7 +183,7 @@ export function registerConfigMcpIpc(): void {
       _event,
       payload: { provider: AppConfig['provider']; apiKey: string; baseUrl?: string }
     ): Promise<ProviderModelInfo[]> => {
-      if (payload.provider !== 'ollama') {
+      if (payload.provider !== 'openai' || !isLoopbackBaseUrl(payload.baseUrl)) {
         return [];
       }
       return listOllamaModels(payload);

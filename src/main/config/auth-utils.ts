@@ -29,9 +29,6 @@ export function isLikelyOAuthAccessToken(token: string | undefined | null): bool
 export function shouldUseAnthropicAuthToken(
   config: Pick<AppConfig, 'provider' | 'customProtocol' | 'apiKey'>
 ): boolean {
-  if (config.provider === 'openrouter') {
-    return true;
-  }
   if (config.provider !== 'anthropic') {
     return false;
   }
@@ -39,11 +36,7 @@ export function shouldUseAnthropicAuthToken(
 }
 
 export function isOpenAIProvider(config: Pick<AppConfig, 'provider' | 'customProtocol'>): boolean {
-  return (
-    config.provider === 'openai' ||
-    config.provider === 'ollama' ||
-    (config.provider === 'custom' && config.customProtocol === 'openai')
-  );
+  return config.provider === 'openai';
 }
 
 export function sanitizeOpenAIAccountId(raw: string | undefined): string | undefined {
@@ -77,7 +70,6 @@ export function normalizeOpenAICompatibleBaseUrl(baseUrl: string | undefined): s
     // OpenRouter has its own path convention (/api/v1) — handle separately.
     if (host.includes('openrouter.ai')) {
       let pathname = parsed.pathname.replace(/\/+$/, '');
-      // Strip endpoint suffixes first (user may have pasted full endpoint)
       pathname = pathname
         .replace(/\/chat\/completions$/i, '')
         .replace(/\/completions$/i, '')
@@ -95,9 +87,6 @@ export function normalizeOpenAICompatibleBaseUrl(baseUrl: string | undefined): s
       return parsed.toString().replace(/\/+$/, '');
     }
 
-    // Generic OpenAI-compatible provider normalization:
-    // Strip trailing endpoint suffixes that users may have copy-pasted from docs.
-    // Do NOT auto-append /v1 — some APIs use /v2, no version path, or custom paths.
     let pathname = parsed.pathname.replace(/\/+$/, '');
     pathname = pathname
       .replace(/\/chat\/completions$/i, '')
@@ -145,7 +134,7 @@ export function isOfficialOpenAIBaseUrl(baseUrl: string | undefined): boolean {
 }
 
 export function getUnifiedUnsupportedCustomOpenAIBaseUrl(config: OpenAIConfigLike): string | null {
-  if (!(config.provider === 'custom' && config.customProtocol === 'openai')) {
+  if (config.provider !== 'openai') {
     return null;
   }
   const resolved = resolveOpenAICredentials(config);
@@ -171,87 +160,74 @@ export function resolveOpenAICredentials(
   config: OpenAIConfigLike
 ): ResolvedOpenAICredentials | null {
   const trimmedApiKey = config.apiKey?.trim();
+  const placeholderKey = isLoopbackOpenAIEndpoint(config)
+    ? OLLAMA_PLACEHOLDER_KEY
+    : LOCAL_OPENAI_PLACEHOLDER_KEY;
   const effectiveApiKey =
-    trimmedApiKey || (shouldAllowEmptyOpenAIApiKey(config) ? LOCAL_OPENAI_PLACEHOLDER_KEY : '');
+    trimmedApiKey || (shouldAllowEmptyOpenAIApiKey(config) ? placeholderKey : '');
   if (effectiveApiKey) {
+    const rawBaseUrl = config.baseUrl?.trim();
+    const baseUrl = rawBaseUrl
+      ? isLoopbackOpenAIEndpoint(config)
+        ? normalizeOllamaBaseUrl(rawBaseUrl)
+        : normalizeOpenAICompatibleBaseUrl(rawBaseUrl)
+      : undefined;
     return {
       apiKey: effectiveApiKey,
-      baseUrl: normalizeOpenAICompatibleBaseUrl(config.baseUrl),
+      baseUrl,
     };
   }
 
   return null;
 }
 
-export function shouldAllowEmptyOllamaApiKey(
-  config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
-): boolean {
-  return config.provider === 'ollama';
-}
-
-export function resolveOllamaCredentials(
-  config: OpenAIConfigLike
-): ResolvedOpenAICredentials | null {
-  if (config.provider !== 'ollama') {
-    return null;
-  }
-  const trimmedApiKey = config.apiKey?.trim();
-  return {
-    apiKey: trimmedApiKey || OLLAMA_PLACEHOLDER_KEY,
-    baseUrl: normalizeOllamaBaseUrl(config.baseUrl),
-  };
-}
-
 export function isLoopbackBaseUrl(baseUrl: string | undefined): boolean {
   return sharedIsLoopbackBaseUrl(baseUrl);
+}
+
+export function isLoopbackOpenAIEndpoint(config: Pick<AppConfig, 'provider' | 'baseUrl'>): boolean {
+  return config.provider === 'openai' && isLoopbackBaseUrl(config.baseUrl);
 }
 
 export function shouldAllowEmptyAnthropicApiKey(
   config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
 ): boolean {
-  return (
-    config.provider === 'custom' &&
-    (config.customProtocol ?? 'anthropic') === 'anthropic' &&
-    isLoopbackBaseUrl(config.baseUrl)
-  );
+  return config.provider === 'anthropic' && isLoopbackBaseUrl(config.baseUrl);
 }
 
 export function shouldAllowEmptyOpenAIApiKey(
   config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
 ): boolean {
-  return (
-    config.provider === 'custom' &&
-    config.customProtocol === 'openai' &&
-    isLoopbackBaseUrl(config.baseUrl)
-  );
+  return config.provider === 'openai' && isLoopbackBaseUrl(config.baseUrl);
 }
 
+/** @deprecated Use isLoopbackOpenAIEndpoint */
 export function isOllamaLegacyCustomOpenAIConfig(
   config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
 ): boolean {
-  if (!(config.provider === 'custom' && config.customProtocol === 'openai')) {
-    return false;
-  }
-  const normalized = normalizeBaseUrl(config.baseUrl);
-  if (!normalized || !isLoopbackBaseUrl(normalized)) {
-    return false;
-  }
-  try {
-    const parsed = new URL(normalized);
-    const port = parsed.port || (parsed.protocol === 'https:' ? '443' : '80');
-    const pathname = parsed.pathname.replace(/\/+$/, '');
-    return port === '11434' && (!pathname || pathname === '/v1');
-  } catch {
-    return false;
-  }
+  return isLoopbackOpenAIEndpoint(config);
 }
 
-export function shouldAllowEmptyGeminiApiKey(
+/** @deprecated Use resolveOpenAICredentials */
+export function resolveOllamaCredentials(
+  config: OpenAIConfigLike
+): ResolvedOpenAICredentials | null {
+  if (config.provider !== 'openai' || !isLoopbackOpenAIEndpoint(config)) {
+    return null;
+  }
+  return resolveOpenAICredentials(config);
+}
+
+/** @deprecated Use shouldAllowEmptyOpenAIApiKey */
+export function shouldAllowEmptyOllamaApiKey(
   config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
 ): boolean {
-  return (
-    config.provider === 'custom' &&
-    (config.customProtocol ?? 'anthropic') === 'gemini' &&
-    isLoopbackBaseUrl(config.baseUrl)
-  );
+  return shouldAllowEmptyOpenAIApiKey(config);
+}
+
+/** @deprecated Loopback anthropic gateways no longer use a separate gemini protocol */
+export function shouldAllowEmptyGeminiApiKey(
+  _config: Pick<AppConfig, 'provider' | 'customProtocol' | 'baseUrl'>
+): boolean {
+  return false;
 }

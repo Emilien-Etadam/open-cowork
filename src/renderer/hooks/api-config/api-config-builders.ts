@@ -5,6 +5,7 @@ import type {
   ProviderProfile,
   ProviderPresets,
   ProviderProfileKey,
+  ProviderType,
 } from '../../types';
 import type { CommonProviderSetup } from '../../../shared/api-provider-guidance';
 import {
@@ -16,7 +17,6 @@ import {
 } from './api-config-types';
 import {
   isCustomProtocol,
-  isLegacyOllamaConfig,
   isProfileKey,
   isProviderType,
   modelPresetForProfile,
@@ -28,42 +28,34 @@ import {
 const DEFAULT_CONFIG_SET_ID = 'default';
 const DEFAULT_CONFIG_SET_NAME_ZH = '默认方案';
 
+function resolveProvider(config: AppConfig | null | undefined): ProviderType {
+  return isProviderType(config?.provider) ? config.provider : 'openai';
+}
+
+function resolveCustomProtocol(
+  config: AppConfig | null | undefined,
+  provider: ProviderType
+): CustomProtocolType {
+  if (isCustomProtocol(config?.customProtocol)) {
+    return config.customProtocol;
+  }
+  return provider === 'anthropic' ? 'anthropic' : 'openai';
+}
+
 export function buildApiConfigSnapshot(
   config: AppConfig | null | undefined,
   presets: ProviderPresets
 ): ConfigStateSnapshot {
-  const migratedToOllama = config?.provider === 'ollama' || isLegacyOllamaConfig(config);
-  const provider = migratedToOllama ? 'ollama' : config?.provider || 'openrouter';
-  const customProtocol: CustomProtocolType = migratedToOllama
-    ? 'openai'
-    : config?.customProtocol === 'openai'
-      ? 'openai'
-      : config?.customProtocol === 'gemini'
-        ? 'gemini'
-        : 'anthropic';
+  const provider = resolveProvider(config);
+  const customProtocol = resolveCustomProtocol(config, provider);
   const derivedProfileKey = profileKeyFromProvider(provider, customProtocol);
-  const activeProfileKey = migratedToOllama
-    ? 'ollama'
-    : isProfileKey(config?.activeProfileKey)
-      ? config.activeProfileKey
-      : derivedProfileKey;
+  const activeProfileKey = isProfileKey(config?.activeProfileKey)
+    ? config.activeProfileKey
+    : derivedProfileKey;
 
   const profiles = {} as Record<ProviderProfileKey, UIProviderProfile>;
   for (const key of PROFILE_KEYS) {
     profiles[key] = normalizeProfile(key, config?.profiles?.[key], presets);
-  }
-
-  if (migratedToOllama) {
-    profiles.ollama = normalizeProfile(
-      'ollama',
-      config?.profiles?.ollama ||
-        config?.profiles?.['custom:openai'] || {
-          apiKey: config?.apiKey || '',
-          baseUrl: config?.baseUrl,
-          model: config?.model,
-        },
-      presets
-    );
   }
 
   const hasProfilesFromConfig = Boolean(
@@ -134,27 +126,16 @@ export function buildApiConfigSets(
 
   if (config?.configSets && config.configSets.length > 0) {
     return config.configSets.map((set, index) => {
-      const isMigratedOllamaSet = isLegacyOllamaConfig({
-        provider: isProviderType(set.provider) ? set.provider : 'openrouter',
-        customProtocol: isCustomProtocol(set.customProtocol) ? set.customProtocol : 'anthropic',
-        baseUrl: set.profiles?.['custom:openai']?.baseUrl || config?.baseUrl,
-      });
-      const provider = isMigratedOllamaSet
-        ? 'ollama'
-        : isProviderType(set.provider)
-          ? set.provider
-          : 'openrouter';
-      const customProtocol = isMigratedOllamaSet
-        ? 'openai'
-        : isCustomProtocol(set.customProtocol)
-          ? set.customProtocol
-          : 'anthropic';
+      const provider = isProviderType(set.provider) ? set.provider : 'openai';
+      const customProtocol = isCustomProtocol(set.customProtocol)
+        ? set.customProtocol
+        : provider === 'anthropic'
+          ? 'anthropic'
+          : 'openai';
       const fallbackActive = profileKeyFromProvider(provider, customProtocol);
-      const activeProfileKey = isMigratedOllamaSet
-        ? 'ollama'
-        : isProfileKey(set.activeProfileKey)
-          ? set.activeProfileKey
-          : fallbackActive;
+      const activeProfileKey = isProfileKey(set.activeProfileKey)
+        ? set.activeProfileKey
+        : fallbackActive;
 
       const normalizedProfiles = {} as Record<ProviderProfileKey, ProviderProfile>;
       for (const key of PROFILE_KEYS) {
@@ -165,21 +146,6 @@ export function buildApiConfigSets(
           model: uiProfile.useCustomModel
             ? uiProfile.customModel.trim() || uiProfile.model
             : uiProfile.model,
-        };
-      }
-
-      if (isMigratedOllamaSet) {
-        const ollamaProfile = normalizeProfile(
-          'ollama',
-          set.profiles?.ollama || set.profiles?.['custom:openai'],
-          presets
-        );
-        normalizedProfiles.ollama = {
-          apiKey: ollamaProfile.apiKey,
-          baseUrl: ollamaProfile.baseUrl,
-          model: ollamaProfile.useCustomModel
-            ? ollamaProfile.customModel.trim() || ollamaProfile.model
-            : ollamaProfile.model,
         };
       }
 
@@ -243,13 +209,6 @@ export function buildInitialApiConfigState(
   bootstrap: ApiConfigBootstrap,
   presets: ProviderPresets
 ): ApiConfigState {
-  const initialLastCustomProtocol: CustomProtocolType =
-    config?.customProtocol === 'openai'
-      ? 'openai'
-      : config?.customProtocol === 'gemini'
-        ? 'gemini'
-        : 'anthropic';
-
   return {
     presets,
     profiles: bootstrap.snapshot.profiles,
@@ -258,7 +217,6 @@ export function buildInitialApiConfigState(
     activeConfigSetId: bootstrap.activeConfigSetId,
     pendingConfigSetAction: null,
     isMutatingConfigSet: false,
-    lastCustomProtocol: initialLastCustomProtocol,
     enableThinking: Boolean(config?.enableThinking),
     discoveredModels: {},
     isLoadingConfig: true,
@@ -290,19 +248,9 @@ export function buildLoadedApiConfigStatePayload(
   enableThinking: boolean;
   configSets: ApiConfigSet[];
   activeConfigSetId: string;
-  lastCustomProtocol: CustomProtocolType;
   savedDraftSignature: string;
 } {
   const bootstrap = buildApiConfigBootstrap(config, presets);
-  const activeMeta = profileKeyToProvider(bootstrap.snapshot.activeProfileKey);
-  const lastCustomProtocol: CustomProtocolType =
-    activeMeta.provider === 'custom'
-      ? activeMeta.customProtocol
-      : config?.customProtocol === 'openai'
-        ? 'openai'
-        : config?.customProtocol === 'gemini'
-          ? 'gemini'
-          : 'anthropic';
 
   return {
     presets,
@@ -311,7 +259,6 @@ export function buildLoadedApiConfigStatePayload(
     enableThinking: bootstrap.snapshot.enableThinking,
     configSets: bootstrap.configSets,
     activeConfigSetId: bootstrap.activeConfigSetId,
-    lastCustomProtocol,
     savedDraftSignature: buildApiConfigDraftSignature(
       bootstrap.snapshot.activeProfileKey,
       bootstrap.snapshot.profiles,

@@ -3,13 +3,12 @@ import type { AppConfig } from '../src/renderer/types';
 import fs from 'node:fs';
 import path from 'node:path';
 import { shouldAutoDiscoverLocalOllamaBaseUrl } from '../src/shared/ollama-base-url';
+import { isLoopbackBaseUrl } from '../src/shared/network/loopback';
 import {
   FALLBACK_PROVIDER_PRESETS,
   buildApiConfigSnapshot,
   getModelInputGuidance,
-  isCustomAnthropicLoopbackGateway,
-  isCustomGeminiLoopbackGateway,
-  isCustomOpenAiLoopbackGateway,
+  isLocalOpenAiMode,
   profileKeyFromProvider,
   profileKeyToProvider,
 } from '../src/renderer/hooks/useApiConfigState';
@@ -25,34 +24,28 @@ const ollamaActionsPath = path.resolve(
 
 describe('api config state helpers', () => {
   it('maps provider/protocol to profile key and back', () => {
-    expect(profileKeyFromProvider('openrouter')).toBe('openrouter');
-    expect(profileKeyFromProvider('ollama')).toBe('ollama');
-    expect(profileKeyFromProvider('custom', 'openai')).toBe('custom:openai');
-    expect(profileKeyFromProvider('custom', 'gemini')).toBe('custom:gemini');
-    expect(profileKeyToProvider('custom:anthropic')).toEqual({
-      provider: 'custom',
-      customProtocol: 'anthropic',
-    });
-    expect(profileKeyToProvider('gemini')).toEqual({
-      provider: 'gemini',
-      customProtocol: 'gemini',
-    });
-    expect(profileKeyToProvider('ollama')).toEqual({
-      provider: 'ollama',
+    expect(profileKeyFromProvider('openai')).toBe('openai');
+    expect(profileKeyFromProvider('anthropic')).toBe('anthropic');
+    expect(profileKeyToProvider('openai')).toEqual({
+      provider: 'openai',
       customProtocol: 'openai',
+    });
+    expect(profileKeyToProvider('anthropic')).toEqual({
+      provider: 'anthropic',
+      customProtocol: 'anthropic',
     });
   });
 
-  it('conservatively upgrades legacy localhost ollama config into the ollama profile', () => {
+  it('loads loopback openai profile values from config', () => {
     const config = {
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'custom:openai',
+      activeProfileKey: 'openai',
       apiKey: '',
       baseUrl: 'http://localhost:11434/v1',
       model: 'qwen3.5:0.8b',
       profiles: {
-        'custom:openai': {
+        openai: {
           apiKey: '',
           baseUrl: 'http://localhost:11434/v1',
           model: 'qwen3.5:0.8b',
@@ -62,21 +55,21 @@ describe('api config state helpers', () => {
     } as AppConfig;
 
     const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.activeProfileKey).toBe('ollama');
-    expect(snapshot.profiles.ollama.baseUrl).toBe('http://localhost:11434/v1');
-    expect(snapshot.profiles.ollama.model).toBe('qwen3.5:0.8b');
+    expect(snapshot.activeProfileKey).toBe('openai');
+    expect(snapshot.profiles.openai.baseUrl).toBe('http://localhost:11434/v1');
+    expect(snapshot.profiles.openai.customModel).toBe('qwen3.5:0.8b');
   });
 
-  it('normalizes ollama profile base urls during renderer bootstrap', () => {
+  it('normalizes openai loopback base urls during renderer bootstrap', () => {
     const config = {
-      provider: 'ollama',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'ollama',
+      activeProfileKey: 'openai',
       apiKey: '',
       baseUrl: 'http://localhost:11434/api',
       model: 'qwen3.5:0.8b',
       profiles: {
-        ollama: {
+        openai: {
           apiKey: '',
           baseUrl: 'http://localhost:11434/api',
           model: 'qwen3.5:0.8b',
@@ -86,19 +79,19 @@ describe('api config state helpers', () => {
     } as AppConfig;
 
     const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.profiles.ollama.baseUrl).toBe('http://localhost:11434/v1');
+    expect(snapshot.profiles.openai.baseUrl).toBe('http://localhost:11434/v1');
   });
 
-  it('keeps remote custom openai configs generic instead of auto-migrating them to ollama', () => {
+  it('keeps remote openai configs on the openai profile', () => {
     const config = {
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'custom:openai',
+      activeProfileKey: 'openai',
       apiKey: '',
       baseUrl: 'https://relay.example.internal/v1',
       model: 'qwen3.5:0.8b',
       profiles: {
-        'custom:openai': {
+        openai: {
           apiKey: '',
           baseUrl: 'https://relay.example.internal/v1',
           model: 'qwen3.5:0.8b',
@@ -108,49 +101,49 @@ describe('api config state helpers', () => {
     } as AppConfig;
 
     const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.activeProfileKey).toBe('custom:openai');
+    expect(snapshot.activeProfileKey).toBe('openai');
   });
 
-  it('exposes ollama presets and guidance', () => {
-    expect(FALLBACK_PROVIDER_PRESETS.ollama.baseUrl).toBe('http://localhost:11434/v1');
-    expect(FALLBACK_PROVIDER_PRESETS.ollama.keyHint).toContain('Ollama');
-    expect(getModelInputGuidance('ollama').placeholder).toContain('qwen');
+  it('exposes openai guidance for local servers', () => {
+    expect(getModelInputGuidance('openai').placeholder).toContain('qwen');
+    expect(isLocalOpenAiMode('openai', 'http://localhost:11434/v1')).toBe(true);
+    expect(isLocalOpenAiMode('openai', 'https://api.openai.com/v1')).toBe(false);
   });
 
   it('loads existing profile values without overwriting them with defaults', () => {
     const config = {
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
-      activeProfileKey: 'custom:openai',
+      activeProfileKey: 'openai',
       apiKey: 'sk-active',
       baseUrl: 'https://custom-openai.example/v1',
       model: 'gpt-5.3-codex',
       profiles: {
-        'custom:openai': {
+        openai: {
           apiKey: 'sk-custom-openai',
           baseUrl: 'https://custom-openai.example/v1',
           model: 'gpt-5.3-codex',
         },
-        'custom:anthropic': {
+        anthropic: {
           apiKey: 'sk-custom-anthropic',
           baseUrl: 'https://custom-anthropic.example',
-          model: 'glm-4.7',
+          model: 'claude-sonnet-4-6',
         },
       },
       isConfigured: true,
     } as AppConfig;
 
     const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.activeProfileKey).toBe('custom:openai');
-    expect(snapshot.profiles['custom:openai'].apiKey).toBe('sk-custom-openai');
-    expect(snapshot.profiles['custom:openai'].baseUrl).toBe('https://custom-openai.example/v1');
-    expect(snapshot.profiles['custom:anthropic'].apiKey).toBe('sk-custom-anthropic');
+    expect(snapshot.activeProfileKey).toBe('openai');
+    expect(snapshot.profiles.openai.apiKey).toBe('sk-custom-openai');
+    expect(snapshot.profiles.openai.baseUrl).toBe('https://custom-openai.example/v1');
+    expect(snapshot.profiles.anthropic.apiKey).toBe('sk-custom-anthropic');
   });
 
   it('applies defaults only for missing profiles', () => {
     const config = {
       provider: 'openai',
-      customProtocol: 'anthropic',
+      customProtocol: 'openai',
       activeProfileKey: 'openai',
       apiKey: 'sk-openai',
       baseUrl: 'https://api.openai.com/v1',
@@ -167,140 +160,27 @@ describe('api config state helpers', () => {
 
     const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
     expect(snapshot.profiles.openai.apiKey).toBe('sk-openai');
-    expect(snapshot.profiles.openrouter.baseUrl).toBe(FALLBACK_PROVIDER_PRESETS.openrouter.baseUrl);
-    expect(snapshot.profiles['custom:anthropic'].model).toBe(
-      FALLBACK_PROVIDER_PRESETS.custom.models[0]?.id
-    );
-    expect(snapshot.profiles['custom:anthropic'].useCustomModel).toBe(true);
-    expect(snapshot.profiles['custom:anthropic'].customModel).toBe('');
+    expect(snapshot.profiles.anthropic.baseUrl).toBe(FALLBACK_PROVIDER_PRESETS.anthropic.baseUrl);
+    expect(snapshot.profiles.openai.useCustomModel).toBe(true);
   });
 
-  it('detects local custom anthropic loopback gateway url', () => {
-    expect(isCustomAnthropicLoopbackGateway('http://127.0.0.1:8082')).toBe(true);
-    expect(isCustomAnthropicLoopbackGateway('http://localhost:8082')).toBe(true);
-    expect(isCustomAnthropicLoopbackGateway('http://[::1]:8082')).toBe(true);
-    expect(isCustomAnthropicLoopbackGateway('http://0.0.0.0:8082')).toBe(false);
-    expect(isCustomAnthropicLoopbackGateway('https://proxy.example.com')).toBe(false);
+  it('detects loopback gateway urls', () => {
+    expect(isLoopbackBaseUrl('http://127.0.0.1:8082')).toBe(true);
+    expect(isLoopbackBaseUrl('http://localhost:8082')).toBe(true);
+    expect(isLoopbackBaseUrl('http://[::1]:8082')).toBe(true);
+    expect(isLoopbackBaseUrl('http://0.0.0.0:8082')).toBe(false);
+    expect(isLoopbackBaseUrl('https://proxy.example.com')).toBe(false);
   });
 
-  it('detects local custom gemini loopback gateway url', () => {
-    expect(isCustomGeminiLoopbackGateway('http://127.0.0.1:8082')).toBe(true);
-    expect(isCustomGeminiLoopbackGateway('http://localhost:8082')).toBe(true);
-    expect(isCustomGeminiLoopbackGateway('http://[::1]:8082')).toBe(true);
-    expect(isCustomGeminiLoopbackGateway('http://0.0.0.0:8082')).toBe(false);
-    expect(isCustomGeminiLoopbackGateway('https://proxy.example.com')).toBe(false);
-  });
-
-  it('detects local custom openai loopback gateway url', () => {
-    expect(isCustomOpenAiLoopbackGateway('http://127.0.0.1:8082/v1')).toBe(true);
-    expect(isCustomOpenAiLoopbackGateway('http://localhost:8082')).toBe(true);
-    expect(isCustomOpenAiLoopbackGateway('http://[::1]:8082')).toBe(true);
-    expect(isCustomOpenAiLoopbackGateway('http://0.0.0.0:8082')).toBe(false);
-    expect(isCustomOpenAiLoopbackGateway('https://relay.example.com/v1')).toBe(false);
-  });
-
-  it('loads gemini provider and custom gemini profile values without fallback drift', () => {
-    const config = {
-      provider: 'custom',
-      customProtocol: 'gemini',
-      activeProfileKey: 'custom:gemini',
-      apiKey: 'AIza-relay',
-      baseUrl: 'https://gemini-proxy.example/v1',
-      model: 'gemini/gemini-2.5-pro',
-      profiles: {
-        gemini: {
-          apiKey: 'AIza-official',
-          baseUrl: 'https://generativelanguage.googleapis.com',
-          model: 'gemini/gemini-2.5-flash',
-        },
-        'custom:gemini': {
-          apiKey: 'AIza-relay',
-          baseUrl: 'https://gemini-proxy.example/v1',
-          model: 'gemini/gemini-2.5-pro',
-        },
-      },
-      isConfigured: true,
-    } as AppConfig;
-
-    const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.activeProfileKey).toBe('custom:gemini');
-    expect(snapshot.profiles.gemini.apiKey).toBe('AIza-official');
-    expect(snapshot.profiles['custom:gemini'].baseUrl).toBe('https://gemini-proxy.example/v1');
-  });
-
-  it('keeps pristine custom openai profile in manual input mode', () => {
-    const config = {
-      provider: 'custom',
-      customProtocol: 'openai',
-      activeProfileKey: 'custom:openai',
-      apiKey: '',
-      baseUrl: 'https://api.openai.com/v1',
-      model: 'gpt-5.4',
-      profiles: {
-        'custom:openai': {
-          apiKey: '',
-          baseUrl: 'https://api.openai.com/v1',
-          model: 'gpt-5.4',
-        },
-      },
-      isConfigured: false,
-    } as AppConfig;
-
-    const snapshot = buildApiConfigSnapshot(config, FALLBACK_PROVIDER_PRESETS);
-    expect(snapshot.profiles['custom:openai'].useCustomModel).toBe(true);
-    expect(snapshot.profiles['custom:openai'].customModel).toBe('');
-    expect(snapshot.profiles['custom:openai'].model).toBe('gpt-5.4');
-  });
-
-  it('exposes updated preset lists and custom guidance', () => {
-    expect(FALLBACK_PROVIDER_PRESETS.openai.models.map((item) => item.id)).toContain('gpt-5.4');
-    expect(FALLBACK_PROVIDER_PRESETS.openai.models.map((item) => item.id)).toContain(
-      'gpt-5.3-codex'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.openai.models.map((item) => item.id)).not.toContain('gpt-5.2');
-    expect(FALLBACK_PROVIDER_PRESETS.anthropic.models.map((item) => item.id)).toContain(
-      'claude-sonnet-4-6'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.gemini.models.map((item) => item.id)).toContain(
-      'gemini-3.1-pro-preview'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.custom.models.map((item) => item.id)).toContain(
-      'kimi-k2-thinking'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.custom.models.map((item) => item.id)).toContain('glm-5');
-    expect(FALLBACK_PROVIDER_PRESETS.custom.models.map((item) => item.id)).toContain(
-      'MiniMax-M2.5'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.custom.models.map((item) => item.id)).toContain(
-      'grok-code-fast-1'
-    );
-    expect(FALLBACK_PROVIDER_PRESETS.custom.models.map((item) => item.id)).toContain(
-      'mistral-large-latest'
-    );
-
-    expect(getModelInputGuidance('custom', 'openai').placeholder).toContain('deepseek-chat');
-    expect(getModelInputGuidance('custom', 'openai').placeholder).not.toContain('kimi');
-    expect(getModelInputGuidance('custom', 'openai').hint).toContain(
-      'selected protocol or endpoint'
-    );
-  });
-
-  it('wires local Ollama discovery through the shared config hook', () => {
+  it('wires local discovery through the shared config hook', () => {
     const hookSource = fs.readFileSync(hookPath, 'utf8');
     const ollamaSource = fs.readFileSync(ollamaActionsPath, 'utf8');
     expect(hookSource).toContain('useApiConfigActions');
     expect(ollamaSource).toContain('window.electronAPI.config.discoverLocal({');
-    expect(ollamaSource).toContain('baseUrl: requestedBaseUrl || undefined');
+    expect(ollamaSource).toContain('isLocalOpenAiMode');
     expect(ollamaSource).toContain("showErrorKey('api.localOllamaNotFound')");
     expect(ollamaSource).toContain("showSuccessKey('api.localOllamaDiscovered'");
-    expect(ollamaSource).toContain("showErrorKey('api.localOllamaNoModels')");
-    expect(ollamaSource).toContain('ollamaDiscoverRequestIdRef');
-    expect(ollamaSource).toContain(
-      "dispatch({ type: 'CLEAR_DISCOVERED_MODELS', profileKey: requestedProfileKey })"
-    );
     expect(ollamaSource).toContain('autoSelectModelId: models[0]?.id');
-    expect(ollamaSource).not.toContain("showErrorKey('api.localOllamaModelUnavailable'");
-    expect(ollamaSource).not.toContain('shouldAutoDiscoverLocalOllamaBaseUrl(baseUrl)');
   });
 
   it('keeps the shared auto-discovery helper constrained to the default local endpoint', () => {

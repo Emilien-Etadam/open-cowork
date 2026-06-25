@@ -197,10 +197,10 @@ describe('runDiagnostics TLS step', () => {
     expect(tlsOptions.servername).toBeUndefined();
   });
 
-  it('uses standard HTTPS port for remote Ollama endpoints without an explicit port', async () => {
+  it('uses standard HTTPS port for remote openai-compatible endpoints without an explicit port', async () => {
     const result = await runDiagnostics({
-      provider: 'ollama',
-      apiKey: '',
+      provider: 'openai',
+      apiKey: 'sk-remote',
       baseUrl: 'https://ollama.example.internal/v1',
       model: 'qwen3.5:0.8b',
     });

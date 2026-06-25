@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { API_PROVIDER_PRESETS } from '../../../shared/api-model-presets';
 import { COMMON_PROVIDER_SETUPS } from '../../../shared/api-provider-guidance';
 import { useAppStore } from '../../store';
-import type { CustomProtocolType, ProviderPresets, ProviderType } from '../../types';
+import type { ProviderPresets, ProviderType } from '../../types';
 import {
   buildApiConfigBootstrap,
   buildInitialApiConfigState,
@@ -50,7 +50,6 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     activeConfigSetId,
     pendingConfigSetAction,
     isMutatingConfigSet,
-    lastCustomProtocol,
     enableThinking,
     discoveredModels,
     isLoadingConfig,
@@ -96,7 +95,8 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     maxTokens,
     modelOptions,
     modelInputGuidance,
-    shouldShowOllamaManualModelToggle,
+    isLocalOpenAiMode,
+    shouldShowLocalModelToggle,
     detectedProviderSetup,
     protocolGuidanceTone,
     protocolGuidanceText,
@@ -134,23 +134,10 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     },
     [activeProfileKey]
   );
-  const changeProvider = useCallback(
-    (newProvider: ProviderType) => {
-      dispatch({
-        type: 'SET_ACTIVE_PROFILE_KEY',
-        payload: profileKeyFromProvider(
-          newProvider,
-          newProvider === 'custom' ? lastCustomProtocol : 'anthropic'
-        ),
-      });
-    },
-    [lastCustomProtocol]
-  );
-  const changeProtocol = useCallback((newProtocol: CustomProtocolType) => {
-    dispatch({ type: 'SET_LAST_CUSTOM_PROTOCOL', payload: newProtocol });
+  const changeProvider = useCallback((newProvider: ProviderType) => {
     dispatch({
       type: 'SET_ACTIVE_PROFILE_KEY',
-      payload: profileKeyFromProvider('custom', newProtocol),
+      payload: profileKeyFromProvider(newProvider),
     });
   }, []);
   const setApiKey = useCallback(
@@ -193,11 +180,7 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     (setupId: string) => {
       const setup = COMMON_PROVIDER_SETUPS.find((item) => item.id === setupId);
       if (!setup) return;
-      const nextProvider = setup.applyProvider;
-      const nextProfileKey = profileKeyFromProvider(nextProvider, setup.recommendedProtocol);
-      if (nextProvider === 'custom') {
-        dispatch({ type: 'SET_LAST_CUSTOM_PROTOCOL', payload: setup.recommendedProtocol });
-      }
+      const nextProfileKey = profileKeyFromProvider(setup.applyProvider, setup.recommendedProtocol);
       dispatch({
         type: 'UPDATE_PROFILE_FN',
         profileKey: nextProfileKey,
@@ -279,7 +262,6 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     baseUrl,
     baseUrlGuidanceText,
     cancelPendingConfigSetAction,
-    changeProtocol,
     changeProvider,
     commonProviderSetups,
     configSetLimit: API_CONFIG_SET_LIMIT,
@@ -306,6 +288,7 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     isDiagnosing,
     isDiscoveringLocalOllama,
     isLoadingConfig,
+    isLocalOpenAiMode,
     isMutatingConfigSet,
     isRefreshingModels,
     isSaving,
@@ -336,7 +319,7 @@ export function useApiConfigState(options: UseApiConfigStateOptions = {}) {
     setMaxTokens,
     setModel,
     setSuccessMessage: showSuccessText,
-    shouldShowOllamaManualModelToggle,
+    shouldShowLocalModelToggle,
     successMessage,
     testResult,
     toggleCustomModel,
