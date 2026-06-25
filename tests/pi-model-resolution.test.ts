@@ -13,7 +13,7 @@ describe('pi model resolution helpers', () => {
   it('skips invalid custom raw provider lookups and deduplicates candidates', () => {
     const candidates = buildPiModelLookupCandidates('openai/gpt-5.4', {
       configProvider: 'openai',
-      rawProvider: 'custom',
+      rawProvider: 'openai',
     });
 
     expect(candidates).toEqual([
@@ -26,11 +26,11 @@ describe('pi model resolution helpers', () => {
   it('prefers openrouter full model id before native provider lookup', () => {
     const candidates = buildPiModelLookupCandidates('anthropic/claude-sonnet-4-6', {
       configProvider: 'anthropic',
-      rawProvider: 'openrouter',
+      rawProvider: 'openai',
     });
 
     expect(candidates).toEqual([
-      { provider: 'openrouter', model: 'anthropic/claude-sonnet-4-6' },
+      { provider: 'openai', model: 'anthropic/claude-sonnet-4-6' },
       { provider: 'anthropic', model: 'claude-sonnet-4-6' },
       { provider: 'openai', model: 'claude-sonnet-4-6' },
       { provider: 'google', model: 'claude-sonnet-4-6' },
@@ -43,7 +43,7 @@ describe('pi model resolution helpers', () => {
     ).toBe('openai/gpt-5.4');
     expect(
       resolvePiModelString({
-        provider: 'custom',
+        provider: 'openai',
         customProtocol: 'gemini',
         model: 'gemini-3-flash-preview',
       })
@@ -57,11 +57,10 @@ describe('pi model resolution helpers', () => {
     ).toBe('anthropic/claude-sonnet-4-6');
   });
 
-  it('routes openrouter through the openai-compatible protocol', () => {
-    expect(resolvePiRouteProtocol('openrouter', 'anthropic')).toBe('openai');
-    expect(resolvePiRouteProtocol('ollama', 'openai')).toBe('openai');
-    expect(resolvePiRouteProtocol('custom', 'gemini')).toBe('gemini');
-    expect(resolvePiRouteProtocol('custom', 'anthropic')).toBe('anthropic');
+  it('routes providers through the openai-compatible or anthropic protocol', () => {
+    expect(resolvePiRouteProtocol('openai', 'openai')).toBe('openai');
+    expect(resolvePiRouteProtocol('anthropic', 'anthropic')).toBe('anthropic');
+    expect(resolvePiRouteProtocol('openai', 'anthropic')).toBe('openai');
   });
 
   it('builds synthetic models with protocol-specific api defaults', () => {
@@ -76,17 +75,17 @@ describe('pi model resolution helpers', () => {
     expect(model.baseUrl).toBe('https://api.x.ai/v1');
   });
 
-  it('preserves explicit provider-prefixed ids for openrouter synthetic fallbacks', () => {
+  it('preserves explicit provider-prefixed ids for relay synthetic fallbacks', () => {
     const fallback = resolveSyntheticPiModelFallback({
       rawModel: 'z-ai/glm-5-turbo',
       resolvedModelString: 'z-ai/glm-5-turbo',
-      rawProvider: 'openrouter',
+      rawProvider: 'openai',
       routeProtocol: 'openai',
       baseUrl: 'https://openrouter.ai/api/v1',
     });
 
     expect(fallback).toEqual({
-      provider: 'openrouter',
+      provider: 'z-ai',
       modelId: 'z-ai/glm-5-turbo',
     });
   });
@@ -110,7 +109,7 @@ describe('pi model resolution helpers', () => {
     const fallback = resolveSyntheticPiModelFallback({
       rawModel: 'qwen3.5:0.8b',
       resolvedModelString: 'qwen3.5:0.8b',
-      rawProvider: 'ollama',
+      rawProvider: 'openai',
       routeProtocol: 'openai',
       baseUrl: 'http://localhost:11434/v1',
     });
@@ -137,7 +136,7 @@ describe('pi model resolution helpers', () => {
       },
       {
         configProvider: 'openai',
-        rawProvider: 'custom',
+        rawProvider: 'openai',
         customBaseUrl: 'https://relay.example.com/v1',
       }
     );
@@ -322,7 +321,7 @@ describe('pi model resolution helpers', () => {
         id: 'qwen3:8b',
         name: 'qwen3:8b',
         api: 'openai-completions',
-        provider: 'ollama',
+        provider: 'openai',
         baseUrl: '',
         reasoning: false,
         input: ['text'],
@@ -332,7 +331,7 @@ describe('pi model resolution helpers', () => {
       },
       {
         configProvider: 'ollama',
-        rawProvider: 'ollama',
+        rawProvider: 'openai',
         customBaseUrl: 'http://localhost:11434/v1',
       }
     );
@@ -357,7 +356,7 @@ describe('pi model resolution helpers', () => {
       },
       {
         configProvider: 'openai',
-        rawProvider: 'ollama',
+        rawProvider: 'openai',
         customBaseUrl: 'http://localhost:11434/v1',
       }
     );
@@ -374,7 +373,7 @@ describe('pi model resolution helpers', () => {
         id: 'anthropic/claude-sonnet-4-6',
         name: 'claude-sonnet-4-6',
         api: 'openai-completions',
-        provider: 'openrouter',
+        provider: 'openai',
         baseUrl: 'https://openrouter.ai/api/v1',
         reasoning: false,
         input: ['text'],
@@ -383,8 +382,8 @@ describe('pi model resolution helpers', () => {
         maxTokens: 8192,
       },
       {
-        configProvider: 'openrouter',
-        rawProvider: 'openrouter',
+        configProvider: 'openai',
+        rawProvider: 'openai',
         customBaseUrl: 'https://openrouter.ai/api/v1',
       }
     );
@@ -423,7 +422,7 @@ describe('pi model resolution helpers', () => {
         id: 'custom-model',
         name: 'custom-model',
         api: 'openai-completions',
-        provider: 'custom',
+        provider: 'openai',
         baseUrl: '',
         reasoning: false,
         input: ['text'],
@@ -436,7 +435,7 @@ describe('pi model resolution helpers', () => {
       } as any,
       {
         configProvider: 'custom',
-        rawProvider: 'custom',
+        rawProvider: 'openai',
         customBaseUrl: 'https://my-relay.example.com/v1',
       }
     );
@@ -453,7 +452,7 @@ describe('pi model resolution helpers', () => {
         id: 'deepseek-v4-pro',
         name: 'deepseek-v4-pro',
         api: 'openai-completions',
-        provider: 'custom',
+        provider: 'openai',
         baseUrl: 'https://my-relay.example.com/v1',
         reasoning: true,
         input: ['text'],
@@ -463,7 +462,7 @@ describe('pi model resolution helpers', () => {
       },
       {
         configProvider: 'custom',
-        rawProvider: 'custom',
+        rawProvider: 'openai',
         customBaseUrl: 'https://my-relay.example.com/v1',
       }
     );
@@ -477,7 +476,7 @@ describe('pi model resolution helpers', () => {
         id: 'deepseek/deepseek-v4-flash',
         name: 'deepseek/deepseek-v4-flash',
         api: 'openai-completions',
-        provider: 'openrouter',
+        provider: 'openai',
         baseUrl: 'https://openrouter.ai/api/v1',
         reasoning: true,
         input: ['text'],
@@ -486,8 +485,8 @@ describe('pi model resolution helpers', () => {
         maxTokens: 16384,
       },
       {
-        configProvider: 'openrouter',
-        rawProvider: 'openrouter',
+        configProvider: 'openai',
+        rawProvider: 'openai',
         customBaseUrl: 'https://openrouter.ai/api/v1',
       }
     );
@@ -501,7 +500,7 @@ describe('pi model resolution helpers', () => {
         id: 'deepseek-reasoner',
         name: 'deepseek-reasoner',
         api: 'openai-completions',
-        provider: 'custom',
+        provider: 'openai',
         baseUrl: 'https://my-relay.example.com/v1',
         reasoning: true,
         input: ['text'],
@@ -511,7 +510,7 @@ describe('pi model resolution helpers', () => {
       },
       {
         configProvider: 'custom',
-        rawProvider: 'custom',
+        rawProvider: 'openai',
         customBaseUrl: 'https://my-relay.example.com/v1',
       }
     );

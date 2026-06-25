@@ -330,6 +330,14 @@
         "genericOpenAI": {
           "name": "Genérico compatible con OpenAI",
           "note": "Usa esto para relés, gateways o servidores de inferencia personalizados que imitan la API de OpenAI."
+        },
+        "vllm": {
+          "name": "vLLM",
+          "note": "Configure via the OpenAI-compatible tab with a local base URL such as http://localhost:8000/v1."
+        },
+        "genericAnthropic": {
+          "name": "Generic Anthropic-compatible",
+          "note": "Use this for local or custom gateways that expose the Anthropic Messages API."
         }
       }
     },

@@ -14,8 +14,8 @@ import { PROVIDER_PRESETS, configStore } from './config-store';
 import { DEFAULT_OLLAMA_BASE_URL } from '../../shared/ollama-base-url';
 import { isLoopbackBaseUrl } from '../../shared/network/loopback';
 import {
+  isLoopbackOpenAIEndpoint,
   normalizeAnthropicBaseUrl,
-  resolveOllamaCredentials,
   resolveOpenAICredentials,
   shouldAllowEmptyAnthropicApiKey,
   shouldUseAnthropicAuthToken,
@@ -62,12 +62,11 @@ function isLoopback(hostname: string): boolean {
 function resolveEffectiveUrl(input: DiagnosticInput): URL {
   let raw = input.baseUrl?.trim();
 
-  if (!raw && input.provider !== 'custom') {
+  if (!raw) {
     raw = PROVIDER_PRESETS[input.provider]?.baseUrl;
   }
 
   if (!raw) {
-    // Fallback for custom without baseUrl — use a dummy so we can still surface errors
     raw = 'https://localhost';
   }
 
@@ -90,33 +89,25 @@ function defaultPort(
   provider: DiagnosticInput['provider'],
   hostname: string
 ): number {
-  if (provider === 'ollama' && isLoopback(hostname)) {
+  if (provider === 'openai' && isLoopback(hostname)) {
     return 11434;
   }
   return protocol === 'https:' ? 443 : 80;
 }
 
 function isOpenAICompatible(input: DiagnosticInput): boolean {
-  return (
-    input.provider === 'openai' ||
-    input.provider === 'ollama' ||
-    input.provider === 'openrouter' ||
-    (input.provider === 'custom' && input.customProtocol === 'openai')
-  );
+  return input.provider === 'openai';
 }
 
 function isAnthropicCompatible(input: DiagnosticInput): boolean {
-  return (
-    input.provider === 'anthropic' ||
-    (input.provider === 'custom' && (input.customProtocol ?? 'anthropic') === 'anthropic')
-  );
+  return input.provider === 'anthropic';
 }
 
-function isGeminiProtocol(input: DiagnosticInput): boolean {
-  return (
-    input.provider === 'gemini' ||
-    (input.provider === 'custom' && input.customProtocol === 'gemini')
-  );
+function isLocalOpenAiDiagnostic(input: DiagnosticInput): boolean {
+  return isLoopbackOpenAIEndpoint({
+    provider: input.provider,
+    baseUrl: input.baseUrl,
+  });
 }
 
 function getErrorMessage(err: unknown): string {
@@ -218,32 +209,21 @@ function makeAnthropicClient(opts: {
 function resolveClientBaseUrl(input: DiagnosticInput): string | undefined {
   const raw = input.baseUrl?.trim();
 
-  if (input.provider === 'ollama') {
-    return normalizeOllamaBaseUrl(raw || PROVIDER_PRESETS.ollama?.baseUrl);
+  if (isLocalOpenAiDiagnostic(input)) {
+    return normalizeOllamaBaseUrl(raw || DEFAULT_OLLAMA_BASE_URL);
   }
 
   if (isOpenAICompatible(input)) {
     if (raw) return normalizeOpenAICompatibleBaseUrl(raw);
-    if (input.provider !== 'custom') {
-      return PROVIDER_PRESETS[input.provider]?.baseUrl;
-    }
-    return undefined;
+    return PROVIDER_PRESETS.openai?.baseUrl;
   }
 
   if (isAnthropicCompatible(input)) {
     if (raw) return normalizeAnthropicBaseUrl(raw);
-    if (input.provider === 'anthropic') {
-      return normalizeAnthropicBaseUrl(PROVIDER_PRESETS.anthropic?.baseUrl);
-    }
-    return undefined;
+    return normalizeAnthropicBaseUrl(PROVIDER_PRESETS.anthropic?.baseUrl);
   }
 
-  // Gemini or unknown
-  if (raw) return raw;
-  if (input.provider !== 'custom') {
-    return PROVIDER_PRESETS[input.provider as keyof typeof PROVIDER_PRESETS]?.baseUrl;
-  }
-  return undefined;
+  return raw;
 }
 
 // ---------------------------------------------------------------------------
@@ -360,66 +340,18 @@ async function stepTls(
 }
 
 async function stepAuth(input: DiagnosticInput, step: DiagnosticStep): Promise<void> {
-  // Gemini: verify key via models.get() — lightweight and always available
-  if (isGeminiProtocol(input)) {
-    const start = Date.now();
-    const apiKey = input.apiKey?.trim() || '';
-
-    if (!apiKey) {
-      step.status = 'fail';
-      step.error = 'No API key provided';
-      step.fix = 'missing_api_key';
-      step.latencyMs = Date.now() - start;
-      return;
-    }
-
-    try {
-      const { GoogleGenAI } = (await import('@google/genai')) as typeof import('@google/genai');
-      const clientBaseUrl = resolveClientBaseUrl(input);
-      const httpOptions = { ...(clientBaseUrl ? { baseUrl: clientBaseUrl } : {}), timeout: 15000 };
-      const client = new GoogleGenAI({ apiKey, httpOptions });
-      const modelToCheck = input.model?.trim() || 'gemini-3-flash-preview';
-      await client.models.get({ model: modelToCheck });
-      step.status = 'ok';
-    } catch (err) {
-      const e = getApiErrorInfo(err);
-      if (shouldContinueAfterGeminiAuthProbeError(e)) {
-        // Some SDK/proxy combinations do not support the lightweight models.get
-        // endpoint. Continue to the live model probe, which exercises inference.
-        step.status = 'ok';
-        step.fix = e.status === 404 ? 'models_get_not_supported' : 'gemini_auth_probe_unavailable';
-        log('[Diagnostics] Gemini auth probe unavailable, continuing to model check:', e.message);
-      } else {
-        step.status = 'fail';
-        step.error = e.message;
-        step.fix = isLikelyAuthFailure(e) ? 'auth_invalid_key' : 'auth_request_failed';
-      }
-    }
-
-    step.latencyMs = Date.now() - start;
-    return;
-  }
-
   const start = Date.now();
   const apiKey = input.apiKey?.trim() || '';
   const clientBaseUrl = resolveClientBaseUrl(input);
 
   try {
     if (isOpenAICompatible(input)) {
-      const resolved =
-        input.provider === 'ollama'
-          ? resolveOllamaCredentials({
-              provider: input.provider,
-              customProtocol: input.customProtocol,
-              apiKey,
-              baseUrl: clientBaseUrl,
-            })
-          : resolveOpenAICredentials({
-              provider: input.provider,
-              customProtocol: input.customProtocol,
-              apiKey,
-              baseUrl: clientBaseUrl,
-            });
+      const resolved = resolveOpenAICredentials({
+        provider: input.provider,
+        customProtocol: input.customProtocol,
+        apiKey,
+        baseUrl: clientBaseUrl,
+      });
 
       if (!resolved?.apiKey) {
         step.status = 'fail';
@@ -500,7 +432,7 @@ async function stepModel(input: DiagnosticInput, step: DiagnosticStep): Promise<
   const start = Date.now();
   try {
     const verificationLevel: DiagnosticVerificationLevel = input.verificationLevel ?? 'deep';
-    if (input.provider === 'ollama' && verificationLevel === 'fast') {
+    if (isLocalOpenAiDiagnostic(input) && verificationLevel === 'fast') {
       const result = await fetchOllamaModelIndex({
         baseUrl: input.baseUrl,
         apiKey: input.apiKey,
@@ -666,7 +598,7 @@ async function runDiagnosticsImpl(input: DiagnosticInput): Promise<DiagnosticRes
     verificationLevel,
   };
 
-  if (overallOk && input.provider === 'ollama' && verificationLevel === 'fast') {
+  if (overallOk && isLocalOpenAiDiagnostic(input) && verificationLevel === 'fast') {
     result.advisoryCode = 'not_deep_verified';
     result.advisoryText =
       'Endpoint is reachable and the selected model is listed, but no live inference was performed.';
@@ -674,7 +606,7 @@ async function runDiagnosticsImpl(input: DiagnosticInput): Promise<DiagnosticRes
 
   if (
     !overallOk &&
-    input.provider === 'ollama' &&
+    isLocalOpenAiDiagnostic(input) &&
     verificationLevel === 'deep' &&
     failedStep?.name === 'model' &&
     failedStep.fix?.startsWith('ollama_model_loading:')

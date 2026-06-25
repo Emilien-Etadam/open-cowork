@@ -19,10 +19,10 @@ const openAIResponsesModel = {
 } as Model<Api>;
 
 describe('pi model runtime overrides', () => {
-  it('keeps OpenAI Responses for custom OpenAI configs that target official OpenAI', () => {
+  it('keeps OpenAI Responses for openai configs that target official OpenAI', () => {
     const model = resolvePiRegistryModel('openai/gpt-5.4', {
       configProvider: 'openai',
-      rawProvider: 'custom',
+      rawProvider: 'openai',
       customProtocol: 'openai',
       customBaseUrl: 'https://api.openai.com/v1',
     });
@@ -31,10 +31,10 @@ describe('pi model runtime overrides', () => {
     expect(model?.baseUrl).toBe('https://api.openai.com/v1');
   });
 
-  it('still downgrades Responses models for generic custom OpenAI-compatible relays', () => {
+  it('still downgrades Responses models for generic OpenAI-compatible relays', () => {
     const model = applyPiModelRuntimeOverrides(openAIResponsesModel, {
       configProvider: 'openai',
-      rawProvider: 'custom',
+      rawProvider: 'openai',
       customProtocol: 'openai',
       customBaseUrl: 'https://relay.example.test/v1',
     });

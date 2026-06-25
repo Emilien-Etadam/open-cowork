@@ -73,11 +73,11 @@ describe('ConfigStore config sets', () => {
 
   it('creates/switches sets without polluting other sets', () => {
     mocks.seed = {
-      provider: 'openrouter',
+      provider: 'anthropic',
       customProtocol: 'anthropic',
-      apiKey: 'sk-openrouter-origin',
-      baseUrl: 'https://openrouter.ai/api',
-      model: 'anthropic/claude-sonnet-4-6',
+      apiKey: 'sk-ant-origin',
+      baseUrl: 'https://api.anthropic.com',
+      model: 'claude-sonnet-4-6',
       enableThinking: false,
       isConfigured: true,
     };
@@ -97,8 +97,8 @@ describe('ConfigStore config sets', () => {
 
     store.switchSet({ id: 'default' });
     const defaultSetView = store.getAll();
-    expect(defaultSetView.provider).toBe('openrouter');
-    expect(defaultSetView.apiKey).toBe('sk-openrouter-origin');
+    expect(defaultSetView.provider).toBe('anthropic');
+    expect(defaultSetView.apiKey).toBe('sk-ant-origin');
   });
 
   it('guards default set deletion and falls back to default after delete', () => {
@@ -121,7 +121,7 @@ describe('ConfigStore config sets', () => {
 
   it('creates blank set with default values for current provider/protocol', () => {
     mocks.seed = {
-      provider: 'custom',
+      provider: 'openai',
       customProtocol: 'openai',
       apiKey: 'sk-existing',
       baseUrl: 'https://example.com/v1',
@@ -134,14 +134,14 @@ describe('ConfigStore config sets', () => {
     const created = store.createSet({ name: 'Blank Set', mode: 'blank' });
     const blankSet = created.configSets.find((set) => set.id !== 'default');
     expect(blankSet).toBeTruthy();
-    expect(blankSet?.provider).toBe('custom');
+    expect(blankSet?.provider).toBe('openai');
     expect(blankSet?.customProtocol).toBe('openai');
     expect(blankSet?.enableThinking).toBe(false);
-    expect(blankSet?.profiles['custom:openai']?.apiKey).toBe('');
-    expect(blankSet?.profiles['custom:openai']?.baseUrl).toBe('https://api.openai.com/v1');
-    expect(blankSet?.profiles['custom:openai']?.model).toBe('gpt-5.4');
+    expect(blankSet?.profiles.openai?.apiKey).toBe('');
+    expect(blankSet?.profiles.openai?.baseUrl).toBe('');
+    expect(blankSet?.profiles.openai?.model).toBe('');
     expect(created.activeConfigSetId).toBe(blankSet?.id);
-    expect(created.provider).toBe('custom');
+    expect(created.provider).toBe('openai');
     expect(created.customProtocol).toBe('openai');
     expect(created.apiKey).toBe('');
   });
@@ -153,25 +153,25 @@ describe('ConfigStore config sets', () => {
     expect(() => store.deleteSet({ id: 'default' })).toThrowError();
   });
 
-  it('creates blank set from gemini provider with gemini defaults intact', () => {
+  it('creates blank set from anthropic provider with anthropic defaults intact', () => {
     mocks.seed = {
-      provider: 'gemini',
-      customProtocol: 'gemini',
-      apiKey: 'AIza-existing',
-      baseUrl: 'https://generativelanguage.googleapis.com',
-      model: 'gemini/gemini-2.5-pro',
+      provider: 'anthropic',
+      customProtocol: 'anthropic',
+      apiKey: 'sk-ant-existing',
+      baseUrl: 'https://api.anthropic.com',
+      model: 'claude-sonnet-4-6',
       enableThinking: false,
       isConfigured: true,
     };
 
     const store = new ConfigStore();
-    const created = store.createSet({ name: 'Gemini Blank', mode: 'blank' });
+    const created = store.createSet({ name: 'Anthropic Blank', mode: 'blank' });
     const blankSet = created.configSets.find((set) => set.id !== 'default');
 
-    expect(blankSet?.provider).toBe('gemini');
-    expect(blankSet?.profiles.gemini?.apiKey).toBe('');
-    expect(blankSet?.profiles.gemini?.baseUrl).toBe('https://generativelanguage.googleapis.com');
-    expect(blankSet?.profiles.gemini?.model).toBe('gemini-2.5-flash');
+    expect(blankSet?.provider).toBe('anthropic');
+    expect(blankSet?.profiles.anthropic?.apiKey).toBe('');
+    expect(blankSet?.profiles.anthropic?.baseUrl).toBe('');
+    expect(blankSet?.profiles.anthropic?.model).toBe('');
   });
 
   it('persists theme preference across config mutations', () => {

@@ -14,19 +14,19 @@ import { useApiConfigState } from '../../hooks/useApiConfigState';
 import { ApiConfigSetManager } from '../ApiConfigSetManager';
 import { CommonProviderSetupsCard, GuidanceInlineHint } from '../ProviderGuidance';
 import ApiDiagnosticsPanel from '../ApiDiagnosticsPanel';
+import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 
 interface ModelOptionItem {
   id: string;
   name: string;
 }
 
-// ==================== API Settings Tab ====================
+const PROVIDER_TABS = ['openai', 'anthropic'] as const;
 
 export function SettingsAPI() {
   const { t } = useTranslation();
   const {
     provider,
-    customProtocol,
     apiKey,
     baseUrl,
     model,
@@ -46,10 +46,8 @@ export function SettingsAPI() {
     isRefreshingModels,
     isDiscoveringLocalOllama,
     enableThinking,
-    isOllamaMode,
+    isLocalOpenAiMode,
     requiresApiKey,
-    protocolGuidanceText,
-    protocolGuidanceTone,
     baseUrlGuidanceText,
     commonProviderSetups,
     configSets,
@@ -70,7 +68,6 @@ export function SettingsAPI() {
     setEnableThinking,
     applyCommonProviderSetup,
     changeProvider,
-    changeProtocol,
     requestConfigSetSwitch,
     requestCreateBlankConfigSet,
     cancelPendingConfigSetAction,
@@ -85,7 +82,7 @@ export function SettingsAPI() {
     isDiagnosing,
     handleDiagnose,
     handleDeepDiagnose,
-    shouldShowOllamaManualModelToggle,
+    shouldShowLocalModelToggle,
   } = useApiConfigState();
 
   if (isLoadingConfig) {
@@ -97,9 +94,12 @@ export function SettingsAPI() {
     );
   }
 
+  const showBaseUrl = provider === 'openai' || isLoopbackBaseUrl(baseUrl);
+  const showContextFields =
+    provider === 'openai' || (provider === 'anthropic' && isLoopbackBaseUrl(baseUrl));
+
   return (
     <div className="space-y-5">
-      {/* Config Set Switcher */}
       <ApiConfigSetManager
         configSets={configSets}
         activeConfigSetId={activeConfigSetId}
@@ -120,34 +120,30 @@ export function SettingsAPI() {
         onDiscardAndContinuePendingAction={discardAndContinuePendingConfigSetAction}
       />
 
-      {/* Provider Selection */}
       <div className="space-y-3 py-5 border-b border-border-muted">
         <label className="flex items-center gap-2 text-sm font-medium text-text-primary">
           <Server className="w-4 h-4" />
           {t('api.provider')}
         </label>
         <p className="text-xs leading-5 text-text-muted">{t('api.providerDescription')}</p>
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2">
-          {(['openrouter', 'anthropic', 'openai', 'gemini', 'ollama', 'custom'] as const).map(
-            (p) => (
-              <button
-                key={p}
-                onClick={() => changeProvider(p)}
-                disabled={isLoadingConfig}
-                className={`px-3 py-2 rounded-lg text-sm transition-colors border ${
-                  provider === p
-                    ? 'border-accent bg-accent/10 text-accent font-medium'
-                    : 'border-border-muted text-text-secondary hover:border-border hover:text-text-primary disabled:opacity-50'
-                }`}
-              >
-                {p === 'custom' ? t('api.moreModels') : presets?.[p]?.name || p}
-              </button>
-            )
-          )}
+        <div className="grid grid-cols-2 gap-2">
+          {PROVIDER_TABS.map((p) => (
+            <button
+              key={p}
+              onClick={() => changeProvider(p)}
+              disabled={isLoadingConfig}
+              className={`px-3 py-2 rounded-lg text-sm transition-colors border ${
+                provider === p
+                  ? 'border-accent bg-accent/10 text-accent font-medium'
+                  : 'border-border-muted text-text-secondary hover:border-border hover:text-text-primary disabled:opacity-50'
+              }`}
+            >
+              {presets?.[p]?.name || p}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* API Key */}
       <div className="space-y-3 py-5 border-b border-border-muted">
         <label
           htmlFor="api-key-input"
@@ -170,43 +166,7 @@ export function SettingsAPI() {
         )}
       </div>
 
-      {/* Custom Protocol */}
-      {provider === 'custom' && (
-        <div className="space-y-3 py-5 border-b border-border-muted">
-          <label
-            id="api-protocol-label"
-            className="flex items-center gap-2 text-sm font-medium text-text-primary"
-          >
-            <Server className="w-4 h-4" />
-            {t('api.protocol')}
-          </label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {(
-              [
-                { id: 'anthropic', label: 'Anthropic' },
-                { id: 'openai', label: 'OpenAI' },
-                { id: 'gemini', label: 'Gemini' },
-              ] as const
-            ).map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => changeProtocol(mode.id)}
-                className={`px-3 py-2 rounded-lg text-sm transition-colors border ${
-                  customProtocol === mode.id
-                    ? 'border-accent bg-accent/10 text-accent font-medium'
-                    : 'border-border-muted text-text-secondary hover:border-border hover:text-text-primary'
-                }`}
-              >
-                {mode.label}
-              </button>
-            ))}
-          </div>
-          <p className="text-xs text-text-muted">{t('api.selectProtocol')}</p>
-          <GuidanceInlineHint text={protocolGuidanceText} tone={protocolGuidanceTone} />
-        </div>
-      )}
-
-      {(provider === 'custom' || provider === 'ollama') && (
+      {showBaseUrl && (
         <div className="space-y-3 py-5 border-b border-border-muted">
           <div className="flex items-center justify-between gap-2">
             <label
@@ -216,7 +176,7 @@ export function SettingsAPI() {
               <Server className="w-4 h-4" />
               {t('api.baseUrl')}
             </label>
-            {isOllamaMode && (
+            {isLocalOpenAiMode && (
               <button
                 type="button"
                 onClick={() => {
@@ -238,33 +198,22 @@ export function SettingsAPI() {
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
             placeholder={
-              provider === 'ollama'
-                ? 'http://localhost:11434/v1'
-                : customProtocol === 'openai'
-                  ? 'https://api.openai.com/v1'
-                  : customProtocol === 'gemini'
-                    ? 'https://generativelanguage.googleapis.com'
-                    : currentPreset?.baseUrl || 'https://api.anthropic.com'
+              provider === 'openai'
+                ? 'https://api.openai.com/v1 or http://localhost:11434/v1'
+                : currentPreset?.baseUrl || 'https://api.anthropic.com'
             }
             className="w-full px-4 py-3 rounded-lg bg-background border border-border text-text-primary placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent transition-all"
           />
           <p className="text-xs text-text-muted">
-            {provider === 'ollama'
-              ? t('api.enterOllamaUrl')
-              : customProtocol === 'openai'
-                ? t('api.enterOpenAIUrl')
-                : customProtocol === 'gemini'
-                  ? t('api.enterGeminiUrl')
-                  : t('api.enterAnthropicUrl')}
+            {provider === 'openai' ? t('api.enterOpenAIUrl') : t('api.enterAnthropicUrl')}
           </p>
-          {isOllamaMode && (
+          {isLocalOpenAiMode && (
             <p className="text-xs text-text-muted">{t('api.discoverLocalOllamaHint')}</p>
           )}
-          {provider === 'custom' && <GuidanceInlineHint text={baseUrlGuidanceText} />}
+          {provider === 'openai' && <GuidanceInlineHint text={baseUrlGuidanceText} />}
         </div>
       )}
 
-      {/* Model Selection */}
       <div className="space-y-3 py-5 border-b border-border-muted">
         <div className="flex items-center justify-between">
           <label
@@ -275,7 +224,7 @@ export function SettingsAPI() {
             {t('api.model')}
           </label>
           <div className="flex items-center gap-2">
-            {isOllamaMode && (
+            {isLocalOpenAiMode && (
               <button
                 type="button"
                 onClick={() => {
@@ -288,7 +237,7 @@ export function SettingsAPI() {
                 {isRefreshingModels ? t('api.refreshingModels') : t('api.refreshModels')}
               </button>
             )}
-            {shouldShowOllamaManualModelToggle && (
+            {shouldShowLocalModelToggle && (
               <button
                 type="button"
                 onClick={toggleCustomModel}
@@ -299,7 +248,7 @@ export function SettingsAPI() {
                 }`}
               >
                 <Edit3 className="w-3 h-3" />
-                {isOllamaMode
+                {isLocalOpenAiMode
                   ? useCustomModel
                     ? t('api.useDetectedModels')
                     : t('api.manualModel')
@@ -341,8 +290,7 @@ export function SettingsAPI() {
         )}
         {useCustomModel && <p className="text-xs text-text-muted">{modelInputHint}</p>}
 
-        {/* Context Window & Max Tokens — only for non-registry providers */}
-        {(provider === 'ollama' || provider === 'custom') && (
+        {showContextFields && (
           <div className="grid grid-cols-2 gap-3 pt-2">
             <div>
               <label
@@ -385,14 +333,13 @@ export function SettingsAPI() {
         )}
       </div>
 
-      {provider === 'custom' && (
+      {provider === 'openai' && (
         <CommonProviderSetupsCard
           setups={commonProviderSetups}
           onApplySetup={applyCommonProviderSetup}
         />
       )}
 
-      {/* Enable Thinking Mode */}
       <div className="space-y-3 py-5 border-b border-border-muted">
         <div className="flex items-start gap-2 text-xs text-text-muted">
           <input
@@ -405,7 +352,7 @@ export function SettingsAPI() {
           <label htmlFor="enable-thinking" className="space-y-0.5 flex-1">
             <div className="text-text-primary font-medium">{t('api.enableThinking')}</div>
             <div>{t('api.enableThinkingHint')}</div>
-            {isOllamaMode && (
+            {isLocalOpenAiMode && (
               <div className="text-amber-500 dark:text-amber-400 text-xs mt-1">
                 {t('api.enableThinkingOllamaHint')}
               </div>
@@ -414,7 +361,6 @@ export function SettingsAPI() {
         </div>
       </div>
 
-      {/* Error/Success Messages */}
       {error && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-lg bg-error/10 text-error text-sm">
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
@@ -427,16 +373,14 @@ export function SettingsAPI() {
           {successMessage}
         </div>
       )}
-      {/* Diagnostics Panel */}
       <ApiDiagnosticsPanel
         result={diagnosticResult}
         isRunning={isDiagnosing}
         onRunDiagnostics={handleDiagnose}
-        onRunDeepDiagnostics={isOllamaMode ? handleDeepDiagnose : undefined}
+        onRunDeepDiagnostics={isLocalOpenAiMode ? handleDeepDiagnose : undefined}
         disabled={requiresApiKey && !apiKey.trim()}
       />
 
-      {/* Save Button */}
       <div className="space-y-3 py-5 border-b border-border-muted">
         <div className="grid grid-cols-1 gap-2">
           <button

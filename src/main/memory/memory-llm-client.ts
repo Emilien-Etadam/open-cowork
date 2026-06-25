@@ -1,11 +1,7 @@
 import OpenAI from 'openai';
 import type { AppConfig, CustomProtocolType, ProviderType } from '../config/config-store';
 import { configStore } from '../config/config-store';
-import {
-  normalizeOpenAICompatibleBaseUrl,
-  resolveOllamaCredentials,
-  resolveOpenAICredentials,
-} from '../config/auth-utils';
+import { normalizeOpenAICompatibleBaseUrl, resolveOpenAICredentials } from '../config/auth-utils';
 import { runPiAiOneShot } from '../claude/claude-sdk-one-shot';
 import { logWarn } from '../utils/logger';
 
@@ -144,11 +140,7 @@ export class MemoryLLMClient implements MemoryLLMClientLike {
 
     const provider = embedConfig.provider;
     const protocol = embedConfig.customProtocol;
-    const isOpenAiCompatible =
-      provider === 'openai' ||
-      provider === 'openrouter' ||
-      provider === 'ollama' ||
-      (provider === 'custom' && protocol === 'openai');
+    const isOpenAiCompatible = provider === 'openai';
 
     if (!isOpenAiCompatible) {
       logWarn(
@@ -158,20 +150,12 @@ export class MemoryLLMClient implements MemoryLLMClientLike {
       return [];
     }
 
-    const resolved =
-      provider === 'ollama'
-        ? resolveOllamaCredentials({
-            provider,
-            customProtocol: protocol,
-            apiKey: embedConfig.apiKey,
-            baseUrl: embedConfig.baseUrl,
-          })
-        : resolveOpenAICredentials({
-            provider,
-            customProtocol: protocol,
-            apiKey: embedConfig.apiKey,
-            baseUrl: embedConfig.baseUrl,
-          });
+    const resolved = resolveOpenAICredentials({
+      provider,
+      customProtocol: protocol,
+      apiKey: embedConfig.apiKey,
+      baseUrl: embedConfig.baseUrl,
+    });
 
     const client = new OpenAI({
       apiKey: resolved?.apiKey || embedConfig.apiKey,

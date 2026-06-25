@@ -5,19 +5,13 @@
  */
 import { mt, DEFAULT_BACKEND_LANGUAGE } from '../i18n';
 
-export type ProviderType = 'openrouter' | 'anthropic' | 'custom' | 'openai' | 'gemini' | 'ollama';
-export type CustomProtocolType = 'anthropic' | 'openai' | 'gemini';
+import { defaultProtocolForSharedProvider } from '../../shared/api-model-presets';
+
+export type ProviderType = 'openai' | 'anthropic';
+export type CustomProtocolType = 'anthropic' | 'openai';
 export type AppTheme = 'dark' | 'light' | 'system';
 export type ThemePreset = 'default' | 'vscode';
-export type ProviderProfileKey =
-  | 'openrouter'
-  | 'anthropic'
-  | 'openai'
-  | 'gemini'
-  | 'ollama'
-  | 'custom:anthropic'
-  | 'custom:openai'
-  | 'custom:gemini';
+export type ProviderProfileKey = 'openai' | 'anthropic';
 export type ConfigSetId = string;
 export type CreateSetMode = 'blank' | 'clone';
 
@@ -120,60 +114,21 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'isConfigured',
 ]);
 
-export const PROFILE_KEYS: ProviderProfileKey[] = [
-  'openrouter',
-  'anthropic',
-  'openai',
-  'gemini',
-  'ollama',
-  'custom:anthropic',
-  'custom:openai',
-  'custom:gemini',
-];
+export const PROFILE_KEYS: ProviderProfileKey[] = ['openai', 'anthropic'];
 
 const VALID_THEMES: AppTheme[] = ['dark', 'light', 'system'];
 const VALID_THEME_PRESETS: ThemePreset[] = ['default', 'vscode'];
 
 export const defaultProfiles: Record<ProviderProfileKey, ProviderProfile> = {
-  openrouter: {
+  openai: {
     apiKey: '',
-    baseUrl: 'https://openrouter.ai/api/v1',
-    model: 'anthropic/claude-sonnet-4-6',
+    baseUrl: '',
+    model: '',
   },
   anthropic: {
     apiKey: '',
-    baseUrl: 'https://api.anthropic.com',
-    model: 'claude-sonnet-4-6',
-  },
-  openai: {
-    apiKey: '',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-5.4',
-  },
-  ollama: {
-    apiKey: '',
-    baseUrl: 'http://localhost:11434/v1',
+    baseUrl: '',
     model: '',
-  },
-  gemini: {
-    apiKey: '',
-    baseUrl: 'https://generativelanguage.googleapis.com',
-    model: 'gemini-2.5-flash',
-  },
-  'custom:anthropic': {
-    apiKey: '',
-    baseUrl: 'https://open.bigmodel.cn/api/anthropic',
-    model: 'glm-5',
-  },
-  'custom:openai': {
-    apiKey: '',
-    baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-5.4',
-  },
-  'custom:gemini': {
-    apiKey: '',
-    baseUrl: 'https://generativelanguage.googleapis.com',
-    model: 'gemini-2.5-flash',
   },
 };
 
@@ -181,9 +136,9 @@ export const defaultConfigSet: ApiConfigSet = {
   id: DEFAULT_CONFIG_SET_ID,
   name: mt('configDefaultSetName'),
   isSystem: true,
-  provider: 'openrouter',
-  customProtocol: 'anthropic',
-  activeProfileKey: 'openrouter',
+  provider: 'openai',
+  customProtocol: 'openai',
+  activeProfileKey: 'openai',
   profiles: defaultProfiles,
   enableThinking: false,
   updatedAt: '1970-01-01T00:00:00.000Z',
@@ -212,10 +167,10 @@ export function shouldRecoverWipedConfig(current: AppConfig, recovered: AppConfi
 
 export const defaultConfig: AppConfig = {
   provider: defaultConfigSet.provider,
-  apiKey: defaultProfiles.openrouter.apiKey,
-  baseUrl: defaultProfiles.openrouter.baseUrl,
+  apiKey: defaultProfiles.openai.apiKey,
+  baseUrl: defaultProfiles.openai.baseUrl,
   customProtocol: defaultConfigSet.customProtocol,
-  model: defaultProfiles.openrouter.model,
+  model: defaultProfiles.openai.model,
   activeProfileKey: defaultConfigSet.activeProfileKey,
   profiles: defaultProfiles,
   activeConfigSetId: DEFAULT_CONFIG_SET_ID,
@@ -263,18 +218,11 @@ export const defaultConfig: AppConfig = {
 };
 
 export function isProviderType(value: unknown): value is ProviderType {
-  return (
-    value === 'openrouter' ||
-    value === 'anthropic' ||
-    value === 'custom' ||
-    value === 'openai' ||
-    value === 'gemini' ||
-    value === 'ollama'
-  );
+  return value === 'openai' || value === 'anthropic';
 }
 
 export function isCustomProtocol(value: unknown): value is CustomProtocolType {
-  return value === 'anthropic' || value === 'openai' || value === 'gemini';
+  return value === 'anthropic' || value === 'openai';
 }
 
 export function isProfileKey(value: unknown): value is ProviderProfileKey {
@@ -358,43 +306,19 @@ export function normalizeMemoryRuntimeConfig(raw: unknown): MemoryRuntimeConfig 
 
 export function profileKeyFromProvider(
   provider: ProviderType,
-  customProtocol: CustomProtocolType = 'anthropic'
+  _customProtocol: CustomProtocolType = 'anthropic'
 ): ProviderProfileKey {
-  if (provider !== 'custom') {
-    return provider;
-  }
-  if (customProtocol === 'openai') {
-    return 'custom:openai';
-  }
-  if (customProtocol === 'gemini') {
-    return 'custom:gemini';
-  }
-  return 'custom:anthropic';
+  return provider;
 }
 
 export function profileKeyToProvider(profileKey: ProviderProfileKey): {
   provider: ProviderType;
   customProtocol: CustomProtocolType;
 } {
-  if (profileKey === 'custom:openai') {
-    return { provider: 'custom', customProtocol: 'openai' };
-  }
-  if (profileKey === 'custom:gemini') {
-    return { provider: 'custom', customProtocol: 'gemini' };
-  }
-  if (profileKey === 'custom:anthropic') {
-    return { provider: 'custom', customProtocol: 'anthropic' };
-  }
-  if (profileKey === 'openai') {
-    return { provider: 'openai', customProtocol: 'openai' };
-  }
-  if (profileKey === 'gemini') {
-    return { provider: 'gemini', customProtocol: 'gemini' };
-  }
-  if (profileKey === 'ollama') {
-    return { provider: 'ollama', customProtocol: 'openai' };
-  }
-  return { provider: profileKey, customProtocol: 'anthropic' };
+  return {
+    provider: profileKey,
+    customProtocol: defaultProtocolForProvider(profileKey),
+  };
 }
 
 export function toBoolean(value: unknown, fallback: boolean): boolean {
@@ -417,18 +341,12 @@ export function normalizeCustomProtocol(
   value: CustomProtocolType | undefined,
   fallback: CustomProtocolType = 'anthropic'
 ): CustomProtocolType {
-  if (value === 'openai' || value === 'gemini' || value === 'anthropic') {
+  if (value === 'openai' || value === 'anthropic') {
     return value;
   }
   return fallback;
 }
 
 export function defaultProtocolForProvider(provider: ProviderType): CustomProtocolType {
-  if (provider === 'openai' || provider === 'ollama') {
-    return 'openai';
-  }
-  if (provider === 'gemini') {
-    return 'gemini';
-  }
-  return 'anthropic';
+  return defaultProtocolForSharedProvider(provider);
 }

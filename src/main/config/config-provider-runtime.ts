@@ -7,12 +7,11 @@ import { API_PROVIDER_PRESETS, PI_AI_CURATED_PRESETS } from '../../shared/api-mo
 import { log, logWarn } from '../utils/logger';
 import {
   isOpenAIProvider,
+  isLoopbackOpenAIEndpoint,
   normalizeAnthropicBaseUrl,
-  resolveOllamaCredentials,
   resolveOpenAICredentials,
   shouldAllowEmptyAnthropicApiKey,
-  shouldAllowEmptyGeminiApiKey,
-  shouldAllowEmptyOllamaApiKey,
+  shouldAllowEmptyOpenAIApiKey,
   shouldUseAnthropicAuthToken,
 } from './auth-utils';
 import { normalizeConfig, projectFromConfigSet } from './config-normalizer';
@@ -83,7 +82,11 @@ export function hasUsableCredentialsForProjection(projection: {
   baseUrl?: string;
   model?: string;
 }): boolean {
-  if (projection.provider === 'ollama' && !projection.model?.trim()) {
+  if (
+    projection.provider === 'openai' &&
+    isLoopbackOpenAIEndpoint(projection) &&
+    !projection.model?.trim()
+  ) {
     return false;
   }
   const apiKey = projection.apiKey?.trim();
@@ -100,16 +103,7 @@ export function hasUsableCredentialsForProjection(projection: {
     return true;
   }
   if (
-    shouldAllowEmptyGeminiApiKey({
-      provider: projection.provider,
-      customProtocol: projection.customProtocol,
-      baseUrl: projection.baseUrl,
-    })
-  ) {
-    return true;
-  }
-  if (
-    shouldAllowEmptyOllamaApiKey({
+    shouldAllowEmptyOpenAIApiKey({
       provider: projection.provider,
       customProtocol: projection.customProtocol,
       baseUrl: projection.baseUrl,
@@ -125,19 +119,12 @@ export function hasUsableCredentialsForProjection(projection: {
     return false;
   }
   return (
-    (projection.provider === 'ollama'
-      ? resolveOllamaCredentials({
-          provider: projection.provider,
-          customProtocol: protocol,
-          apiKey: projection.apiKey ?? '',
-          baseUrl: projection.baseUrl,
-        })
-      : resolveOpenAICredentials({
-          provider: projection.provider,
-          customProtocol: protocol,
-          apiKey: projection.apiKey ?? '',
-          baseUrl: projection.baseUrl,
-        })) !== null
+    resolveOpenAICredentials({
+      provider: projection.provider,
+      customProtocol: protocol,
+      apiKey: projection.apiKey ?? '',
+      baseUrl: projection.baseUrl,
+    }) !== null
   );
 }
 
@@ -202,19 +189,8 @@ export function applyConfigToEnv(config: AppConfig): void {
   delete process.env.CLAUDE_CODE_PATH;
   delete process.env.COWORK_WORKDIR;
 
-  const useOpenAI =
-    projectedConfig.provider === 'openai' ||
-    projectedConfig.provider === 'ollama' ||
-    (projectedConfig.provider === 'custom' && projectedConfig.customProtocol === 'openai');
-  const useGemini =
-    projectedConfig.provider === 'gemini' ||
-    (projectedConfig.provider === 'custom' && projectedConfig.customProtocol === 'gemini');
-
-  if (useOpenAI) {
-    const resolvedOpenAI =
-      projectedConfig.provider === 'ollama'
-        ? resolveOllamaCredentials(projectedConfig)
-        : resolveOpenAICredentials(projectedConfig);
+  if (projectedConfig.provider === 'openai') {
+    const resolvedOpenAI = resolveOpenAICredentials(projectedConfig);
     if (resolvedOpenAI?.apiKey) {
       process.env.OPENAI_API_KEY = resolvedOpenAI.apiKey;
     }
@@ -228,55 +204,29 @@ export function applyConfigToEnv(config: AppConfig): void {
     if (projectedConfig.model) {
       process.env.OPENAI_MODEL = projectedConfig.model;
     }
-  } else if (useGemini) {
-    const trimmedApiKey = projectedConfig.apiKey?.trim();
-    if (trimmedApiKey) {
-      process.env.GEMINI_API_KEY = trimmedApiKey;
-    }
-    const normalizedGeminiBaseUrl = projectedConfig.baseUrl?.trim().replace(/\/+$/, '');
-    if (normalizedGeminiBaseUrl) {
-      process.env.GEMINI_BASE_URL = normalizedGeminiBaseUrl;
-    }
-    if (projectedConfig.model) {
-      process.env.CLAUDE_MODEL = projectedConfig.model;
-    }
   } else {
     const effectiveAnthropicApiKey =
       projectedConfig.apiKey?.trim() ||
       (shouldAllowEmptyAnthropicApiKey(projectedConfig) ? LOCAL_ANTHROPIC_PLACEHOLDER_KEY : '');
-    if (
-      projectedConfig.provider === 'anthropic' ||
-      (projectedConfig.provider === 'custom' && projectedConfig.customProtocol !== 'openai')
-    ) {
-      const useAuthToken = shouldUseAnthropicAuthToken({
-        ...projectedConfig,
-        apiKey: effectiveAnthropicApiKey,
-      });
-      if (effectiveAnthropicApiKey) {
-        if (useAuthToken) {
-          process.env.ANTHROPIC_AUTH_TOKEN = effectiveAnthropicApiKey;
-        } else {
-          process.env.ANTHROPIC_API_KEY = effectiveAnthropicApiKey;
-        }
-      }
-      const normalizedAnthropicBaseUrl = normalizeAnthropicBaseUrl(projectedConfig.baseUrl);
-      if (normalizedAnthropicBaseUrl) {
-        process.env.ANTHROPIC_BASE_URL = normalizedAnthropicBaseUrl;
-      }
+    const useAuthToken = shouldUseAnthropicAuthToken({
+      ...projectedConfig,
+      apiKey: effectiveAnthropicApiKey,
+    });
+    if (effectiveAnthropicApiKey) {
       if (useAuthToken) {
-        delete process.env.ANTHROPIC_API_KEY;
-      } else {
-        delete process.env.ANTHROPIC_AUTH_TOKEN;
-      }
-    } else {
-      if (effectiveAnthropicApiKey) {
         process.env.ANTHROPIC_AUTH_TOKEN = effectiveAnthropicApiKey;
+      } else {
+        process.env.ANTHROPIC_API_KEY = effectiveAnthropicApiKey;
       }
-      const normalizedAnthropicBaseUrl = normalizeAnthropicBaseUrl(projectedConfig.baseUrl);
-      if (normalizedAnthropicBaseUrl) {
-        process.env.ANTHROPIC_BASE_URL = normalizedAnthropicBaseUrl;
-      }
+    }
+    const normalizedAnthropicBaseUrl = normalizeAnthropicBaseUrl(projectedConfig.baseUrl);
+    if (normalizedAnthropicBaseUrl) {
+      process.env.ANTHROPIC_BASE_URL = normalizedAnthropicBaseUrl;
+    }
+    if (useAuthToken) {
       delete process.env.ANTHROPIC_API_KEY;
+    } else {
+      delete process.env.ANTHROPIC_AUTH_TOKEN;
     }
 
     if (projectedConfig.model) {

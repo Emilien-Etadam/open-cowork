@@ -23,7 +23,6 @@ export function apiConfigReducer(state: ApiConfigState, action: ApiConfigAction)
         configSets: action.payload.configSets,
         activeConfigSetId: action.payload.activeConfigSetId,
         pendingConfigSetAction: null,
-        lastCustomProtocol: action.payload.lastCustomProtocol,
         savedDraftSignature: action.payload.savedDraftSignature,
       };
 
@@ -138,9 +137,6 @@ export function apiConfigReducer(state: ApiConfigState, action: ApiConfigAction)
 
     case 'SET_SAVED_DRAFT_SIGNATURE':
       return { ...state, savedDraftSignature: action.payload };
-
-    case 'SET_LAST_CUSTOM_PROTOCOL':
-      return { ...state, lastCustomProtocol: action.payload };
 
     default: {
       // Exhaustiveness check — TypeScript will error if a case is missing

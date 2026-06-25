@@ -9,7 +9,12 @@ import type {
   ProviderType,
 } from '../../types';
 import type { ApiConfigAction } from './api-config-types';
-import { modelPresetForProfile, normalizeDiscoveredOllamaModels } from './api-config-profile-utils';
+import {
+  isLocalOpenAiMode,
+  modelPresetForProfile,
+  normalizeDiscoveredOllamaModels,
+} from './api-config-profile-utils';
+
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
 
 interface UseApiConfigOllamaActionsParams {
@@ -26,19 +31,19 @@ interface UseApiConfigOllamaActionsParams {
   showSuccessKey: (key: string, values?: Record<string, string | number>) => void;
 }
 
-interface OllamaTarget {
+interface LocalOpenAiTarget {
   activeProfileKey: ProviderProfileKey;
   baseUrl: string;
   provider: ProviderType;
 }
 
-function isStaleOllamaTarget(
-  latestTarget: OllamaTarget,
+function isStaleLocalOpenAiTarget(
+  latestTarget: LocalOpenAiTarget,
   requestedProfileKey: ProviderProfileKey,
   requestedBaseUrl: string
 ): boolean {
   return (
-    latestTarget.provider !== 'ollama' ||
+    !isLocalOpenAiMode(latestTarget.provider, latestTarget.baseUrl) ||
     latestTarget.activeProfileKey !== requestedProfileKey ||
     latestTarget.baseUrl !== requestedBaseUrl
   );
@@ -57,20 +62,20 @@ export function useApiConfigOllamaActions({
   showErrorText,
   showSuccessKey,
 }: UseApiConfigOllamaActionsParams) {
-  const ollamaRefreshRequestIdRef = useRef(0);
-  const ollamaDiscoverRequestIdRef = useRef(0);
-  const latestOllamaTargetRef = useRef<OllamaTarget>({
+  const refreshRequestIdRef = useRef(0);
+  const discoverRequestIdRef = useRef(0);
+  const latestTargetRef = useRef<LocalOpenAiTarget>({
     activeProfileKey,
     baseUrl: '',
-    provider: 'openrouter',
+    provider: 'openai',
   });
 
   useEffect(() => {
-    latestOllamaTargetRef.current = { activeProfileKey, baseUrl: baseUrl.trim(), provider };
+    latestTargetRef.current = { activeProfileKey, baseUrl: baseUrl.trim(), provider };
   }, [activeProfileKey, baseUrl, provider]);
 
   useEffect(() => {
-    if (provider !== 'ollama') {
+    if (!isLocalOpenAiMode(provider, baseUrl)) {
       return;
     }
 
@@ -91,7 +96,7 @@ export function useApiConfigOllamaActions({
     });
   }, [activeProfileKey, baseUrl, dispatch, presets, provider]);
 
-  const applyDiscoveredOllamaState = useCallback(
+  const applyDiscoveredLocalModels = useCallback(
     (
       targetProfileKey: ProviderProfileKey,
       discoveredBaseUrl: string,
@@ -129,13 +134,13 @@ export function useApiConfigOllamaActions({
   );
 
   const refreshModelOptions = useCallback(async () => {
-    if (!isElectron || provider !== 'ollama') {
+    if (!isElectron || !isLocalOpenAiMode(provider, baseUrl)) {
       return [];
     }
 
     const requestedProfileKey = activeProfileKey;
     const requestedBaseUrl = baseUrl.trim();
-    const requestId = ++ollamaRefreshRequestIdRef.current;
+    const requestId = ++refreshRequestIdRef.current;
 
     dispatch({ type: 'SET_IS_REFRESHING_MODELS', payload: true });
     clearError();
@@ -146,10 +151,10 @@ export function useApiConfigOllamaActions({
         baseUrl: requestedBaseUrl || undefined,
       });
 
-      const latestTarget = latestOllamaTargetRef.current;
+      const latestTarget = latestTargetRef.current;
       if (
-        requestId !== ollamaRefreshRequestIdRef.current ||
-        isStaleOllamaTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
+        requestId !== refreshRequestIdRef.current ||
+        isStaleLocalOpenAiTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
       ) {
         return models;
       }
@@ -176,10 +181,10 @@ export function useApiConfigOllamaActions({
       });
       return models;
     } catch (refreshError) {
-      const latestTarget = latestOllamaTargetRef.current;
+      const latestTarget = latestTargetRef.current;
       if (
-        requestId !== ollamaRefreshRequestIdRef.current ||
-        isStaleOllamaTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
+        requestId !== refreshRequestIdRef.current ||
+        isStaleLocalOpenAiTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
       ) {
         return [];
       }
@@ -192,7 +197,7 @@ export function useApiConfigOllamaActions({
       }
       return [];
     } finally {
-      if (requestId === ollamaRefreshRequestIdRef.current) {
+      if (requestId === refreshRequestIdRef.current) {
         dispatch({ type: 'SET_IS_REFRESHING_MODELS', payload: false });
       }
     }
@@ -209,14 +214,14 @@ export function useApiConfigOllamaActions({
 
   const discoverLocalOllama = useCallback(
     async (options?: { silent?: boolean }) => {
-      if (!isElectron || provider !== 'ollama') {
+      if (!isElectron || !isLocalOpenAiMode(provider, baseUrl)) {
         return null;
       }
 
       const requestedProfileKey = activeProfileKey;
       const requestedBaseUrl = baseUrl.trim();
       const shouldClearDiscoveredModels = !requestedBaseUrl || isLoopbackBaseUrl(requestedBaseUrl);
-      const requestId = ++ollamaDiscoverRequestIdRef.current;
+      const requestId = ++discoverRequestIdRef.current;
       dispatch({ type: 'SET_IS_DISCOVERING_LOCAL_OLLAMA', payload: true });
       if (!options?.silent) {
         clearError();
@@ -227,10 +232,10 @@ export function useApiConfigOllamaActions({
           baseUrl: requestedBaseUrl || undefined,
         });
 
-        const latestTarget = latestOllamaTargetRef.current;
+        const latestTarget = latestTargetRef.current;
         if (
-          requestId !== ollamaDiscoverRequestIdRef.current ||
-          isStaleOllamaTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
+          requestId !== discoverRequestIdRef.current ||
+          isStaleLocalOpenAiTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
         ) {
           return result;
         }
@@ -246,7 +251,7 @@ export function useApiConfigOllamaActions({
         }
 
         const models = normalizeDiscoveredOllamaModels(result.models);
-        applyDiscoveredOllamaState(requestedProfileKey, result.baseUrl, models, {
+        applyDiscoveredLocalModels(requestedProfileKey, result.baseUrl, models, {
           autoSelectModelId: models[0]?.id,
         });
 
@@ -260,10 +265,10 @@ export function useApiConfigOllamaActions({
         }
         return result;
       } catch (discoveryError) {
-        const latestTarget = latestOllamaTargetRef.current;
+        const latestTarget = latestTargetRef.current;
         if (
-          requestId !== ollamaDiscoverRequestIdRef.current ||
-          isStaleOllamaTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
+          requestId !== discoverRequestIdRef.current ||
+          isStaleLocalOpenAiTarget(latestTarget, requestedProfileKey, requestedBaseUrl)
         ) {
           return null;
         }
@@ -280,14 +285,14 @@ export function useApiConfigOllamaActions({
         }
         return null;
       } finally {
-        if (requestId === ollamaDiscoverRequestIdRef.current) {
+        if (requestId === discoverRequestIdRef.current) {
           dispatch({ type: 'SET_IS_DISCOVERING_LOCAL_OLLAMA', payload: false });
         }
       }
     },
     [
       activeProfileKey,
-      applyDiscoveredOllamaState,
+      applyDiscoveredLocalModels,
       baseUrl,
       clearError,
       clearSuccessMessage,
@@ -300,7 +305,7 @@ export function useApiConfigOllamaActions({
   );
 
   useEffect(() => {
-    if (provider !== 'ollama') {
+    if (!isLocalOpenAiMode(provider, baseUrl)) {
       return;
     }
     const trimmed = baseUrl.trim();
@@ -314,5 +319,9 @@ export function useApiConfigOllamaActions({
     return () => clearTimeout(timer);
   }, [baseUrl, provider, refreshModelOptions]);
 
-  return { applyDiscoveredOllamaState, discoverLocalOllama, refreshModelOptions };
+  return {
+    applyDiscoveredOllamaState: applyDiscoveredLocalModels,
+    discoverLocalOllama,
+    refreshModelOptions,
+  };
 }

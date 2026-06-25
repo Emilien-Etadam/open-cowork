@@ -199,22 +199,22 @@ describe('probeWithClaudeSdk', () => {
     expect(mocks.completeSimple).not.toHaveBeenCalled();
   });
 
-  it('allows empty key for loopback custom anthropic probe requests', async () => {
+  it('allows empty key for loopback anthropic probe requests', async () => {
     const result = await probeWithClaudeSdk(
       {
-        provider: 'custom',
+        provider: 'anthropic',
         customProtocol: 'anthropic',
         apiKey: '',
         baseUrl: 'http://127.0.0.1:8082',
-        model: 'glm-5',
+        model: 'claude-sonnet-4-6',
       },
       createConfig({
-        provider: 'custom',
+        provider: 'anthropic',
         customProtocol: 'anthropic',
         apiKey: '',
         baseUrl: 'http://127.0.0.1:8082',
-        model: 'glm-5',
-        activeProfileKey: 'custom:anthropic',
+        model: 'claude-sonnet-4-6',
+        activeProfileKey: 'anthropic',
       })
     );
 
@@ -313,17 +313,17 @@ describe('probeWithClaudeSdk', () => {
 
     const result = await probeWithClaudeSdk(
       {
-        provider: 'ollama',
+        provider: 'openai',
         apiKey: '',
         baseUrl: 'http://localhost:11434',
         model: 'qwen3.5:0.8b',
       },
       createConfig({
-        provider: 'ollama',
+        provider: 'openai',
         apiKey: '',
         baseUrl: 'http://localhost:11434',
         model: 'qwen3.5:0.8b',
-        activeProfileKey: 'ollama',
+        activeProfileKey: 'openai',
       })
     );
 
@@ -332,24 +332,24 @@ describe('probeWithClaudeSdk', () => {
     expect(result.details).toMatch(/ECONNREFUSED/i);
   });
 
-  it('maps ECONNREFUSED to network_error for non-ollama provider', async () => {
+  it('maps ECONNREFUSED to network_error for anthropic provider', async () => {
     mocks.completeSimple.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:8080'));
 
     const result = await probeWithClaudeSdk(
       {
-        provider: 'custom',
-        customProtocol: 'openai',
+        provider: 'anthropic',
+        customProtocol: 'anthropic',
         apiKey: 'sk-test',
         baseUrl: 'http://127.0.0.1:8080',
-        model: 'gpt-4.1-mini',
+        model: 'claude-sonnet-4-6',
       },
       createConfig({
-        provider: 'custom',
-        customProtocol: 'openai',
+        provider: 'anthropic',
+        customProtocol: 'anthropic',
         apiKey: 'sk-test',
         baseUrl: 'http://127.0.0.1:8080',
-        model: 'gpt-4.1-mini',
-        activeProfileKey: 'custom:openai',
+        model: 'claude-sonnet-4-6',
+        activeProfileKey: 'anthropic',
       })
     );
 
@@ -361,24 +361,24 @@ describe('probeWithClaudeSdk', () => {
     mocks.resolvePiRegistryModel.mockReturnValue(undefined);
     mocks.buildSyntheticPiModel.mockReturnValue({
       id: 'qwen3.5:0.8b',
-      provider: 'ollama',
+      provider: 'openai',
       api: 'openai-completions',
       baseUrl: 'http://localhost:11434/v1',
     });
 
     const result = await probeWithClaudeSdk(
       {
-        provider: 'ollama',
+        provider: 'openai',
         apiKey: '',
         baseUrl: 'http://localhost:11434',
         model: 'qwen3.5:0.8b',
       },
       createConfig({
-        provider: 'ollama',
+        provider: 'openai',
         apiKey: '',
         baseUrl: 'http://localhost:11434',
         model: 'qwen3.5:0.8b',
-        activeProfileKey: 'ollama',
+        activeProfileKey: 'openai',
       })
     );
 
@@ -392,36 +392,36 @@ describe('probeWithClaudeSdk', () => {
     );
   });
 
-  it('keeps explicit openrouter model namespaces for synthetic fallback models', async () => {
+  it('keeps explicit prefixed model namespaces for synthetic fallback models', async () => {
     mocks.resolvePiRegistryModel.mockReturnValue(undefined);
     mocks.buildSyntheticPiModel.mockReturnValue({
       id: 'z-ai/glm-5-turbo',
-      provider: 'openrouter',
+      provider: 'z-ai',
       api: 'openai-completions',
       baseUrl: 'https://openrouter.ai/api/v1',
     });
 
     const result = await probeWithClaudeSdk(
       {
-        provider: 'openrouter',
+        provider: 'openai',
         apiKey: 'sk-or-test',
         model: 'z-ai/glm-5-turbo',
         baseUrl: 'https://openrouter.ai/api/v1',
       },
       createConfig({
-        provider: 'openrouter',
+        provider: 'openai',
         apiKey: 'sk-or-test',
         baseUrl: 'https://openrouter.ai/api/v1',
-        customProtocol: 'anthropic',
+        customProtocol: 'openai',
         model: 'z-ai/glm-5-turbo',
-        activeProfileKey: 'openrouter',
+        activeProfileKey: 'openai',
       })
     );
 
     expect(result.ok).toBe(true);
     expect(mocks.buildSyntheticPiModel).toHaveBeenCalledWith(
-      'z-ai/glm-5-turbo',
-      'openrouter',
+      'glm-5-turbo',
+      'z-ai',
       'openai',
       'https://openrouter.ai/api/v1',
       'openai-completions'
@@ -438,9 +438,9 @@ describe('probeWithClaudeSdk', () => {
     });
 
     const result = await probeWithClaudeSdk(
-      { provider: 'gemini', apiKey: 'AIza-bad-key', model: 'gemini-2.5-flash' },
+      { provider: 'openai', apiKey: 'AIza-bad-key', model: 'gemini-2.5-flash' },
       createConfig({
-        provider: 'gemini',
+        provider: 'openai',
         customProtocol: 'gemini',
         apiKey: 'AIza-bad-key',
         model: 'gemini-2.5-flash',
@@ -477,9 +477,9 @@ describe('probeWithClaudeSdk', () => {
     });
 
     const result = await probeWithClaudeSdk(
-      { provider: 'gemini', apiKey: 'bad', model: 'gemini-2.5-flash' },
+      { provider: 'openai', apiKey: 'bad', model: 'gemini-2.5-flash' },
       createConfig({
-        provider: 'gemini',
+        provider: 'openai',
         customProtocol: 'gemini',
         apiKey: 'bad',
         model: 'gemini-2.5-flash',
@@ -498,9 +498,9 @@ describe('probeWithClaudeSdk', () => {
     });
 
     const result = await probeWithClaudeSdk(
-      { provider: 'gemini', apiKey: 'bad', model: 'gemini-2.5-flash' },
+      { provider: 'openai', apiKey: 'bad', model: 'gemini-2.5-flash' },
       createConfig({
-        provider: 'gemini',
+        provider: 'openai',
         customProtocol: 'gemini',
         apiKey: 'bad',
         model: 'gemini-2.5-flash',
@@ -519,9 +519,9 @@ describe('probeWithClaudeSdk', () => {
     });
 
     const result = await probeWithClaudeSdk(
-      { provider: 'gemini', apiKey: 'key', model: 'gemini-2.5-flash' },
+      { provider: 'openai', apiKey: 'key', model: 'gemini-2.5-flash' },
       createConfig({
-        provider: 'gemini',
+        provider: 'openai',
         customProtocol: 'gemini',
         apiKey: 'key',
         model: 'gemini-2.5-flash',
@@ -539,9 +539,9 @@ describe('probeWithClaudeSdk', () => {
     });
 
     const result = await probeWithClaudeSdk(
-      { provider: 'gemini', apiKey: 'key', model: 'gemini-2.5-flash' },
+      { provider: 'openai', apiKey: 'key', model: 'gemini-2.5-flash' },
       createConfig({
-        provider: 'gemini',
+        provider: 'openai',
         customProtocol: 'gemini',
         apiKey: 'key',
         model: 'gemini-2.5-flash',
