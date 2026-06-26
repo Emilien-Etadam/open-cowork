@@ -96,6 +96,27 @@
     "updateDownloading": "Téléchargement de la mise à jour en cours…",
     "updateDownloadError": "Échec du téléchargement automatique : {{error}}"
   },
+  "webSearch": {
+    "title": "Recherche web",
+    "description": "Choisissez le moteur utilisé par l'outil WebSearch intégré.",
+    "provider": "Fournisseur de recherche",
+    "providerDuckduckgo": "DuckDuckGo",
+    "providerSearxng": "SearXNG / SearX",
+    "providerYacy": "YaCy",
+    "baseUrl": "URL de l'instance",
+    "baseUrlHint": "Exemple : http://localhost:8080. Vous pouvez aussi définir SEARXNG_BASE_URL ou YACY_BASE_URL dans l'environnement.",
+    "categories": "Catégories",
+    "authToken": "Jeton d'authentification (optionnel)",
+    "authTokenPlaceholder": "Jeton Bearer pour les instances protégées",
+    "language": "Langue (optionnel)",
+    "maxResults": "Résultats max",
+    "searxngSetupHint": "SearXNG doit exposer le JSON dans settings.yml :\nsearch:\n  formats:\n    - html\n    - json",
+    "saved": "Paramètres de recherche web enregistrés.",
+    "test": "Tester la connexion",
+    "testing": "Test en cours...",
+    "testSuccess": "Connexion OK ({{count}} résultats).",
+    "testFailed": "Échec du test de recherche web."
+  },
   "chatLan": {
     "title": "Chat LAN",
     "description": "Interface web locale pour discuter avec l’agent depuis votre réseau (WireGuard/LAN). Aucun relais externe.",

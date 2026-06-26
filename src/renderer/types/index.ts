@@ -714,8 +714,39 @@ export interface AppConfig {
   sandboxEnabled?: boolean;
   memoryEnabled?: boolean;
   memoryRuntime?: MemoryRuntimeConfig;
+  webSearch?: WebSearchConfig;
   enableThinking?: boolean;
   isConfigured: boolean;
+}
+
+export type WebSearchProvider = 'duckduckgo' | 'searxng' | 'yacy';
+
+export interface WebSearchConfig {
+  provider: WebSearchProvider;
+  baseUrl?: string;
+  authToken?: string;
+  language?: string;
+  categories?: string;
+  safeSearch?: 0 | 1 | 2;
+  maxResults?: number;
+  timeoutMs?: number;
+}
+
+export interface WebSearchTestInput {
+  provider: WebSearchProvider;
+  baseUrl?: string;
+  authToken?: string;
+  language?: string;
+  categories?: string;
+  safeSearch?: 0 | 1 | 2;
+  query?: string;
+}
+
+export interface WebSearchTestResult {
+  ok: boolean;
+  resultCount?: number;
+  preview?: string;
+  error?: string;
 }
 
 export interface ProviderPreset {

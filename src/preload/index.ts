@@ -8,6 +8,8 @@ import type {
   Skill,
   ApiTestInput,
   ApiTestResult,
+  WebSearchTestInput,
+  WebSearchTestResult,
   InstalledPlugin,
   PluginToggleResult,
   PluginComponentKind,
@@ -145,6 +147,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     isConfigured: (): Promise<boolean> => ipcRenderer.invoke('config.isConfigured'),
     test: (config: ApiTestInput): Promise<ApiTestResult> =>
       ipcRenderer.invoke('config.test', config),
+    testWebSearch: (payload: WebSearchTestInput): Promise<WebSearchTestResult> =>
+      ipcRenderer.invoke('config.testWebSearch', payload),
     listModels: (payload: {
       provider: AppConfig['provider'];
       apiKey: string;
@@ -424,6 +428,7 @@ declare global {
         switchSet: (payload: { id: string }) => Promise<{ success: boolean; config: AppConfig }>;
         isConfigured: () => Promise<boolean>;
         test: (config: ApiTestInput) => Promise<ApiTestResult>;
+        testWebSearch: (payload: WebSearchTestInput) => Promise<WebSearchTestResult>;
         listModels: (payload: {
           provider: AppConfig['provider'];
           apiKey: string;
