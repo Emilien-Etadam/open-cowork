@@ -91,12 +91,13 @@
 
 Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5) · [CHANGELOG](CHANGELOG.md)
 
-### v5.x hardening (in progress)
+### v5.x hardening
 
 - **Encrypted stores**: MCP credentials + Chat LAN token aligned with machine-bound encryption (`app-store` helper)
 - **Dead code removal**: legacy per-skill MCP process stubs removed (MCP via marketplace / `mcp-config-store` only)
 - **Docs**: SECURITY.md, README, ROADMAP updated for v5 support policy
-- **Next (Phase 1)**: macOS sandbox default, IPC allowlist in main process, Chat LAN hardening (Bearer SSE, security headers)
+- **Phase 1**: macOS sandbox default, IPC allowlist in main process, Chat LAN hardening (Bearer SSE, security headers)
+- **Phase 2**: extracted `command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`; expanded tool-executor tests; CI coverage floor 40%
 
 ## 🚧 In Progress
 
@@ -134,5 +135,5 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (v5.0.0, Phase 0 prep — encrypted stores, docs)_  
+_Last updated: 2026-06-27 (Phase 2 — module extraction, tool-executor tests, coverage 40%)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

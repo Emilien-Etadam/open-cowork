@@ -11,6 +11,7 @@ import type {
   ContentBlock,
 } from '../types';
 import i18n from '../i18n/config';
+import { createIpcStreamBatching } from './use-ipc-stream-batching';
 
 // Check if running in Electron
 const isElectron = typeof window !== 'undefined' && window.electronAPI !== undefined;
@@ -42,78 +43,9 @@ export function useIPC() {
 
     console.log('[useIPC] Setting up IPC listener (once)');
 
-    // --- RAF batching for high-frequency events ---
-    const pendingPartials: Record<string, string[]> = {};
-    let partialRafId: number | null = null;
-
-    const pendingThinking: Record<string, string[]> = {};
-    let thinkingRafId: number | null = null;
-
-    const flushPartials = () => {
-      partialRafId = null;
-      const store = useAppStore.getState();
-      for (const sessionId in pendingPartials) {
-        const chunks = pendingPartials[sessionId];
-        if (chunks.length > 0) {
-          store.setPartialMessage(sessionId, chunks.join(''));
-          pendingPartials[sessionId] = [];
-        }
-      }
-    };
-
-    const bufferPartial = (sessionId: string, delta: string) => {
-      if (!pendingPartials[sessionId]) pendingPartials[sessionId] = [];
-      pendingPartials[sessionId].push(delta);
-      if (partialRafId === null) {
-        partialRafId = requestAnimationFrame(flushPartials);
-      }
-    };
-
-    const flushThinking = () => {
-      thinkingRafId = null;
-      const store = useAppStore.getState();
-      for (const sessionId in pendingThinking) {
-        const chunks = pendingThinking[sessionId];
-        if (chunks.length > 0) {
-          store.setPartialThinking(sessionId, chunks.join(''));
-          pendingThinking[sessionId] = [];
-        }
-      }
-    };
-
-    const bufferThinking = (sessionId: string, delta: string) => {
-      if (!pendingThinking[sessionId]) pendingThinking[sessionId] = [];
-      pendingThinking[sessionId].push(delta);
-      if (thinkingRafId === null) {
-        thinkingRafId = requestAnimationFrame(flushThinking);
-      }
-    };
-
-    type TraceAction =
-      | { kind: 'add'; sessionId: string; step: TraceStep }
-      | { kind: 'update'; sessionId: string; stepId: string; updates: Partial<TraceStep> };
-    let pendingTraces: TraceAction[] = [];
-    let traceRafId: number | null = null;
-
-    const flushTraces = () => {
-      traceRafId = null;
-      const store = useAppStore.getState();
-      for (const action of pendingTraces) {
-        if (action.kind === 'add') {
-          store.addTraceStep(action.sessionId, action.step);
-        } else {
-          store.updateTraceStep(action.sessionId, action.stepId, action.updates);
-        }
-      }
-      pendingTraces = [];
-    };
-
-    const bufferTrace = (action: TraceAction) => {
-      pendingTraces.push(action);
-      if (traceRafId === null) {
-        traceRafId = requestAnimationFrame(flushTraces);
-      }
-    };
+    const streamBatching = createIpcStreamBatching(() => useAppStore.getState());
+    const { bufferPartial, bufferThinking, bufferTrace, clearPartial, clearThinking } =
+      streamBatching;
 
     const applyConfigSnapshot = (config: AppConfig, isConfigured: boolean) => {
       const store = useAppStore.getState();
@@ -164,9 +96,9 @@ export function useIPC() {
               JSON.stringify(event.payload.message.content)
             );
             // Clear pending partial buffer to prevent RAF from appending stale chunks
-            delete pendingPartials[event.payload.sessionId];
+            clearPartial(event.payload.sessionId);
             // Clear thinking buffer too — final thinking is in the message content blocks
-            delete pendingThinking[event.payload.sessionId];
+            clearThinking(event.payload.sessionId);
             store.addMessage(event.payload.sessionId, event.payload.message);
             if (event.payload.message.role === 'assistant') {
               store.clearActiveTurn(event.payload.sessionId);
@@ -407,19 +339,7 @@ export function useIPC() {
     return () => {
       disposed = true;
       console.log('[useIPC] Cleaning up IPC listener');
-      // Flush any pending RAF batches before cancelling to avoid lost updates
-      if (partialRafId !== null) {
-        cancelAnimationFrame(partialRafId);
-        flushPartials();
-      }
-      if (thinkingRafId !== null) {
-        cancelAnimationFrame(thinkingRafId);
-        flushThinking();
-      }
-      if (traceRafId !== null) {
-        cancelAnimationFrame(traceRafId);
-        flushTraces();
-      }
+      streamBatching.dispose();
       cleanup?.();
       // Reset guard so a subsequent mount (e.g., React Strict Mode double-
       // invoke in dev) re-installs the listener instead of silently running
