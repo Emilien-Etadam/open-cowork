@@ -26,7 +26,7 @@ import {
 } from './api-config-profile-utils';
 
 const DEFAULT_CONFIG_SET_ID = 'default';
-const DEFAULT_CONFIG_SET_NAME_ZH = '默认方案';
+const DEFAULT_CONFIG_SET_NAME = 'Default';
 
 function resolveProvider(config: AppConfig | null | undefined): ProviderType {
   return isProviderType(config?.provider) ? config.provider : 'openai';
@@ -152,7 +152,8 @@ export function buildApiConfigSets(
       return {
         ...set,
         id: typeof set.id === 'string' && set.id.trim() ? set.id : `set-${index + 1}`,
-        name: typeof set.name === 'string' && set.name.trim() ? set.name : `配置方案 ${index + 1}`,
+        name:
+          typeof set.name === 'string' && set.name.trim() ? set.name : `Configuration ${index + 1}`,
         provider,
         customProtocol,
         activeProfileKey,
@@ -173,7 +174,7 @@ export function buildApiConfigSets(
   return [
     {
       id: fallbackId,
-      name: DEFAULT_CONFIG_SET_NAME_ZH,
+      name: DEFAULT_CONFIG_SET_NAME,
       isSystem: true,
       provider: activeMeta.provider,
       customProtocol: activeMeta.customProtocol,
