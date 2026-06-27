@@ -7,7 +7,7 @@ import {
   getLastInputTokenCount,
   isContextOverflowError,
   shouldBlockForContextOverflow,
-} from '../../src/main/claude/context-budget';
+} from '../../src/main/agent/context-budget';
 
 describe('context-budget', () => {
   it('computes effective usage including reserved output tokens', () => {

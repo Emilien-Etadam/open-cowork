@@ -164,7 +164,7 @@ export function buildColdStartContextualPrompt(options: BuildColdStartPromptOpti
   const preamble = `<conversation_history>\n${compactionPrefix}${historyNote}${historyItems.join('\n')}\n</conversation_history>`;
 
   log(
-    '[ClaudeAgentRunner] Cold start: injecting',
+    '[AgentRunner] Cold start: injecting',
     historyItems.length,
     'of',
     historyMessages.length,

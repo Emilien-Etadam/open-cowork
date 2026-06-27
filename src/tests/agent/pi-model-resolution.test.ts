@@ -3,7 +3,7 @@ import type { Api, Model } from '@earendil-works/pi-ai';
 import {
   applyPiModelRuntimeOverrides,
   resolvePiRegistryModel,
-} from '../../main/claude/pi-model-resolution';
+} from '../../main/agent/pi-model-resolution';
 
 const openAIResponsesModel = {
   id: 'gpt-5.4',

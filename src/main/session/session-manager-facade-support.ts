@@ -1,6 +1,6 @@
 import type { ContentBlock, Message, ServerEvent, Session } from '../../renderer/types';
 import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
-import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { generateTitleWithPiAi } from '../agent/pi-ai-one-shot';
 import { configStore } from '../config/config-store';
 import type { DatabaseInstance } from '../db/database';
 import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
@@ -247,7 +247,7 @@ export class SessionManagerFacadeSupport {
 
   private async generateTitleWithConfig(titlePrompt: string): Promise<string | null> {
     return normalizeGeneratedTitle(
-      await generateTitleWithClaudeSdk(titlePrompt, configStore.getAll())
+      await generateTitleWithPiAi(titlePrompt, configStore.getAll())
     );
   }
 }

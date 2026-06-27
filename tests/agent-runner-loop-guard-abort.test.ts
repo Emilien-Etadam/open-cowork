@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const agentRunnerRunPath = path.resolve(process.cwd(), 'src/main/claude/agent-runner-run.ts');
+const agentRunnerRunPath = path.resolve(process.cwd(), 'src/main/agent/agent-runner-run.ts');
 const agentRunnerStreamHandlerPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-handler.ts'
+  'src/main/agent/agent-runner-stream-handler.ts'
 );
 const agentRunnerStreamEventsPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-events.ts'
+  'src/main/agent/agent-runner-stream-events.ts'
 );
 const agentRunnerRunContent = readFileSync(agentRunnerRunPath, 'utf8');
 const agentRunnerStreamHandlerContent = readFileSync(agentRunnerStreamHandlerPath, 'utf8');

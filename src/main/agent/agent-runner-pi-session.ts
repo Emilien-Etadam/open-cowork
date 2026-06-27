@@ -64,7 +64,7 @@ export function disposeCachedPiSession(cached: CachedPiSession): void {
   try {
     cached.session.dispose();
   } catch (e) {
-    logWarn('[ClaudeAgentRunner] dispose error:', e);
+    logWarn('[AgentRunner] dispose error:', e);
   }
 }
 
@@ -81,7 +81,7 @@ export function evictOldestPiSession(sessions: Map<string, CachedPiSession>): vo
     disposeCachedPiSession(oldest);
   }
   sessions.delete(oldestKey);
-  log('[ClaudeAgentRunner] Evicted oldest cached session:', oldestKey);
+  log('[AgentRunner] Evicted oldest cached session:', oldestKey);
 }
 
 /**
@@ -102,14 +102,14 @@ export function installPermissionHook(
   getToolDisplayName: (toolName: string) => string
 ): void {
   if (!requestPermission) {
-    log('[ClaudeAgentRunner] No requestPermission callback — skipping permission hook');
+    log('[AgentRunner] No requestPermission callback — skipping permission hook');
     return;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const agent = (piSession as any).agent;
   if (!agent || typeof agent.setBeforeToolCall !== 'function') {
-    logWarn('[ClaudeAgentRunner] Cannot access agent.setBeforeToolCall — skipping permission hook');
+    logWarn('[AgentRunner] Cannot access agent.setBeforeToolCall — skipping permission hook');
     return;
   }
 
@@ -128,7 +128,7 @@ export function installPermissionHook(
       const displayName = getToolDisplayName(toolName);
 
       if (decision === 'deny') {
-        log(`[ClaudeAgentRunner] Tool '${toolName}' denied by rule`);
+        log(`[AgentRunner] Tool '${toolName}' denied by rule`);
         return {
           block: true,
           reason: `Tool '${displayName}' is denied by your permission rules.`,
@@ -142,7 +142,7 @@ export function installPermissionHook(
           result = await requestPermission(sessionId, toolUseId, displayName, input);
         } catch (permErr) {
           logError(
-            `[ClaudeAgentRunner] Permission request failed for '${toolName}' — failing closed`,
+            `[AgentRunner] Permission request failed for '${toolName}' — failing closed`,
             permErr
           );
           return {
@@ -152,7 +152,7 @@ export function installPermissionHook(
         }
 
         if (result === 'deny') {
-          log(`[ClaudeAgentRunner] Tool '${toolName}' denied by user`);
+          log(`[AgentRunner] Tool '${toolName}' denied by user`);
           return { block: true, reason: `User denied permission for '${displayName}'.` };
         }
 
@@ -166,7 +166,7 @@ export function installPermissionHook(
   );
 
   log(
-    `[ClaudeAgentRunner] Permission hook installed on session ${sessionId} via agent.setBeforeToolCall`
+    `[AgentRunner] Permission hook installed on session ${sessionId} via agent.setBeforeToolCall`
   );
 }
 
@@ -204,11 +204,11 @@ export function wrapBashToolForSudo(
         const command = params.command;
 
         if (isSudoCommand(command)) {
-          log('[ClaudeAgentRunner] Sudo command detected, requesting password');
+          log('[AgentRunner] Sudo command detected, requesting password');
           const password = await requestSudoPassword(sessionId, toolCallId, command);
 
           if (!password) {
-            log('[ClaudeAgentRunner] Sudo password cancelled by user');
+            log('[AgentRunner] Sudo password cancelled by user');
             return {
               content: [
                 { type: 'text' as const, text: 'Command cancelled: user denied sudo password.' },
@@ -220,7 +220,7 @@ export function wrapBashToolForSudo(
           const rewrittenCommand = command.replace(/\bsudo\b(?!\s+-S)/g, 'sudo -S');
 
           log(
-            '[ClaudeAgentRunner] Executing sudo command with password injection (via stdin pipe)'
+            '[AgentRunner] Executing sudo command with password injection (via stdin pipe)'
           );
           try {
             const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/sh';
@@ -260,7 +260,7 @@ export function wrapBashToolForSudo(
               details: undefined as unknown,
             };
           } catch (sudoErr) {
-            logError('[ClaudeAgentRunner] Sudo command failed:', sudoErr);
+            logError('[AgentRunner] Sudo command failed:', sudoErr);
             throw sudoErr instanceof Error ? sudoErr : new Error(String(sudoErr));
           }
         }
@@ -327,7 +327,7 @@ export async function reuseCachedPiSession({
   const piSession = cachedSession.session;
   if (cachedSession.modelId !== piModel.id) {
     logCtx(
-      '[ClaudeAgentRunner] Model changed, hot-swapping:',
+      '[AgentRunner] Model changed, hot-swapping:',
       cachedSession.modelId,
       '→',
       piModel.id
@@ -337,14 +337,14 @@ export async function reuseCachedPiSession({
     if (cachedSession.ollamaNumCtx) {
       cachedSession.ollamaNumCtx.value = piModel.contextWindow || 128000;
       log(
-        '[ClaudeAgentRunner] Updated Ollama num_ctx on hot-swap:',
+        '[AgentRunner] Updated Ollama num_ctx on hot-swap:',
         cachedSession.ollamaNumCtx.value
       );
     }
   }
   if (cachedSession.thinkingLevel !== thinkingLevel) {
     logCtx(
-      '[ClaudeAgentRunner] Thinking level changed, hot-swapping:',
+      '[AgentRunner] Thinking level changed, hot-swapping:',
       cachedSession.thinkingLevel,
       '→',
       thinkingLevel
@@ -353,7 +353,7 @@ export async function reuseCachedPiSession({
     cachedSession.thinkingLevel = thinkingLevel;
   }
 
-  logCtx('[ClaudeAgentRunner] Reusing cached pi session for:', sessionId);
+  logCtx('[AgentRunner] Reusing cached pi session for:', sessionId);
   return { piSession, cachedSession, compactionEnabled: cachedSession.compactionEnabled ?? true };
 }
 
@@ -378,7 +378,7 @@ async function reloadResourceLoaderWithTimeout(
       }),
     ]);
   } catch (error) {
-    logWarn('[ClaudeAgentRunner] Resource loader reload failed:', error);
+    logWarn('[AgentRunner] Resource loader reload failed:', error);
     throw error;
   } finally {
     if (timeoutHandle) {
@@ -440,9 +440,9 @@ export async function createPiSession({
     estimateTokensFromText(promptPrefix || '')
   );
   if (!compactionSettings.enabled) {
-    log('[ClaudeAgentRunner] Auto-compaction disabled (contextWindow:', modelContextWindow, ')');
+    log('[AgentRunner] Auto-compaction disabled (contextWindow:', modelContextWindow, ')');
   } else {
-    log('[ClaudeAgentRunner] Compaction settings:', JSON.stringify(compactionSettings));
+    log('[AgentRunner] Compaction settings:', JSON.stringify(compactionSettings));
   }
 
   const { session: piSession } = await createAgentSession({
@@ -478,7 +478,7 @@ export async function createPiSession({
     const agent = piSession.agent as any;
     if (!('_onPayload' in agent)) {
       logWarn(
-        '[ClaudeAgentRunner] SDK agent does not expose _onPayload — skipping Ollama num_ctx patch'
+        '[AgentRunner] SDK agent does not expose _onPayload — skipping Ollama num_ctx patch'
       );
     } else {
       const originalOnPayload = agent._onPayload as
@@ -498,7 +498,7 @@ export async function createPiSession({
         return { ...result, num_ctx: ollamaNumCtx.value };
       };
       ctx.piSessions.get(sessionId)!.ollamaNumCtx = ollamaNumCtx;
-      log('[ClaudeAgentRunner] Ollama _onPayload wrapper installed, num_ctx:', ollamaNumCtx.value);
+      log('[AgentRunner] Ollama _onPayload wrapper installed, num_ctx:', ollamaNumCtx.value);
     }
   }
 

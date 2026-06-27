@@ -10,7 +10,7 @@ export async function runProactiveCompaction(
   ctx: AgentRunnerRunContext,
   sessionId: string
 ): Promise<boolean> {
-  log('[ClaudeAgentRunner] Proactive compaction before prompt for session:', sessionId);
+  log('[AgentRunner] Proactive compaction before prompt for session:', sessionId);
   ctx.renderer.sendSessionNotice(sessionId, mt('noticeCompactionStart'), 'info');
 
   try {
@@ -33,7 +33,7 @@ export async function runProactiveCompaction(
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    logWarn('[ClaudeAgentRunner] Proactive compaction failed:', message);
+    logWarn('[AgentRunner] Proactive compaction failed:', message);
     ctx.renderer.sendSessionNotice(
       sessionId,
       mt('noticeCompactionFailed', { error: message }),

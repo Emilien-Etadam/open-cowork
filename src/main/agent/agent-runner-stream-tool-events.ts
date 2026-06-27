@@ -15,7 +15,7 @@ export function handleToolExecutionStartEvent(
   event: ToolExecutionStartEvent,
   deps: StreamEventDeps
 ): void {
-  logCtx(`[ClaudeAgentRunner] Tool execution start: ${event.toolName}`);
+  logCtx(`[AgentRunner] Tool execution start: ${event.toolName}`);
   deps.handleLoopGuardDecision(
     deps.loopGuard.recordToolInvocation(event.toolName),
     'tool_execution_start'
@@ -62,7 +62,7 @@ export function handleCompactionStartEvent(
   state: StreamEventState,
   deps: StreamEventDeps
 ): void {
-  log('[ClaudeAgentRunner] Auto-compaction started, reason:', event.reason);
+  log('[AgentRunner] Auto-compaction started, reason:', event.reason);
   deps.ctx.renderer.sendSessionNotice(deps.session.id, mt('noticeCompactionStart'), 'info');
   state.compactionStepId = `compaction-${Date.now()}`;
   deps.ctx.renderer.sendTraceStep(deps.session.id, {
@@ -85,7 +85,7 @@ export function handleCompactionEndEvent(
     : event.errorMessage
       ? `Context compaction failed: ${event.errorMessage}`
       : 'Context compaction completed';
-  log('[ClaudeAgentRunner] Auto-compaction ended:', title, 'willRetry:', event.willRetry);
+  log('[AgentRunner] Auto-compaction ended:', title, 'willRetry:', event.willRetry);
 
   if (state.compactionStepId) {
     deps.ctx.renderer.sendTraceUpdate(deps.session.id, state.compactionStepId, { status, title });

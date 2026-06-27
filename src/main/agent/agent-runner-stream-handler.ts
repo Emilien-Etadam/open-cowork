@@ -94,7 +94,7 @@ export async function runPromptWithStreamHandling({
     }
     activityTimeoutId = setTimeout(
       () => {
-        logWarn('[ClaudeAgentRunner] Prompt timed out (no activity for 5 min), aborting');
+        logWarn('[AgentRunner] Prompt timed out (no activity for 5 min), aborting');
         abortedByTimeout = true;
         controller.abort();
       },
@@ -194,7 +194,7 @@ export async function runPromptWithStreamHandling({
           handleToolExecutionEndEvent(event, eventDeps);
           break;
         case 'agent_end':
-          logCtx('[ClaudeAgentRunner] Agent finished');
+          logCtx('[AgentRunner] Agent finished');
           break;
         case 'compaction_start':
           handleCompactionStartEvent(event, state, eventDeps);
@@ -215,7 +215,7 @@ export async function runPromptWithStreamHandling({
     }
     if (provider === 'ollama') {
       log(
-        '[ClaudeAgentRunner] Starting Ollama prompt',
+        '[AgentRunner] Starting Ollama prompt',
         safeStringify({
           sessionId: session.id,
           modelId: piModel.id,
@@ -229,7 +229,7 @@ export async function runPromptWithStreamHandling({
     }
     const promptResult = await piSession.prompt(contextualPrompt);
     log(
-      '[ClaudeAgentRunner] prompt() returned:',
+      '[AgentRunner] prompt() returned:',
       JSON.stringify(promptResult ?? 'void').substring(0, 1000)
     );
   } catch (error) {
@@ -240,7 +240,7 @@ export async function runPromptWithStreamHandling({
     try {
       unsubscribe();
     } catch (error) {
-      logWarn('[ClaudeAgentRunner] unsubscribe error:', error);
+      logWarn('[AgentRunner] unsubscribe error:', error);
     }
     if (activityTimeoutId) {
       clearTimeout(activityTimeoutId);

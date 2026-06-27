@@ -99,6 +99,7 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 - **Phase 1**: macOS sandbox default, IPC allowlist in main process, Chat LAN hardening (Bearer SSE, security headers)
 - **Phase 2**: extracted `command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`; expanded tool-executor tests; CI coverage floor 40%
 - **Phase 3**: migration `@earendil-works/pi-ai` / `@earendil-works/pi-coding-agent` ^0.80.2 (0 CVE runtime), compat entrypoint for legacy API, DeepSeek V4 thinking patch ported
+- **v5.1 prep**: Node `>=22.19.0`, installer slimming (@img removed, MCP minify, locales win/linux), legacy rename `src/main/claude/` → `src/main/agent/`, `pi-ai-one-shot`, `AgentRunner`
 
 ## 🚧 In Progress
 
@@ -136,5 +137,5 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (Phase 3 — pi-agent 0.80.2 migration, CVE cleanup)_  
+_Last updated: 2026-06-27 (v5.1 prep — Node 22.19, slimming, agent module rename)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

@@ -218,7 +218,7 @@ async function bundleWithEsbuild() {
       format: 'cjs',
       external: NODE_EXTERNALS,
       sourcemap: false,
-      minify: false,
+      minify: true,
       logLevel: 'warning',
     });
 

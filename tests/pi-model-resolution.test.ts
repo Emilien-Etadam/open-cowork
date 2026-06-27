@@ -7,7 +7,7 @@ import {
   resolvePiModelString,
   resolvePiRouteProtocol,
   resolveSyntheticPiModelFallback,
-} from '../src/main/claude/pi-model-resolution';
+} from '../src/main/agent/pi-model-resolution';
 
 describe('pi model resolution helpers', () => {
   it('skips invalid custom raw provider lookups and deduplicates candidates', () => {

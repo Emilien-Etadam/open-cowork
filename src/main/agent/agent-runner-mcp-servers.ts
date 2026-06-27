@@ -23,9 +23,9 @@ export function logMcpServersSummary(mcpServers: Record<string, unknown>): void 
     };
   });
 
-  log('[ClaudeAgentRunner] Final mcpServers summary:', safeStringify(summary, 2));
+  log('[AgentRunner] Final mcpServers summary:', safeStringify(summary, 2));
   if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {
-    log('[ClaudeAgentRunner] Final mcpServers config:', safeStringify(mcpServers, 2));
+    log('[AgentRunner] Final mcpServers config:', safeStringify(mcpServers, 2));
   }
 }
 
@@ -40,19 +40,19 @@ export function buildMcpServers(
 
   const serverStatuses = ctx.mcpManager.getServerStatus();
   const connectedServers = serverStatuses.filter((status) => status.connected);
-  log('[ClaudeAgentRunner] MCP server statuses:', safeStringify(serverStatuses));
-  log('[ClaudeAgentRunner] Connected MCP servers:', connectedServers.length);
+  log('[AgentRunner] MCP server statuses:', safeStringify(serverStatuses));
+  log('[AgentRunner] Connected MCP servers:', connectedServers.length);
 
   let allConfigs: ReturnType<typeof mcpConfigStore.getEnabledServers> = [];
   try {
     allConfigs = mcpConfigStore.getEnabledServers();
     log(
-      '[ClaudeAgentRunner] Enabled MCP configs:',
+      '[AgentRunner] Enabled MCP configs:',
       allConfigs.map((config) => config.name)
     );
   } catch (error) {
     logWarn(
-      '[ClaudeAgentRunner] Failed to read enabled MCP configs; MCP tools will be unavailable this query',
+      '[AgentRunner] Failed to read enabled MCP configs; MCP tools will be unavailable this query',
       error
     );
   }
@@ -61,7 +61,7 @@ export function buildMcpServers(
   const cachedMcpServers = ctx.getMcpServersCache();
   if (cachedMcpServers?.fingerprint === mcpFingerprint) {
     Object.assign(mcpServers, cachedMcpServers.servers);
-    log('[ClaudeAgentRunner] MCP servers config reused from cache');
+    log('[AgentRunner] MCP servers config reused from cache');
     logMcpServersSummary(mcpServers);
     return mcpServers;
   }
@@ -85,7 +85,7 @@ export function buildMcpServers(
           const nodeBinDir = path.dirname(bundledNodePaths.node);
           const currentPath = process.env.PATH || '';
           serverEnv.PATH = `${nodeBinDir}${path.delimiter}${currentPath}`;
-          log(`[ClaudeAgentRunner]   Added bundled node bin to PATH: ${nodeBinDir}`);
+          log(`[AgentRunner]   Added bundled node bin to PATH: ${nodeBinDir}`);
         }
 
         if (!imageCapable) {
@@ -119,19 +119,19 @@ export function buildMcpServers(
           args: resolvedArgs,
           env: serverEnv,
         };
-        log(`[ClaudeAgentRunner] Added STDIO MCP server: ${serverKey}`);
-        log(`[ClaudeAgentRunner]   Command: ${command} ${resolvedArgs.join(' ')}`);
-        log(`[ClaudeAgentRunner]   Tools will be named: mcp__${serverKey}__<toolName>`);
+        log(`[AgentRunner] Added STDIO MCP server: ${serverKey}`);
+        log(`[AgentRunner]   Command: ${command} ${resolvedArgs.join(' ')}`);
+        log(`[AgentRunner]   Tools will be named: mcp__${serverKey}__<toolName>`);
       } else if (config.type === 'sse') {
         mcpServers[serverKey] = {
           type: 'sse',
           url: config.url,
           headers: config.headers || {},
         };
-        log(`[ClaudeAgentRunner] Added SSE MCP server: ${serverKey}`);
+        log(`[AgentRunner] Added SSE MCP server: ${serverKey}`);
       }
     } catch (error) {
-      logError('[ClaudeAgentRunner] Failed to prepare MCP server config, skipping server', {
+      logError('[AgentRunner] Failed to prepare MCP server config, skipping server', {
         serverId: config.id,
         serverName: config.name,
         error: toErrorText(error),
