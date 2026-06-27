@@ -49,7 +49,7 @@
 
 ### Releases (recommended)
 
-Download the latest build from [Releases](https://github.com/emilien-etadam/open-cowork/releases):
+Download the latest build from [Releases](https://github.com/emilien-etadam/lygodactylus/releases):
 
 | Platform              | File   |
 | --------------------- | ------ |
@@ -61,7 +61,7 @@ On **Windows**, the app checks for EE updates on startup. Otherwise use **Settin
 ### From source
 
 ```bash
-git clone https://github.com/emilien-etadam/open-cowork.git
+git clone https://github.com/emilien-etadam/lygodactylus.git
 cd lygodactylus
 npm install   # Node.js 22+
 npm run dev

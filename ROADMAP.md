@@ -88,7 +88,7 @@
 | `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                               |
 | `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                        |
 
-Current stable fork baseline: **`3.3.1-EE4.98`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.98) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`3.3.1-EE4.98`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v3.3.1-EE4.98) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 

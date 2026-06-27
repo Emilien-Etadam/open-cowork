@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Rebranding** : l'application s'appelle désormais **Lygodactylus** (`com.lygodactylus.app`, installeurs `Lygodactylus-*`)
+- **Dépôt GitHub** : renommé en `Emilien-Etadam/lygodactylus` (URLs du projet mises à jour)
 - Identifiants internes, i18n (12 langues), installateur Windows et script de nettoyage legacy mis à jour
 - Les clés de chiffrement legacy Open Cowork restent supportées pour la rotation des configs existantes
 

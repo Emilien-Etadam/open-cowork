@@ -10,7 +10,7 @@ import { validateCatalogManifest } from '../../shared/catalog-manifest-validator
 import { log, logWarn } from '../utils/logger';
 
 export const REMOTE_MANIFEST_URL =
-  'https://raw.githubusercontent.com/Emilien-Etadam/open-cowork/main/catalog/manifest.json';
+  'https://raw.githubusercontent.com/Emilien-Etadam/lygodactylus/main/catalog/manifest.json';
 const CACHE_TTL_MS = 60 * 60 * 1000;
 
 interface CachedManifest {

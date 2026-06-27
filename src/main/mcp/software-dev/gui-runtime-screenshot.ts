@@ -193,7 +193,7 @@ export async function callVisionAPI(
     };
 
     if (isOpenRouter) {
-      headers['HTTP-Referer'] = 'https://github.com/Emilien-Etadam/open-cowork';
+      headers['HTTP-Referer'] = 'https://github.com/Emilien-Etadam/lygodactylus';
       headers['X-Title'] = 'Lygodactylus';
     }
 

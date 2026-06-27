@@ -18,9 +18,9 @@ Lygodactylus is a free, open-source desktop application that provides a local AI
 
 ## Links
 
-- Repository: https://github.com/OpenCoworkAI/open-cowork
-- Issues: https://github.com/OpenCoworkAI/open-cowork/issues
-- Discussions: https://github.com/OpenCoworkAI/open-cowork/discussions
+- Source repository: https://github.com/Emilien-Etadam/lygodactylus
+- Releases: https://github.com/Emilien-Etadam/lygodactylus/releases
+- Issues: https://github.com/Emilien-Etadam/lygodactylus/issues
 - Discord: https://discord.gg/pynjtQDf
 - License: MIT
 
@@ -33,7 +33,7 @@ brew install --cask --no-quarantine lygodactylus
 ```
 
 ### Windows / macOS (Installer)
-Download from: https://github.com/OpenCoworkAI/open-cowork/releases
+Download from: https://github.com/Emilien-Etadam/lygodactylus/releases
 
 ## Supported AI Providers
 

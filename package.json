@@ -22,13 +22,13 @@
     "docx",
     "multi-model"
   ],
-  "homepage": "https://github.com/emilien-etadam/open-cowork",
+  "homepage": "https://github.com/emilien-etadam/lygodactylus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/emilien-etadam/open-cowork.git"
+    "url": "https://github.com/emilien-etadam/lygodactylus.git"
   },
   "bugs": {
-    "url": "https://github.com/emilien-etadam/open-cowork/issues"
+    "url": "https://github.com/emilien-etadam/lygodactylus/issues"
   },
   "engines": {
     "node": ">=22"
