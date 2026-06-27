@@ -59,6 +59,7 @@ Out of scope:
 - Store API keys only in the built-in settings — never in plain text files in your workspace.
 - Review marketplace extensions before installing; MCP stdio servers run local code.
 - Use **Chat LAN** only over a trusted network path (e.g. WireGuard VPN). Disable it when not needed; regenerate the token if it may have leaked.
+- Prefer the built-in Chat LAN UI (Bearer token in headers). Query-string tokens are supported for compatibility but are easier to leak in logs.
 - Enable sandbox isolation when running untrusted agent operations.
 
 ## Sensitive data at rest

@@ -21,11 +21,14 @@ describe('MessageCard user actions', () => {
 describe('session message branch IPC', () => {
   it('registers fork and rewind client events', () => {
     const types = readFileSync(path.resolve(process.cwd(), 'src/renderer/types/index.ts'), 'utf8');
-    const preload = readFileSync(path.resolve(process.cwd(), 'src/preload/index.ts'), 'utf8');
+    const allowlist = readFileSync(
+      path.resolve(process.cwd(), 'src/shared/client-event-allowlist.ts'),
+      'utf8'
+    );
 
     expect(types).toContain('session.forkFromMessage');
     expect(types).toContain('session.rewindToMessage');
-    expect(preload).toContain('session.forkFromMessage');
-    expect(preload).toContain('session.rewindToMessage');
+    expect(allowlist).toContain('session.forkFromMessage');
+    expect(allowlist).toContain('session.rewindToMessage');
   });
 });

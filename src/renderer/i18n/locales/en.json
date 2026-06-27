@@ -127,7 +127,7 @@
     "tokenCopied": "Token copied",
     "tokenRegenerated": "New token generated",
     "urls": "Open in browser (local network)",
-    "wireguardHint": "From another device on WireGuard, use the IP address shown above.",
+    "wireguardHint": "Recommended: access via your WireGuard tunnel (not public Wi‑Fi). The token is sent in the Authorization header, not the URL.",
     "saved": "Settings saved"
   },
   "memory": {

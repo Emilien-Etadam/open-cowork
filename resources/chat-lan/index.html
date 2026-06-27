@@ -221,7 +221,7 @@
     const TOKEN_KEY = 'lygodactylus-chat-lan-token';
     let authToken = localStorage.getItem(TOKEN_KEY) || '';
     let activeSessionId = null;
-    let eventSource = null;
+    let eventStreamAbort = null;
     let pendingPermission = null;
     let pendingSudo = null;
 
@@ -284,21 +284,49 @@
     }
 
     function connectEvents() {
-      if (eventSource) eventSource.close();
-      const url = '/api/events?token=' + encodeURIComponent(authToken);
-      eventSource = new EventSource(url);
+      if (eventStreamAbort) {
+        eventStreamAbort.abort();
+      }
+      eventStreamAbort = new AbortController();
       $('connStatus').textContent = 'Connecté (LAN)';
       $('connStatus').className = 'status ok';
-      eventSource.onmessage = (ev) => {
+
+      void (async () => {
         try {
-          const event = JSON.parse(ev.data);
-          handleServerEvent(event);
-        } catch (e) { console.warn(e); }
-      };
-      eventSource.onerror = () => {
-        $('connStatus').textContent = 'Flux interrompu';
-        $('connStatus').className = 'status';
-      };
+          const response = await fetch('/api/events', {
+            headers: { Authorization: 'Bearer ' + authToken },
+            signal: eventStreamAbort.signal,
+          });
+          if (!response.ok || !response.body) {
+            throw new Error('SSE ' + response.status);
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const frames = buffer.split('\n\n');
+            buffer = frames.pop() || '';
+            for (const frame of frames) {
+              const line = frame.split('\n').find((entry) => entry.startsWith('data: '));
+              if (!line) continue;
+              try {
+                handleServerEvent(JSON.parse(line.slice(6)));
+              } catch (e) {
+                console.warn(e);
+              }
+            }
+          }
+        } catch (error) {
+          if (error && error.name === 'AbortError') return;
+          $('connStatus').textContent = 'Flux interrompu';
+          $('connStatus').className = 'status';
+        }
+      })();
     }
 
     function handleServerEvent(event) {
