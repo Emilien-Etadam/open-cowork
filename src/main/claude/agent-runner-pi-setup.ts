@@ -3,7 +3,7 @@ import {
   type AgentSession as PiAgentSession,
   type BashToolOptions,
   type ToolDefinition,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import type { Message, Session } from '../../renderer/types';
 import { configStore } from '../config/config-store';
 import { isLoopbackOpenAIEndpoint, normalizeOpenAICompatibleBaseUrl } from '../config/auth-utils';

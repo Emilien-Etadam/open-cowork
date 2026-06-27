@@ -1,4 +1,4 @@
-import type { AgentSession as PiAgentSession } from '@mariozechner/pi-coding-agent';
+import type { AgentSession as PiAgentSession } from '@earendil-works/pi-coding-agent';
 import { v4 as uuidv4 } from 'uuid';
 import type { Session } from '../../renderer/types';
 import { log, logError, logWarn } from '../utils/logger';

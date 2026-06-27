@@ -1,5 +1,5 @@
 import { Type, type TSchema } from 'typebox';
-import type { ToolDefinition } from '@mariozechner/pi-coding-agent';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import { configStore } from '../config/config-store';
 import { runWebSearch } from '../../shared/web-search';
 

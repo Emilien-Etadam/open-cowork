@@ -118,7 +118,7 @@ Same tiered policy as upstream (Dependabot in `.github/dependabot.yml`).
 **Manual review always required for:**
 
 - `electron`
-- `@mariozechner/pi-coding-agent` / `@mariozechner/pi-ai`
+- `@earendil-works/pi-coding-agent` / `@earendil-works/pi-ai`
 - `better-sqlite3`
 - `vite` / `@vitejs/plugin-react`
 

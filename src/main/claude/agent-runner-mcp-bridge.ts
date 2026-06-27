@@ -1,5 +1,5 @@
 import { Type, type TSchema } from 'typebox';
-import type { ToolDefinition } from '@mariozechner/pi-coding-agent';
+import type { ToolDefinition } from '@earendil-works/pi-coding-agent';
 import type { Message } from '../../renderer/types';
 import type { MCPManager } from '../mcp/mcp-manager';
 import { logError } from '../utils/logger';

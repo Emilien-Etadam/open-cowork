@@ -1,4 +1,4 @@
-import type { BashOperations } from '@mariozechner/pi-coding-agent';
+import type { BashOperations } from '@earendil-works/pi-coding-agent';
 import {
   getWslSandboxBashSession,
   type WslSandboxBashSessionOptions,

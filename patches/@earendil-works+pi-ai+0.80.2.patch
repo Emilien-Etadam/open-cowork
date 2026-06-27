@@ -1,8 +1,8 @@
-diff --git a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
-index 3ec63be..7bf5577 100644
---- a/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
-+++ b/node_modules/@mariozechner/pi-ai/dist/providers/openai-completions.js
-@@ -641,7 +641,15 @@ export function convertMessages(model, context, compat) {
+diff --git a/node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js b/node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js
+index 805f0ed..1080bfa 100644
+--- a/node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js
++++ b/node_modules/@earendil-works/pi-ai/dist/api/openai-completions.js
+@@ -742,7 +742,15 @@ export function convertMessages(model, context, compat) {
                  .filter(isThinkingContentBlock)
                  .filter((block) => block.thinking.trim().length > 0);
              if (nonEmptyThinkingBlocks.length > 0) {
@@ -19,15 +19,15 @@ index 3ec63be..7bf5577 100644
                      // Convert thinking blocks to plain text (no tags to avoid model mimicking them)
                      const thinkingText = nonEmptyThinkingBlocks
                          .map((block) => sanitizeSurrogates(block.thinking))
-@@ -866,6 +874,7 @@ function detectCompat(model) {
-     const useMaxTokens = baseUrl.includes("chutes.ai") || isMoonshot || isCloudflareAiGateway;
+@@ -982,6 +990,7 @@ function detectCompat(model) {
+     const useMaxTokens = baseUrl.includes("chutes.ai") || isMoonshot || isCloudflareAiGateway || isTogether || isNvidia || isAntLing;
      const isGrok = provider === "xai" || baseUrl.includes("api.x.ai");
      const isDeepSeek = provider === "deepseek" || baseUrl.includes("deepseek.com");
 +    const isDeepSeekV4 = /(?:^|[/_-])deepseek[-_.]?v4(?:$|[-:_.])/i.test(model.id);
+     const isOpenRouterDeveloperRoleModel = isOpenRouter && (model.id.startsWith("anthropic/") || model.id.startsWith("openai/"));
      const cacheControlFormat = provider === "openrouter" && model.id.startsWith("anthropic/") ? "anthropic" : undefined;
      return {
-         supportsStore: !isNonStandard,
-@@ -876,6 +885,7 @@ function detectCompat(model) {
+@@ -993,6 +1002,7 @@ function detectCompat(model) {
          requiresToolResultName: false,
          requiresAssistantAfterToolResult: false,
          requiresThinkingAsText: false,
@@ -35,7 +35,7 @@ index 3ec63be..7bf5577 100644
          requiresReasoningContentOnAssistantMessages: isDeepSeek,
          thinkingFormat: isDeepSeek
              ? "deepseek"
-@@ -910,6 +920,7 @@ function getCompat(model) {
+@@ -1036,6 +1046,7 @@ function getCompat(model) {
          requiresToolResultName: model.compat.requiresToolResultName ?? detected.requiresToolResultName,
          requiresAssistantAfterToolResult: model.compat.requiresAssistantAfterToolResult ?? detected.requiresAssistantAfterToolResult,
          requiresThinkingAsText: model.compat.requiresThinkingAsText ?? detected.requiresThinkingAsText,
