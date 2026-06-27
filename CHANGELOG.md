@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-06-27
+
+### Added
+
+- **Hardening v5 (phases 0–3)** : stores MCP/Chat LAN chiffrés, sandbox macOS/Windows activé par défaut, allowlist IPC côté main, durcissement Chat LAN (Bearer SSE, en-têtes sécurité)
+- **Qualité** : extractions modules (`command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`), tests tool-executor, seuil couverture CI 40 %
+- **Sécurité dépendances** : migration `@earendil-works/pi-ai` / `pi-coding-agent` ^0.80.2 — **0 CVE runtime** (patch DeepSeek V4 porté)
+
+### Changed
+
+- **Node** : `engines` >= 22.19.0 (aligné earendil 0.80.2), CI/release sur Node 22.19
+- **Allègement installateur** : retrait `@img`/sharp des artifacts, minify bundles MCP, locales Electron réduites (win/linux)
+- **Renommage interne** : `src/main/claude/` → `src/main/agent/`, `AgentRunner`, `pi-ai-one-shot`, `probeWithPiAi` / `generateTitleWithPiAi`
+- **1075 tests** passent en CI
+
 ## [5.0.0] - 2026-06-27
 
 ### Changed

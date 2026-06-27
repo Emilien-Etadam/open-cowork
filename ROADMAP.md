@@ -68,7 +68,8 @@
 
 | Tag             | Date       | Highlights                                                              |
 | --------------- | ---------- | ----------------------------------------------------------------------- |
-| `v5.0.0`        | 2026-06-27 | **Latest** — logo gecko Lygodactylus, série v5, rebranding complet      |
+| `v5.1.0`        | 2026-06-27 | **Latest** — hardening v5 (phases 0–3), pi-agent 0.80.2, Node 22.19, slimming |
+| `v5.0.0`        | 2026-06-27 | logo gecko Lygodactylus, série v5, rebranding complet                   |
 | `v3.3.1-EE4.98` | 2026-06-26 | rebranding Lygodactylus                                                 |
 | `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar       |
 | `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input             |
@@ -89,7 +90,7 @@
 | `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                        |
 | `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                 |
 
-Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5.1.0) · [CHANGELOG](CHANGELOG.md)
 
 ### v5.x hardening
 
