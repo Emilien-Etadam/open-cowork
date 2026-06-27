@@ -1,6 +1,6 @@
 {
   "name": "lygodactylus",
-  "version": "3.3.1-EE4.98",
+  "version": "5.0.0",
   "description": "Lygodactylus — open-source AI agent desktop app for Windows & macOS with Claude Code, MCP tools, Skills, sandbox isolation and multi-model support",
   "keywords": [
     "ai-agent",
