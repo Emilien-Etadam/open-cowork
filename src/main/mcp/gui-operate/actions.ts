@@ -619,7 +619,7 @@ export async function takeScreenshot(
     const baseMessage = error instanceof Error ? error.message : String(error);
     const hint =
       '\n\nmacOS 权限提示 / Permissions:\n' +
-      '- System Settings → Privacy & Security → Screen Recording：允许 Open Cowork\n' +
+      '- System Settings → Privacy & Security → Screen Recording：允许 Lygodactylus\n' +
       '- 重新启动应用后再试 / Restart the app and try again\n';
     throw new Error(`${baseMessage}${hint}`);
   }

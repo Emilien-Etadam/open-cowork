@@ -70,7 +70,7 @@ async function loadDatabaseModule(userDataPath: string) {
 
 describe('database path recovery', () => {
   beforeEach(() => {
-    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'open-cowork-db-path-test-'));
+    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lygodactylus-db-path-test-'));
   });
 
   afterEach(() => {

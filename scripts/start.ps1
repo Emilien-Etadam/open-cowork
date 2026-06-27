@@ -1,8 +1,8 @@
-# Open Cowork - Startup Script
+# Lygodactylus - Startup Script
 # This script starts the application.
 # Environment variables should be set in .env file or system environment.
 
-Write-Host "Starting Open Cowork..." -ForegroundColor Cyan
+Write-Host "Starting Lygodactylus..." -ForegroundColor Cyan
 Write-Host ""
 
 # Check if .env file exists

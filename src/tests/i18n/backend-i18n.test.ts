@@ -41,9 +41,9 @@ describe('mt()', () => {
   it('translates into the active language', () => {
     setBackendLanguage('en');
     expect(getBackendLanguage()).toBe('en');
-    expect(mt('startupFailedTitle')).toBe('Open Cowork failed to start');
+    expect(mt('startupFailedTitle')).toBe('Lygodactylus failed to start');
     setBackendLanguage('zh');
-    expect(mt('startupFailedTitle')).toBe('Open Cowork 启动失败');
+    expect(mt('startupFailedTitle')).toBe('Lygodactylus 启动失败');
   });
 
   it('interpolates {{params}} and leaves none behind', () => {

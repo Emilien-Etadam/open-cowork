@@ -1,11 +1,19 @@
 # Changelog
 
-All notable changes to the Open Cowork AI agent desktop app will be documented in this file.
+All notable changes to the Lygodactylus AI agent desktop app will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [3.3.1-EE4.98] - 2026-06-26
+
+### Changed
+
+- **Rebranding** : l'application s'appelle désormais **Lygodactylus** (`com.lygodactylus.app`, installeurs `Lygodactylus-*`)
+- Identifiants internes, i18n (12 langues), installateur Windows et script de nettoyage legacy mis à jour
+- Les clés de chiffrement legacy Open Cowork restent supportées pour la rotation des configs existantes
 
 ## [3.3.1-EE4.97] - 2026-06-25
 
@@ -32,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Auto-update Windows** : `latest.yml` pointait vers `Open-Cowork-*.exe` au lieu de `Open.Cowork-*.exe` (téléchargement 404)
+- **Auto-update Windows** : `latest.yml` pointait vers `Lygodactylus-*.exe` au lieu de `Lygodactylus-*.exe` (téléchargement 404)
 - Script CI `sync-windows-latest-yml.mjs` pour aligner le YAML sur le nom réel de l’installateur
 - Affichage de l’erreur de téléchargement automatique dans Paramètres
 
@@ -205,7 +213,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Autocomplétion des commandes slash (`/`) dans le champ de prompt
-- `README_en.md` et logo Open Cowork
+- `README_en.md` et logo Lygodactylus
 
 ### Changed
 
@@ -288,7 +296,7 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 ### Changed
 
-- Updated Open Cowork app icons for Windows and macOS packaging (branding refresh)
+- Updated Lygodactylus app icons for Windows and macOS packaging (branding refresh)
 - Widened chat content area layout for better readability
 
 ### Fixed
@@ -331,7 +339,7 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 ### Added
 
-- Initial release of Open Cowork — open-source AI agent desktop app with one-click install for Windows and macOS
+- Initial release of Lygodactylus — open-source AI agent desktop app with one-click install for Windows and macOS
 
 [Unreleased]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.3.0-beta.8...HEAD
 [3.3.0-beta.8]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.2.0...v3.3.0-beta.8

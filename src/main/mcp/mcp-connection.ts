@@ -38,7 +38,7 @@ export async function connectServerInternal(
 
   const client = new Client(
     {
-      name: 'open-cowork',
+      name: 'lygodactylus',
       version: '0.1.0',
     },
     {

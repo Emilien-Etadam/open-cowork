@@ -9,7 +9,7 @@ async function githubSubdirExists(repo: string, subdir: string, ref: string): Pr
     {
       headers: {
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'open-cowork-catalog-validator',
+        'User-Agent': 'lygodactylus-catalog-validator',
       },
     }
   );

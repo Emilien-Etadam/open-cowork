@@ -128,7 +128,7 @@ export class ClaudeAgentRunner {
       sendToRenderer: (event) => this.renderer.dispatch(event),
     });
 
-    log('[ClaudeAgentRunner] Initialized with Open Cowork agent SDK');
+    log('[ClaudeAgentRunner] Initialized with Lygodactylus agent SDK');
     log('[ClaudeAgentRunner] Skills enabled: settingSources=[user, project], Skill tool enabled');
     if (mcpManager) {
       log('[ClaudeAgentRunner] MCP support enabled');

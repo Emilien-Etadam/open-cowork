@@ -1,7 +1,7 @@
-# 🗺️ Open Cowork Roadmap
+# 🗺️ Lygodactylus Roadmap
 
-> Development direction for the [Emilien-Etadam/open-cowork](https://github.com/Emilien-Etadam/open-cowork) fork (alpha series `3.3.1-EE*`).
-> For feature requests and discussion, see [GitHub Issues](https://github.com/Emilien-Etadam/open-cowork/issues).
+> Development direction for the [Emilien-Etadam/lygodactylus](https://github.com/Emilien-Etadam/lygodactylus) fork (alpha series `3.3.1-EE*`).
+> For feature requests and discussion, see [GitHub Issues](https://github.com/Emilien-Etadam/lygodactylus/issues).
 
 ## ✅ Completed
 
@@ -21,11 +21,12 @@
 - **Dependency Policy**: Tiered management strategy with Dependabot grouping
 - **Memory System Foundation**: Unified storage with core/experience memory and source-aware retrieval workflow
 
-### EE fork (`3.3.1-EE1` → `3.3.1-EE4.97`)
+### EE fork (`3.3.1-EE1` → `3.3.1-EE4.98`)
 
+- **EE4.98** (release) : rebranding complet **Lygodactylus** (`com.lygodactylus.app`)
 - **EE4.97** (release) : compaction proactive contexte plein ; fork/édition prompt sur messages utilisateur ; barre contexte sidebar uniquement (#47, #48)
 - **EE4.96** (release) : fix chat streaming en direct (multicast IPC preload — listener plugin n’écrase plus `useIPC`) ; barre de contexte au-dessus de la zone de saisie (#45)
-- **EE4.95** (release) : fix auto-update Windows — `latest.yml` aligné sur `Open.Cowork-*.exe`, erreur téléchargement affichée dans Paramètres
+- **EE4.95** (release) : fix auto-update Windows — `latest.yml` aligné sur `Lygodactylus-*.exe`, erreur téléchargement affichée dans Paramètres
 - **EE4.94** (release) : fix Chat LAN « UI missing » — `resources/chat-lan` dans extraResources Windows/macOS/Linux
 - **EE4.93** (release) : fix UI mises à jour Windows — téléchargement auto + bouton installer
 - **EE4.92** (release publiée, Latest) :
@@ -67,7 +68,8 @@
 
 | Tag             | Date       | Highlights                                                                     |
 | --------------- | ---------- | ------------------------------------------------------------------------------ |
-| `v3.3.1-EE4.97` | 2026-06-25 | **Latest** — compaction proactive, fork/édition prompt, barre contexte sidebar |
+| `v3.3.1-EE4.98` | 2026-06-26 | **Latest** — rebranding Lygodactylus |
+| `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar |
 | `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input                    |
 | `v3.3.1-EE4.95` | 2026-06-25 | Fix auto-update Windows (`latest.yml` + nom installateur)                      |
 | `v3.3.1-EE4.94` | 2026-06-25 | Fix Chat LAN UI missing (extraResources)                                       |
@@ -86,7 +88,7 @@
 | `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                               |
 | `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                        |
 
-Current stable fork baseline: **`3.3.1-EE4.97`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.97) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`3.3.1-EE4.98`** — [release](https://github.com/Emilien-Etadam/open-cowork/releases/tag/v3.3.1-EE4.98) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 
@@ -102,7 +104,7 @@ Current stable fork baseline: **`3.3.1-EE4.97`** — [release](https://github.co
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
 - **App Slimming**: Reduce installer from ~156 MB to ~80 MB — on-demand Python/Node.js download, lazy-load SDKs, strip unused files (Feishu SDK retiré #40)
-- **Naming Standardization**: Clean up legacy references (`claude-sdk`, `claude-sandbox`, `claude-plugin`, `pi-coding-agent`) to consistent Open Cowork naming
+- **Naming Standardization**: Clean up legacy references (`claude-sdk`, `claude-sandbox`, `claude-plugin`, `pi-coding-agent`) to consistent Lygodactylus naming
 - **Tool Completeness**: Native TodoWrite, AskUserQuestion, Glob, Grep, WebFetch, WebSearch tool schemas + handlers for API key users
 - **Memory System Enhancements**: Prompt injection controls, cross-session retrieval UX, memory source inspection, reranking quality
 - **Scheduled Tasks**: Cron-like scheduling with UI management (backend exists; polish UX and edge cases)

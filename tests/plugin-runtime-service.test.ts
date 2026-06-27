@@ -8,7 +8,7 @@ let testRoot = '';
 vi.mock('electron', () => {
   const electron = {
     app: {
-      getName: () => 'open-cowork-test',
+      getName: () => 'lygodactylus-test',
       getVersion: () => '0.0.0-test',
       getPath: (name: string) => {
         if (name === 'userData') return path.join(testRoot, 'userData');
@@ -83,7 +83,7 @@ async function createRuntimeService() {
 
 describe('PluginRuntimeService', () => {
   beforeEach(() => {
-    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'open-cowork-plugin-runtime-'));
+    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lygodactylus-plugin-runtime-'));
     fs.mkdirSync(path.join(testRoot, 'userData'), { recursive: true });
     fs.mkdirSync(path.join(testRoot, 'temp'), { recursive: true });
     fs.mkdirSync(path.join(testRoot, 'home'), { recursive: true });

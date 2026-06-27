@@ -190,7 +190,7 @@ export class SandboxAdapter implements SandboxExecutor {
       log('[SandboxAdapter] [X] WSL2 not available');
       await this.initializeBlocked(
         config,
-        'WSL2 is not installed. Run "wsl --install" in PowerShell as Administrator, restart, then relaunch Open Cowork.'
+        'WSL2 is not installed. Run "wsl --install" in PowerShell as Administrator, restart, then relaunch Lygodactylus.'
       );
       return;
     }

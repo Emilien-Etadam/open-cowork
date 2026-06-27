@@ -36,7 +36,7 @@ describe('deepseek-common runRg', () => {
           ':!node_modules/**',
           '.',
         ]);
-        return 'ROADMAP.md:1:# Open Cowork Roadmap\n';
+        return 'ROADMAP.md:1:# Lygodactylus Roadmap\n';
       }
       throw new Error(`unexpected command: ${command}`);
     });
@@ -45,7 +45,7 @@ describe('deepseek-common runRg', () => {
 
     expect(
       runRg(['-n', '-F', '--max-count', '2', '-e', 'Roadmap', '--glob', '!node_modules/**', '.'])
-    ).toBe('ROADMAP.md:1:# Open Cowork Roadmap');
+    ).toBe('ROADMAP.md:1:# Lygodactylus Roadmap');
   });
 
   it('returns no snippets when ripgrep and git grep are both unavailable', async () => {

@@ -254,7 +254,7 @@ describe('createEncryptedStoreWithKeyRotation', () => {
     const { SECURE_SCRYPT_OPTIONS } = await import('../src/main/utils/store-encryption');
 
     expect(() =>
-      crypto.scryptSync('stable-seed', 'open-cowork-salt', 32, SECURE_SCRYPT_OPTIONS)
+      crypto.scryptSync('stable-seed', 'lygodactylus-salt', 32, SECURE_SCRYPT_OPTIONS)
     ).not.toThrow();
     expect(SECURE_SCRYPT_OPTIONS.maxmem).toBeGreaterThan(128 * 65536 * 8);
   });

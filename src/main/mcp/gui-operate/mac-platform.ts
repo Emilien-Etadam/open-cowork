@@ -892,9 +892,9 @@ export async function executeCliclick(
     if (/Accessibility privileges not enabled/i.test(result.stderr || '')) {
       const hint =
         '\n\nmacOS 权限提示 / Permissions:\n' +
-        '- System Settings → Privacy & Security → Accessibility：允许 Open Cowork\n' +
+        '- System Settings → Privacy & Security → Accessibility：允许 Lygodactylus\n' +
         '- 如果是终端运行：允许 Terminal/iTerm\n' +
-        '- 授权后请重启 Open Cowork 再重试\n';
+        '- 授权后请重启 Lygodactylus 再重试\n';
       throw new Error(
         `cliclick cannot control UI because Accessibility permission is not enabled.${hint}`
       );
@@ -905,8 +905,8 @@ export async function executeCliclick(
     const baseMessage = error instanceof Error ? error.message : String(error);
     const hint =
       '\n\nmacOS 权限提示 / Permissions:\n' +
-      '- System Settings → Privacy & Security → Accessibility：允许 Open Cowork\n' +
-      '- System Settings → Privacy & Security → Automation：允许 Open Cowork 控制 “System Events”\n';
+      '- System Settings → Privacy & Security → Accessibility：允许 Lygodactylus\n' +
+      '- System Settings → Privacy & Security → Automation：允许 Lygodactylus 控制 “System Events”\n';
     throw new Error(`${baseMessage}${hint}`);
   }
 }
