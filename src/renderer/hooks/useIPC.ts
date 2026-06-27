@@ -122,7 +122,6 @@ export function useIPC() {
       store.setAppConfig(config);
       store.setSettings({
         theme: config.theme || 'light',
-        themePreset: config.themePreset || 'default',
       });
       if (isInitialConfigStatus) {
         store.markInitialConfigStatusSeen();

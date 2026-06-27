@@ -15,15 +15,15 @@ describe('theme settings persistence', () => {
     const indexSource = fs.readFileSync(mainIndexPath, 'utf8');
 
     expect(windowSource).toContain('const WINDOW_BACKGROUNDS');
-    expect(windowSource).toContain("default: { dark: '#171614', light: '#f5f3ee' }");
+    expect(windowSource).toContain("dark: '#1e1e1e'");
     expect(clientEventsSource).toContain('configStore.update({ theme: nextTheme });');
-    expect(clientEventsSource).toContain('configStore.update({ themePreset:');
+    expect(clientEventsSource).not.toContain('themePreset');
     expect(windowSource).toContain('getWindowBackground(');
-    expect(windowSource).toContain("vscode: { dark: '#1e1e1e', light: '#ffffff' }");
+    expect(windowSource).toContain("light: '#ffffff'");
     expect(windowSource).toContain('nativeTheme.themeSource = theme;');
     expect(windowSource).toContain('setBackgroundColor(');
     expect(indexSource).toContain("getSavedThemePreference() === 'system'");
-    expect(windowSource).toContain('getWindowBackground(preset, effectiveTheme)');
+    expect(windowSource).toContain('getWindowBackground(effectiveTheme)');
     expect(clientEventsSource).not.toContain(
       "case 'settings.update':\n      // TODO: Implement settings update"
     );
@@ -37,7 +37,7 @@ describe('theme settings persistence', () => {
     );
     expect(source).toContain('store.setSettings({');
     expect(source).toContain("theme: config.theme || 'light'");
-    expect(source).toContain("themePreset: config.themePreset || 'default'");
+    expect(source).not.toContain('themePreset');
     expect(source).toContain('window.electronAPI.config.get()');
     expect(source).toContain('window.electronAPI.getSystemTheme()');
   });

@@ -6,7 +6,7 @@
 import { app, BrowserWindow, Menu, shell, Tray, nativeTheme } from 'electron';
 import { join } from 'path';
 import * as fs from 'fs';
-import { configStore, type AppTheme, type ThemePreset } from './config/config-store';
+import { configStore, type AppTheme } from './config/config-store';
 import { log, logWarn, logError } from './utils/logger';
 import { mainAppState } from './main-app-state';
 import { sendToRenderer } from './main-renderer-bridge';
@@ -14,15 +14,15 @@ import { startSandboxBootstrap } from './main-working-dir';
 import { revealFileInFolder } from './main-shell-reveal';
 import { localPathFromAppUrlPathname, localPathFromFileUrl } from '../shared/local-file-path';
 
-const WINDOW_BACKGROUNDS: Record<ThemePreset, { dark: string; light: string }> = {
-  default: { dark: '#171614', light: '#f5f3ee' },
-  vscode: { dark: '#1e1e1e', light: '#ffffff' },
-};
+const WINDOW_BACKGROUNDS = {
+  dark: '#1e1e1e',
+  light: '#ffffff',
+} as const;
 
-const TITLE_BAR_SYMBOL_COLORS: Record<ThemePreset, { dark: string; light: string }> = {
-  default: { dark: '#f1ece4', light: '#1a1a1a' },
-  vscode: { dark: '#cccccc', light: '#333333' },
-};
+const TITLE_BAR_SYMBOL_COLORS = {
+  dark: '#cccccc',
+  light: '#333333',
+} as const;
 
 const editMenuItems: Electron.MenuItemConstructorOptions[] = [
   { role: 'undo' },
@@ -233,18 +233,13 @@ export function getSavedThemePreference(): AppTheme {
   return theme === 'dark' || theme === 'system' ? theme : 'light';
 }
 
-export function getSavedThemePreset(): ThemePreset {
-  const preset = configStore.get('themePreset');
-  return preset === 'vscode' ? 'vscode' : 'default';
+function getWindowBackground(effectiveTheme: 'dark' | 'light'): string {
+  return WINDOW_BACKGROUNDS[effectiveTheme];
 }
 
-function getWindowBackground(preset: ThemePreset, effectiveTheme: 'dark' | 'light'): string {
-  return WINDOW_BACKGROUNDS[preset][effectiveTheme];
-}
-
-export function applyWindowBackground(preset: ThemePreset, effectiveTheme: 'dark' | 'light'): void {
+export function applyWindowBackground(effectiveTheme: 'dark' | 'light'): void {
   if (mainAppState.mainWindow && !mainAppState.mainWindow.isDestroyed()) {
-    mainAppState.mainWindow.setBackgroundColor(getWindowBackground(preset, effectiveTheme));
+    mainAppState.mainWindow.setBackgroundColor(getWindowBackground(effectiveTheme));
   }
 }
 
@@ -261,20 +256,19 @@ export function applyNativeThemePreference(theme: AppTheme): void {
 
 export function createWindow() {
   const savedTheme = getSavedThemePreference();
-  const savedPreset = getSavedThemePreset();
   applyNativeThemePreference(savedTheme);
   const effectiveTheme = resolveEffectiveTheme(savedTheme);
   const THEME =
     effectiveTheme === 'dark'
       ? {
-          background: getWindowBackground(savedPreset, 'dark'),
-          titleBar: getWindowBackground(savedPreset, 'dark'),
-          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS[savedPreset].dark,
+          background: getWindowBackground('dark'),
+          titleBar: getWindowBackground('dark'),
+          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS.dark,
         }
       : {
-          background: getWindowBackground(savedPreset, 'light'),
-          titleBar: getWindowBackground(savedPreset, 'light'),
-          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS[savedPreset].light,
+          background: getWindowBackground('light'),
+          titleBar: getWindowBackground('light'),
+          titleBarSymbol: TITLE_BAR_SYMBOL_COLORS.light,
         };
 
   const isMac = process.platform === 'darwin';

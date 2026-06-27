@@ -101,18 +101,16 @@ function App() {
     const effectiveTheme =
       settings.theme === 'system' ? (systemDarkMode ? 'dark' : 'light') : settings.theme;
 
-    document.documentElement.dataset.preset = settings.themePreset ?? 'default';
-
     if (effectiveTheme === 'light') {
       document.documentElement.classList.add('light');
     } else {
       document.documentElement.classList.remove('light');
     }
-  }, [settings.theme, settings.themePreset, systemDarkMode]);
+  }, [settings.theme, systemDarkMode]);
 
   const effectiveTheme =
     settings.theme === 'system' ? (systemDarkMode ? 'dark' : 'light') : settings.theme;
-  useHighlightTheme(settings.themePreset ?? 'default', effectiveTheme);
+  useHighlightTheme(effectiveTheme);
 
   // Auto-collapse panels based on window width
   useEffect(() => {

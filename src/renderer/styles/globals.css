@@ -5,57 +5,56 @@
 @tailwind utilities;
 
 @layer base {
-  /* Define CSS variables for theming */
+  /* Define CSS variables for theming — VS Code Dark+ */
   :root {
-    /* Dark theme (default) — Claude warm palette */
-    --color-background: #171614;
-    --color-background-secondary: #1d1b18;
-    --color-surface: #22201d;
-    --color-surface-hover: #2a2723;
-    --color-surface-active: #33302b;
-    --color-surface-muted: #1b1916;
-    --color-border: #34302a;
-    --color-border-muted: #2a2722;
-    --color-border-subtle: rgba(255, 245, 232, 0.07);
+    --color-background: #1e1e1e;
+    --color-background-secondary: #252526;
+    --color-surface: #252526;
+    --color-surface-hover: #2a2d2e;
+    --color-surface-active: #37373d;
+    --color-surface-muted: #1e1e1e;
+    --color-border: #454545;
+    --color-border-muted: #3c3c3c;
+    --color-border-subtle: rgba(255, 255, 255, 0.06);
     --color-mcp: #9d8abc;
-    --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.24);
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(255, 245, 232, 0.03);
-    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.34), 0 0 0 1px rgba(255, 245, 232, 0.04);
-    --color-accent: #d67a52;
-    --color-accent-hover: #c56c46;
-    --color-accent-muted: rgba(214, 122, 82, 0.14);
-    --color-text-primary: #f1ece4;
-    --color-text-secondary: #b6ada2;
-    --color-text-muted: #8c8378;
-    --color-success: #22c55e;
-    --color-warning: #eab308;
-    --color-error: #ef4444;
+    --shadow-soft: none;
+    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.36);
+    --color-accent: #007acc;
+    --color-accent-hover: #0062a3;
+    --color-accent-muted: rgba(0, 122, 204, 0.15);
+    --color-text-primary: #cccccc;
+    --color-text-secondary: #969696;
+    --color-text-muted: #6e6e6e;
+    --color-success: #89d185;
+    --color-warning: #cca700;
+    --color-error: #f48771;
   }
 
-  /* Light theme override — Claude warm cream */
+  /* Light theme override — VS Code Light+ */
   .light {
-    --color-background: #f5f3ed;
-    --color-background-secondary: #f0eee8;
-    --color-surface: #faf9f4;
-    --color-surface-hover: #f5f3ed;
-    --color-surface-active: #eceae4;
-    --color-surface-muted: #f2f0eb;
-    --color-border: #e2dfd9;
-    --color-border-muted: #e8e6e0;
-    --color-border-subtle: rgba(0, 0, 0, 0.05);
+    --color-background: #ffffff;
+    --color-background-secondary: #f3f3f3;
+    --color-surface: #f3f3f3;
+    --color-surface-hover: #e8e8e8;
+    --color-surface-active: #d4d4d4;
+    --color-surface-muted: #f8f8f8;
+    --color-border: #e5e5e5;
+    --color-border-muted: #eeeeee;
+    --color-border-subtle: rgba(0, 0, 0, 0.06);
     --color-mcp: #8570a6;
-    --shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.04);
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.1);
-    --color-accent: #d97757;
-    --color-accent-hover: #c46849;
-    --color-accent-muted: #fef3ee;
-    --color-text-primary: #1a1a1a;
-    --color-text-secondary: #5c5c5c;
+    --shadow-soft: none;
+    --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.08);
+    --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --color-accent: #007acc;
+    --color-accent-hover: #0062a3;
+    --color-accent-muted: rgba(0, 122, 204, 0.1);
+    --color-text-primary: #333333;
+    --color-text-secondary: #616161;
     --color-text-muted: #8c8c8c;
-    --color-success: #16a34a;
-    --color-warning: #ca8a04;
-    --color-error: #dc2626;
+    --color-success: #16825d;
+    --color-warning: #bf8803;
+    --color-error: #e51400;
   }
 
   * {
@@ -75,7 +74,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -104,14 +103,14 @@
 }
 
 @layer components {
-  /* Heading serif font — for titles and headings */
+  /* Heading font — matches VS Code UI typography */
   .heading-serif {
-    font-family: 'Source Serif 4', Georgia, serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   }
 
   /* Button styles */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition-all duration-150;
     @apply focus:outline-none focus:ring-2 focus:ring-accent focus:ring-opacity-30;
   }
 
@@ -130,7 +129,7 @@
 
   /* Input styles */
   .input {
-    @apply w-full px-4 py-3 rounded-xl bg-surface border border-border;
+    @apply w-full px-4 py-3 rounded bg-surface border border-border;
     @apply text-text-primary placeholder:text-text-muted;
     @apply focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent focus:ring-opacity-30;
     @apply transition-all duration-150;
@@ -138,12 +137,12 @@
 
   /* Card styles */
   .card {
-    @apply bg-surface rounded-2xl shadow-card border border-border-subtle;
+    @apply bg-surface rounded shadow-card border border-border-subtle;
   }
 
   /* Tag/Chip styles - like the quick action buttons */
   .tag {
-    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface border border-border;
+    @apply inline-flex items-center gap-1.5 px-3 py-2 rounded bg-surface border border-border;
     @apply text-sm font-medium text-text-primary;
     @apply hover:bg-surface-hover hover:shadow-soft cursor-pointer transition-all duration-150;
   }
@@ -173,9 +172,9 @@
     margin-left: auto;
   }
 
-  /* Prose styling for assistant messages - elegant serif font */
+  /* Prose styling for assistant messages */
   .prose-chat {
-    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     font-size: 1.0625rem;
     line-height: 1.625;
     letter-spacing: -0.01em;
@@ -329,7 +328,13 @@
 
   /* Code block */
   .code-block {
-    @apply bg-surface-muted rounded-xl p-4 font-mono text-sm overflow-x-auto border border-border-subtle;
+    @apply bg-surface-muted rounded p-4 text-sm overflow-x-auto border border-border-subtle;
+    font-family: Consolas, 'Courier New', 'SF Mono', Monaco, Menlo, monospace;
+  }
+
+  .code-block code,
+  code {
+    font-family: Consolas, 'Courier New', 'SF Mono', Monaco, Menlo, monospace;
   }
 
   /* Override hljs theme background to use our code-block background */
@@ -337,78 +342,6 @@
   .code-block code {
     background: transparent;
   }
-}
-
-/* VS Code theme preset — Dark+ */
-:root[data-preset='vscode'] {
-  --color-background: #1e1e1e;
-  --color-background-secondary: #252526;
-  --color-surface: #252526;
-  --color-surface-hover: #2a2d2e;
-  --color-surface-active: #37373d;
-  --color-surface-muted: #1e1e1e;
-  --color-border: #454545;
-  --color-border-muted: #3c3c3c;
-  --color-border-subtle: rgba(255, 255, 255, 0.06);
-  --color-accent: #007acc;
-  --color-accent-hover: #0062a3;
-  --color-accent-muted: rgba(0, 122, 204, 0.15);
-  --color-text-primary: #cccccc;
-  --color-text-secondary: #969696;
-  --color-text-muted: #6e6e6e;
-  --color-success: #89d185;
-  --color-warning: #cca700;
-  --color-error: #f48771;
-  --shadow-soft: none;
-  --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.05);
-  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.36);
-}
-
-/* VS Code theme preset — Light+ */
-:root[data-preset='vscode'].light {
-  --color-background: #ffffff;
-  --color-background-secondary: #f3f3f3;
-  --color-surface: #f3f3f3;
-  --color-surface-hover: #e8e8e8;
-  --color-surface-active: #d4d4d4;
-  --color-surface-muted: #f8f8f8;
-  --color-border: #e5e5e5;
-  --color-border-muted: #eeeeee;
-  --color-border-subtle: rgba(0, 0, 0, 0.06);
-  --color-accent: #007acc;
-  --color-accent-hover: #0062a3;
-  --color-accent-muted: rgba(0, 122, 204, 0.1);
-  --color-text-primary: #333333;
-  --color-text-secondary: #616161;
-  --color-text-muted: #8c8c8c;
-  --color-success: #16825d;
-  --color-warning: #bf8803;
-  --color-error: #e51400;
-  --shadow-soft: none;
-  --shadow-card: 0 0 0 1px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-[data-preset='vscode'] body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-[data-preset='vscode'] .prose-chat,
-[data-preset='vscode'] .heading-serif {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-}
-
-[data-preset='vscode'] .code-block,
-[data-preset='vscode'] .code-block code,
-[data-preset='vscode'] code {
-  font-family: Consolas, 'Courier New', 'SF Mono', Monaco, Menlo, monospace;
-}
-
-[data-preset='vscode'] .btn,
-[data-preset='vscode'] .input,
-[data-preset='vscode'] .card,
-[data-preset='vscode'] .tag {
-  border-radius: 3px;
 }
 
 /* Respect reduced motion preferences */

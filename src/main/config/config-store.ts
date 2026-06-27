@@ -47,7 +47,6 @@ import {
   isCustomProtocol,
   isProfileKey,
   isProviderType,
-  isThemePreset,
   MAX_CONFIG_SET_COUNT,
   normalizeCustomProtocol,
   normalizeMemoryRuntimeConfig,
@@ -136,9 +135,6 @@ export class ConfigStore {
           return defaultConfig[key];
         }
         if (key === 'theme' && !isAppTheme(rawValue)) {
-          return defaultConfig[key];
-        }
-        if (key === 'themePreset' && !isThemePreset(rawValue)) {
           return defaultConfig[key];
         }
         if (
@@ -402,7 +398,6 @@ export class ConfigStore {
       enableDevLogs:
         updates.enableDevLogs !== undefined ? updates.enableDevLogs : current.enableDevLogs,
       theme: updates.theme !== undefined ? updates.theme : current.theme,
-      themePreset: updates.themePreset !== undefined ? updates.themePreset : current.themePreset,
       uiLanguage: updates.uiLanguage !== undefined ? updates.uiLanguage : current.uiLanguage,
       sandboxEnabled:
         updates.sandboxEnabled !== undefined ? updates.sandboxEnabled : current.sandboxEnabled,

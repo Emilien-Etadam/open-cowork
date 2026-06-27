@@ -15,7 +15,6 @@ import {
 export type ProviderType = 'openai' | 'anthropic';
 export type CustomProtocolType = 'anthropic' | 'openai';
 export type AppTheme = 'dark' | 'light' | 'system';
-export type ThemePreset = 'default' | 'vscode';
 export type ProviderProfileKey = 'openai' | 'anthropic';
 export type ConfigSetId = string;
 export type CreateSetMode = 'blank' | 'clone';
@@ -63,7 +62,6 @@ export interface AppConfig {
   globalSkillsPath?: string;
   enableDevLogs: boolean;
   theme: AppTheme;
-  themePreset: ThemePreset;
   uiLanguage?: string;
   sandboxEnabled: boolean;
   memoryEnabled: boolean;
@@ -116,7 +114,6 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'globalSkillsPath',
   'enableDevLogs',
   'theme',
-  'themePreset',
   'sandboxEnabled',
   'memoryEnabled',
   'webSearch',
@@ -127,7 +124,6 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
 export const PROFILE_KEYS: ProviderProfileKey[] = ['openai', 'anthropic'];
 
 const VALID_THEMES: AppTheme[] = ['dark', 'light', 'system'];
-const VALID_THEME_PRESETS: ThemePreset[] = ['default', 'vscode'];
 
 export const defaultProfiles: Record<ProviderProfileKey, ProviderProfile> = {
   openai: {
@@ -190,7 +186,6 @@ export const defaultConfig: AppConfig = {
   globalSkillsPath: '',
   enableDevLogs: false,
   theme: 'light',
-  themePreset: 'default',
   uiLanguage: DEFAULT_BACKEND_LANGUAGE,
   sandboxEnabled: getDefaultSandboxEnabled(),
   memoryEnabled: true,
@@ -242,10 +237,6 @@ export function isProfileKey(value: unknown): value is ProviderProfileKey {
 
 export function isAppTheme(value: unknown): value is AppTheme {
   return typeof value === 'string' && VALID_THEMES.includes(value as AppTheme);
-}
-
-export function isThemePreset(value: unknown): value is ThemePreset {
-  return typeof value === 'string' && VALID_THEME_PRESETS.includes(value as ThemePreset);
 }
 
 function isMemoryModelRuntimeConfig(value: unknown): value is Partial<MemoryModelRuntimeConfig> {
