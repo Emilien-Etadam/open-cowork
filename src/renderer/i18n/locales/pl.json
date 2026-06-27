@@ -96,6 +96,27 @@
     "updateDownloading": "Downloading update…",
     "updateDownloadError": "Automatic download failed: {{error}}"
   },
+  "webSearch": {
+    "title": "Web search",
+    "description": "Choose the backend used by the built-in WebSearch tool.",
+    "provider": "Search provider",
+    "providerDuckduckgo": "DuckDuckGo",
+    "providerSearxng": "SearXNG / SearX",
+    "providerYacy": "YaCy",
+    "baseUrl": "Instance URL",
+    "baseUrlHint": "Example: http://localhost:8080. You can also set SEARXNG_BASE_URL or YACY_BASE_URL in the environment.",
+    "categories": "Categories",
+    "authToken": "Auth token (optional)",
+    "authTokenPlaceholder": "Bearer token for protected instances",
+    "language": "Language (optional)",
+    "maxResults": "Max results",
+    "searxngSetupHint": "SearXNG must expose JSON in settings.yml:\nsearch:\n  formats:\n    - html\n    - json",
+    "saved": "Web search settings saved.",
+    "test": "Test connection",
+    "testing": "Testing...",
+    "testSuccess": "Connection OK ({{count}} results).",
+    "testFailed": "Web search test failed."
+  },
   "memory": {
     "title": "Pamięć",
     "description": "Globalna pamięć podstawowa przechowuje stabilne preferencje, a pamięć doświadczenia obszaru roboczego przechowuje wielowątkową wiedzę specyficzną dla projektu.",

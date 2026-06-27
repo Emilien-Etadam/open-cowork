@@ -7,6 +7,7 @@ vi.mock('../../main/claude/claude-sdk-one-shot', () => ({
 }));
 
 import type { AppConfig } from '../../main/config/config-store';
+import { DEFAULT_WEB_SEARCH_CONFIG } from '../../main/config/config-store';
 import { MemoryLLMClient } from '../../main/memory/memory-llm-client';
 
 function makeConfig(timeoutMs: number): AppConfig {
@@ -53,6 +54,7 @@ function makeConfig(timeoutMs: number): AppConfig {
       evalArtifactsRoot: '',
       promptIterationRounds: 2,
     },
+    webSearch: { ...DEFAULT_WEB_SEARCH_CONFIG },
     enableThinking: false,
     isConfigured: true,
   };

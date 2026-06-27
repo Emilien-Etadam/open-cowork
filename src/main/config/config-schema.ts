@@ -6,6 +6,11 @@
 import { mt, DEFAULT_BACKEND_LANGUAGE } from '../i18n';
 
 import { defaultProtocolForSharedProvider } from '../../shared/api-model-presets';
+import {
+  DEFAULT_WEB_SEARCH_CONFIG,
+  normalizeWebSearchConfig,
+  type WebSearchConfig,
+} from '../../shared/web-search';
 
 export type ProviderType = 'openai' | 'anthropic';
 export type CustomProtocolType = 'anthropic' | 'openai';
@@ -63,9 +68,13 @@ export interface AppConfig {
   sandboxEnabled: boolean;
   memoryEnabled: boolean;
   memoryRuntime: MemoryRuntimeConfig;
+  webSearch: WebSearchConfig;
   enableThinking: boolean;
   isConfigured: boolean;
 }
+
+export type { WebSearchConfig };
+export { DEFAULT_WEB_SEARCH_CONFIG, normalizeWebSearchConfig };
 
 export interface MemoryModelRuntimeConfig {
   inheritFromActive: boolean;
@@ -110,6 +119,7 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'themePreset',
   'sandboxEnabled',
   'memoryEnabled',
+  'webSearch',
   'enableThinking',
   'isConfigured',
 ]);
@@ -213,6 +223,7 @@ export const defaultConfig: AppConfig = {
     evalArtifactsRoot: '',
     promptIterationRounds: 2,
   },
+  webSearch: { ...DEFAULT_WEB_SEARCH_CONFIG },
   enableThinking: false,
   isConfigured: false,
 };

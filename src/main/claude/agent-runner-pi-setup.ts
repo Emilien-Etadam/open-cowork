@@ -25,6 +25,7 @@ import {
   wrapBashToolWithDefaultTimeout,
 } from './agent-runner-pi-session';
 import { buildCoworkAppendPrompt } from './agent-runner-prompts';
+import { buildWebSearchCustomTools } from './agent-runner-web-search-tool';
 import {
   AgentRunnerRunContext,
   ensureSkillsSetup,
@@ -331,11 +332,18 @@ export async function preparePiSessionRun({
     useSandboxIsolation
   );
   const mcpCustomTools = ctx.mcpManager ? buildMcpCustomTools(ctx.mcpManager) : [];
+  const webSearchCustomTools = buildWebSearchCustomTools();
   const extensionCustomTools = extensionResult.customTools || [];
   if (mcpCustomTools.length > 0) {
     log(
       `[ClaudeAgentRunner] Registered ${mcpCustomTools.length} MCP tools as customTools:`,
       mcpCustomTools.map((tool) => tool.name).join(', ')
+    );
+  }
+  if (webSearchCustomTools.length > 0) {
+    log(
+      `[ClaudeAgentRunner] Registered ${webSearchCustomTools.length} web search tools as customTools:`,
+      webSearchCustomTools.map((tool) => tool.name).join(', ')
     );
   }
   if (extensionCustomTools.length > 0) {
@@ -375,6 +383,7 @@ export async function preparePiSessionRun({
   ).find((tool) => tool.name === 'bash');
   const allCustomTools = [
     ...(wrappedBash ? [wrappedBash] : []),
+    ...webSearchCustomTools,
     ...mcpCustomTools,
     ...extensionCustomTools,
   ];

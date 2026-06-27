@@ -18,7 +18,10 @@ import type {
   ApiTestResult,
   DiagnosticInput,
   ProviderModelInfo,
+  WebSearchTestInput,
+  WebSearchTestResult,
 } from '../../renderer/types';
+import { runWebSearchConfigTest } from '../config/web-search-test';
 import { log, logError } from '../utils/logger';
 import { mainAppState } from '../main-app-state';
 import { sendToRenderer } from '../main-renderer-bridge';
@@ -176,6 +179,21 @@ export function registerConfigMcpIpc(): void {
       };
     }
   });
+
+  ipcMain.handle(
+    'config.testWebSearch',
+    async (_event, payload: WebSearchTestInput): Promise<WebSearchTestResult> => {
+      try {
+        return await runWebSearchConfigTest(payload);
+      } catch (error) {
+        logError('[Config] Web search test failed:', error);
+        return {
+          ok: false,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+  );
 
   ipcMain.handle(
     'config.listModels',

@@ -15,6 +15,7 @@ vi.mock('../../main/claude/shared-auth', () => ({
 }));
 
 import type { AppConfig } from '../../main/config/config-store';
+import { DEFAULT_WEB_SEARCH_CONFIG } from '../../main/config/config-store';
 import { runPiAiOneShot } from '../../main/claude/claude-sdk-one-shot';
 
 function makeConfig(): AppConfig {
@@ -61,6 +62,7 @@ function makeConfig(): AppConfig {
       evalArtifactsRoot: '',
       promptIterationRounds: 2,
     },
+    webSearch: { ...DEFAULT_WEB_SEARCH_CONFIG },
     enableThinking: false,
     isConfigured: true,
   };
