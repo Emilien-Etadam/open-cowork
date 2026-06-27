@@ -32,36 +32,16 @@ import type {
 import type { DiagnosticInput, DiagnosticResult } from '../renderer/types';
 import type { McpServerConfig, McpTool, McpServerStatus, McpPresetsMap } from '../shared/ipc-types';
 import { subscribeServerEvents } from './server-event-bus';
+import { isAllowedClientEventType } from '../shared/client-event-allowlist';
 
 // Allowlist of valid ClientEvent types to prevent spoofing arbitrary IPC channels
-const ALLOWED_CLIENT_EVENTS: ReadonlySet<string> = new Set<ClientEvent['type']>([
-  'session.start',
-  'session.continue',
-  'session.compact',
-  'session.handoff',
-  'session.forkFromMessage',
-  'session.rewindToMessage',
-  'session.stop',
-  'session.delete',
-  'session.batchDelete',
-  'session.list',
-  'session.getMessages',
-  'session.getTraceSteps',
-  'permission.response',
-  'sudo.password.response',
-  'settings.update',
-  'folder.select',
-  'workdir.get',
-  'workdir.set',
-  'workdir.select',
-]);
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('electronAPI', {
   // Send events to main process
   send: (event: ClientEvent) => {
-    if (!ALLOWED_CLIENT_EVENTS.has(event.type)) {
+    if (!isAllowedClientEventType(event.type)) {
       console.warn('[Preload] Blocked unauthorized event type:', event.type);
       return;
     }
@@ -74,7 +54,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Invoke and wait for response
   invoke: async <T>(event: ClientEvent): Promise<T> => {
-    if (!ALLOWED_CLIENT_EVENTS.has(event.type)) {
+    if (!isAllowedClientEventType(event.type)) {
       console.warn('[Preload] Blocked unauthorized invoke type:', event.type);
       throw new Error(`Unauthorized event type: ${event.type}`);
     }

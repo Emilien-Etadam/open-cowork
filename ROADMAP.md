@@ -96,7 +96,7 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 - **Encrypted stores**: MCP credentials + Chat LAN token aligned with machine-bound encryption (`app-store` helper)
 - **Dead code removal**: legacy per-skill MCP process stubs removed (MCP via marketplace / `mcp-config-store` only)
 - **Docs**: SECURITY.md, README, ROADMAP updated for v5 support policy
-- **Next (Phase 1)**: macOS sandbox default, Chat LAN WireGuard guidance, IPC allowlist in main process
+- **Next (Phase 1)**: macOS sandbox default, IPC allowlist in main process, Chat LAN hardening (Bearer SSE, security headers)
 
 ## 🚧 In Progress
 

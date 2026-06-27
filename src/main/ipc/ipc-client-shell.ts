@@ -9,9 +9,23 @@ import { handleClientEvent } from '../main-client-events';
 import { revealFileInFolder } from '../main-shell-reveal';
 import { listRecentWorkspaceFiles } from '../utils/recent-workspace-files';
 import type { ClientEvent } from '../../renderer/types';
+import { isAllowedClientEvent } from '../../shared/client-event-allowlist';
+
+function rejectUnauthorizedClientEvent(data: unknown): data is ClientEvent {
+  if (!isAllowedClientEvent(data)) {
+    const type =
+      data && typeof data === 'object' && 'type' in data ? String((data as { type: unknown }).type) : '(invalid)';
+    logWarn('[IPC] Blocked unauthorized client event:', type);
+    return false;
+  }
+  return true;
+}
 
 export function registerClientShellIpc(): void {
   ipcMain.on('client-event', async (_event, data: ClientEvent) => {
+    if (!rejectUnauthorizedClientEvent(data)) {
+      return;
+    }
     try {
       await handleClientEvent(data);
     } catch (error) {
@@ -24,6 +38,9 @@ export function registerClientShellIpc(): void {
   });
 
   ipcMain.handle('client-invoke', async (_event, data: ClientEvent) => {
+    if (!rejectUnauthorizedClientEvent(data)) {
+      throw new Error('Unauthorized client event');
+    }
     return handleClientEvent(data);
   });
 
