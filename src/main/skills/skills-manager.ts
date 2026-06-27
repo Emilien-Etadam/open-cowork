@@ -19,35 +19,11 @@ import type { Skill, PluginInstallResult } from '../../renderer/types';
 import type { DatabaseInstance } from '../db/database';
 import { log, logError, logWarn } from '../utils/logger';
 import { isPathWithinRoot } from '../tools/path-containment';
-
-/**
- * Validate that a skill name is safe for use as a directory name.
- * Rejects names containing path separators or parent directory references.
- */
-function validateSkillName(name: string): void {
-  if (!name || /[/\\]|\.\./.test(name)) {
-    throw new Error(`Invalid skill name: ${name}`);
-  }
-}
-
-/**
- * Check if a path is a dangling symlink (symlink whose target no longer exists).
- */
-function isDanglingSymlink(filePath: string): boolean {
-  try {
-    const lstat = fs.lstatSync(filePath);
-    if (!lstat.isSymbolicLink()) return false;
-    // Symlink exists — check if the target is reachable
-    try {
-      fs.statSync(filePath);
-      return false; // target exists, not dangling
-    } catch {
-      return true; // target unreachable
-    }
-  } catch {
-    return false; // path itself doesn't exist
-  }
-}
+import {
+  isDanglingSymlink,
+  readSkillMetadata,
+  validateSkillName,
+} from './skills-frontmatter';
 
 interface McpServerConfig {
   command: string;
@@ -811,33 +787,8 @@ export class SkillsManager {
    * Get skill metadata from SKILL.md file
    */
   getSkillMetadata(skillPath: string): { name: string; description: string } | null {
-    const skillMdPath = path.join(skillPath, 'SKILL.md');
-
-    if (!fs.existsSync(skillMdPath)) {
-      return null;
-    }
-
     try {
-      const content = fs.readFileSync(skillMdPath, 'utf-8');
-
-      // Limit regex matching to the YAML front-matter block (between --- markers)
-      const frontMatterMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-      const frontMatter = frontMatterMatch ? frontMatterMatch[1] : content;
-
-      const nameMatch = frontMatter.match(/name:\s*["']?([^"'\r\n]+)["']?/);
-      const descMatch = frontMatter.match(/description:\s*["']?([^"'\r\n]+)["']?/);
-
-      if (!nameMatch || !descMatch) {
-        return null;
-      }
-
-      const name = nameMatch[1].trim();
-      validateSkillName(name);
-
-      return {
-        name,
-        description: descMatch[1].trim(),
-      };
+      return readSkillMetadata(skillPath);
     } catch (error) {
       logError(`Failed to parse SKILL.md from ${skillPath}:`, error);
       return null;
