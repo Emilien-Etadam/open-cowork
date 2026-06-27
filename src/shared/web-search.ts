@@ -1,5 +1,5 @@
 /**
- * Web search providers for Open Cowork.
+ * Web search providers for Lygodactylus.
  *
  * Supports DuckDuckGo (default) and self-hosted metasearch engines:
  * - SearXNG / SearX / LibreX (SearXNG-compatible JSON API)
@@ -126,7 +126,7 @@ export function getWebSearchProviderLabel(provider: WebSearchProvider): string {
 
 function buildAuthHeaders(config: WebSearchConfig): Record<string, string> {
   const headers: Record<string, string> = {
-    'User-Agent': 'open-cowork',
+    'User-Agent': 'lygodactylus',
     Accept: 'application/json',
   };
   if (config.authToken) {

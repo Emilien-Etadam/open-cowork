@@ -1,4 +1,4 @@
-# Contributing to Open Cowork (Fork EE)
+# Contributing to Lygodactylus (Fork EE)
 
 Thank you for your interest in contributing! This repository is a **personal fork** of [Open Cowork](https://github.com/OpenCoworkAI/open-cowork), maintained by [Emilien-Etadam](https://github.com/Emilien-Etadam). Releases are tagged `3.3.1-EE*` (alpha).
 
@@ -17,8 +17,8 @@ Upstream contributions should generally go to [OpenCoworkAI/open-cowork](https:/
 **Install**
 
 ```bash
-git clone https://github.com/Emilien-Etadam/open-cowork.git
-cd open-cowork
+git clone https://github.com/Emilien-Etadam/lygodactylus.git
+cd lygodactylus
 npm install        # postinstall: downloads Node binaries + rebuilds native modules
 ```
 
@@ -159,7 +159,7 @@ MCP stdio servers execute local code — review sources carefully. No open self-
 
 ## Reporting Issues
 
-Open issues on [Emilien-Etadam/open-cowork](https://github.com/Emilien-Etadam/open-cowork/issues).
+Open issues on [Emilien-Etadam/lygodactylus](https://github.com/Emilien-Etadam/lygodactylus/issues).
 
 Include:
 

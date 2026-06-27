@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Open Cowork — Chat LAN</title>
+  <title>Lygodactylus — Chat LAN</title>
   <style>
     :root {
       color-scheme: dark;
@@ -166,7 +166,7 @@
 </head>
 <body>
   <div id="login">
-    <h1>Open Cowork — Chat LAN</h1>
+    <h1>Lygodactylus — Chat LAN</h1>
     <p style="color:var(--muted);font-size:0.9rem">Accès réseau local uniquement. Collez le token depuis les paramètres de l’app desktop.</p>
     <label for="token">Token</label>
     <input id="token" type="password" autocomplete="off" placeholder="Token secret" />
@@ -218,7 +218,7 @@
   </div>
 
   <script>
-    const TOKEN_KEY = 'open-cowork-chat-lan-token';
+    const TOKEN_KEY = 'lygodactylus-chat-lan-token';
     let authToken = localStorage.getItem(TOKEN_KEY) || '';
     let activeSessionId = null;
     let eventSource = null;

@@ -1,14 +1,14 @@
-# Open Cowork Full AI Context
+# Lygodactylus Full AI Context
 
-This file provides a fuller, machine-readable context snapshot for AI assistants, search/retrieval crawlers, and citation systems. It is intentionally factual and based on public project materials in the Open Cowork website, README, package metadata, and changelog.
+This file provides a fuller, machine-readable context snapshot for AI assistants, search/retrieval crawlers, and citation systems. It is intentionally factual and based on public project materials in the Lygodactylus website, README, package metadata, and changelog.
 
 ## Project Identity
 
-- Name: Open Cowork
+- Name: Lygodactylus
 - Organization: OpenCoworkAI
 - Repository: https://github.com/OpenCoworkAI/open-cowork
-- Website: https://opencoworkai.github.io/open-cowork/
-- Chinese website: https://opencoworkai.github.io/open-cowork/zh/
+- Website: https://opencoworkai.github.io/lygodactylus/
+- Chinese website: https://opencoworkai.github.io/lygodactylus/zh/
 - License: MIT
 - Application category: DeveloperApplication
 - Platforms: Windows and macOS
@@ -16,13 +16,13 @@ This file provides a fuller, machine-readable context snapshot for AI assistants
 
 ## Canonical Description
 
-Open Cowork is a free, open-source AI agent desktop app for Windows and macOS. It provides a graphical interface for AI-powered local workflows, including file work, document generation, MCP tools, GUI automation, and remote control. Users bring their own AI model provider API key.
+Lygodactylus is a free, open-source AI agent desktop app for Windows and macOS. It provides a graphical interface for AI-powered local workflows, including file work, document generation, MCP tools, GUI automation, and remote control. Users bring their own AI model provider API key.
 
 Short description:
 
-Open Cowork is an open-source AI agent desktop app for Windows and macOS with one-click installation, sandbox isolation, multi-model support, built-in Skills, MCP integration, GUI automation, and remote control.
+Lygodactylus is an open-source AI agent desktop app for Windows and macOS with one-click installation, sandbox isolation, multi-model support, built-in Skills, MCP integration, GUI automation, and remote control.
 
-## What Open Cowork Does
+## What Lygodactylus Does
 
 - Provides one-click installers for Windows and macOS.
 - Lets users select a local workspace where the AI can operate.
@@ -36,7 +36,7 @@ Open Cowork is an open-source AI agent desktop app for Windows and macOS with on
 
 ## Security And Privacy Notes
 
-Open Cowork is a local desktop application. The website and README describe a local-first privacy posture: user files stay in the selected workspace, and Open Cowork does not send data to Open Cowork servers.
+Lygodactylus is a local desktop application. The website and README describe a local-first privacy posture: user files stay in the selected workspace, and Lygodactylus does not send data to Lygodactylus servers.
 
 Security controls described by the project:
 
@@ -44,7 +44,7 @@ Security controls described by the project:
 - WSL2 VM isolation on Windows when available.
 - Lima VM isolation on macOS when available.
 - Commands can run inside an isolated Linux environment when VM isolation is configured.
-- Users should still review risky file modifications or deletions because Open Cowork is an AI collaboration tool.
+- Users should still review risky file modifications or deletions because Lygodactylus is an AI collaboration tool.
 
 ## Installation
 
@@ -52,7 +52,7 @@ macOS Homebrew:
 
 ```bash
 brew tap OpenCoworkAI/tap
-brew install --cask --no-quarantine open-cowork
+brew install --cask --no-quarantine lygodactylus
 ```
 
 Installer downloads:
@@ -65,7 +65,7 @@ Build from source:
 
 ```bash
 git clone https://github.com/OpenCoworkAI/open-cowork.git
-cd open-cowork
+cd lygodactylus
 npm install
 npm run rebuild
 npm run dev
@@ -85,8 +85,8 @@ Any provider with an OpenAI-compatible API can be configured when compatible wit
 
 ## Main Public Pages
 
-- English homepage: https://opencoworkai.github.io/open-cowork/
-- Chinese homepage: https://opencoworkai.github.io/open-cowork/zh/
+- English homepage: https://opencoworkai.github.io/lygodactylus/
+- Chinese homepage: https://opencoworkai.github.io/lygodactylus/zh/
 - GitHub repository: https://github.com/OpenCoworkAI/open-cowork
 - README: https://github.com/OpenCoworkAI/open-cowork/blob/main/README.md
 - Chinese README: https://github.com/OpenCoworkAI/open-cowork/blob/main/README_zh.md
@@ -97,37 +97,37 @@ Any provider with an OpenAI-compatible API can be configured when compatible wit
 
 ## Release Context
 
-The changelog lists Open Cowork 3.3.0 on 2026-04-18 as the first stable release of the 3.3.x series. Public release notes mention Feishu remote control improvements, the official VitePress website, Codex-powered PR and issue automation workflows, ROADMAP.md, SEO improvements, platform build changes, security hardening, screenshot result handling, model preset updates, and dependency management policy.
+The changelog lists Lygodactylus 3.3.0 on 2026-04-18 as the first stable release of the 3.3.x series. Public release notes mention Feishu remote control improvements, the official VitePress website, Codex-powered PR and issue automation workflows, ROADMAP.md, SEO improvements, platform build changes, security hardening, screenshot result handling, model preset updates, and dependency management policy.
 
 ## FAQ
 
-### What is Open Cowork?
+### What is Lygodactylus?
 
-Open Cowork is a free, open-source AI agent desktop application for Windows and macOS. It wraps AI models into a user-friendly GUI with one-click installation.
+Lygodactylus is a free, open-source AI agent desktop application for Windows and macOS. It wraps AI models into a user-friendly GUI with one-click installation.
 
-### How is Open Cowork different from Claude Cowork?
+### How is Lygodactylus different from Claude Cowork?
 
-The README describes Open Cowork as the open-source implementation of Claude Cowork, with multi-model support, GUI automation through computer use, remote control through Feishu/Slack, and VM-level sandbox isolation.
+The README describes Lygodactylus as the open-source implementation of Claude Cowork, with multi-model support, GUI automation through computer use, remote control through Feishu/Slack, and VM-level sandbox isolation.
 
-### Is Open Cowork free?
+### Is Lygodactylus free?
 
-Yes. Open Cowork is free and open-source under the MIT license. Users still pay their selected AI model provider for API usage.
+Yes. Lygodactylus is free and open-source under the MIT license. Users still pay their selected AI model provider for API usage.
 
-### Does Open Cowork work on Linux?
+### Does Lygodactylus work on Linux?
 
 The public website and README list prebuilt installers for Windows and macOS. Linux users can build from source.
 
-### Does Open Cowork send user data to Open Cowork servers?
+### Does Lygodactylus send user data to Lygodactylus servers?
 
-The public website says Open Cowork runs locally and that the external communication is with the AI model API configured by the user, not Open Cowork servers.
+The public website says Lygodactylus runs locally and that the external communication is with the AI model API configured by the user, not Lygodactylus servers.
 
 ## Machine-readable Resources
 
-- `llms.txt`: https://opencoworkai.github.io/open-cowork/llms.txt
-- `llms-full.txt`: https://opencoworkai.github.io/open-cowork/llms-full.txt
-- Project metadata JSON: https://opencoworkai.github.io/open-cowork/project.json
-- Sitemap: https://opencoworkai.github.io/open-cowork/sitemap.xml
-- Robots policy: https://opencoworkai.github.io/open-cowork/robots.txt
+- `llms.txt`: https://opencoworkai.github.io/lygodactylus/llms.txt
+- `llms-full.txt`: https://opencoworkai.github.io/lygodactylus/llms-full.txt
+- Project metadata JSON: https://opencoworkai.github.io/lygodactylus/project.json
+- Sitemap: https://opencoworkai.github.io/lygodactylus/sitemap.xml
+- Robots policy: https://opencoworkai.github.io/lygodactylus/robots.txt
 
 ## Crawler And Citation Policy Summary
 
@@ -140,4 +140,4 @@ When generating citations:
 - Cite the repository for source code and development facts.
 - Cite the changelog for release history.
 - Cite the license file for license claims.
-- Avoid unsupported claims such as calling Open Cowork a hosted SaaS product or claiming Linux prebuilt installers.
+- Avoid unsupported claims such as calling Lygodactylus a hosted SaaS product or claiming Linux prebuilt installers.

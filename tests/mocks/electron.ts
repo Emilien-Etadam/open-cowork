@@ -57,7 +57,7 @@ class MockTray {
 
 export const app = {
   isPackaged: false,
-  name: 'open-cowork-test',
+  name: 'lygodactylus-test',
   commandLine: {
     appendSwitch: noop,
   },
@@ -66,9 +66,9 @@ export const app = {
   },
   disableHardwareAcceleration: noop,
   requestSingleInstanceLock: () => true,
-  getPath: (_name: string) => '/tmp/open-cowork-test',
+  getPath: (_name: string) => '/tmp/lygodactylus-test',
   getVersion: () => '0.0.0-test',
-  getName: () => 'open-cowork-test',
+  getName: () => 'lygodactylus-test',
   getLocale: () => 'en',
   getAppPath: () => process.cwd(),
   whenReady: () => Promise.resolve(),

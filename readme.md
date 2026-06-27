@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="resources/logo.png" alt="Open Cowork Logo" width="200" />
+  <img src="resources/logo.png" alt="Lygodactylus Logo" width="200" />
 </p>
 
-<h1 align="center">Open Cowork — Fork EE</h1>
+<h1 align="center">Lygodactylus</h1>
 
 <p align="center">
   Fork personnel de <a href="https://github.com/OpenCoworkAI/open-cowork">Open Cowork</a> par <a href="https://github.com/Emilien-Etadam">Emilien-Etadam</a>
@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
-  <img src="https://img.shields.io/badge/version-3.3.1--EE4.97-orange" alt="Version" />
+  <img src="https://img.shields.io/badge/version-3.3.1--EE4.98-orange" alt="Version" />
   <img src="https://img.shields.io/badge/status-alpha-yellow" alt="Status" />
 </p>
 
@@ -24,7 +24,7 @@
 
 ## C'est quoi ?
 
-**Open Cowork** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), isole les commandes dans un **sandbox** (WSL2 / Lima), et expose un **chat LAN** (interface web locale sur le réseau).
+**Lygodactylus** est une application desktop d'agent IA (Electron) pour Windows et macOS. Elle gère vos fichiers, génère des documents via **Skills** (PPTX, DOCX, XLSX, PDF), installe des extensions via une **marketplace** curated (Skills, MCP, plugins), isole les commandes dans un **sandbox** (WSL2 / Lima), et expose un **chat LAN** (interface web locale sur le réseau).
 
 > [!NOTE]
 > Ce dépôt est un **fork personnel**. Les releases `EE*` sont des builds **alpha** expérimentales. Pour la version stable officielle, voir [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
@@ -49,7 +49,7 @@
 
 ### Releases (recommandé)
 
-Téléchargez la dernière version sur la page [Releases](https://github.com/emilien-etadam/open-cowork/releases) :
+Téléchargez la dernière version sur la page [Releases](https://github.com/emilien-etadam/lygodactylus/releases) :
 
 | Plateforme            | Fichier |
 | --------------------- | ------- |
@@ -61,8 +61,8 @@ Sur **Windows**, l'app vérifie les mises à jour EE au démarrage. Sinon, utili
 ### Depuis les sources
 
 ```bash
-git clone https://github.com/emilien-etadam/open-cowork.git
-cd open-cowork
+git clone https://github.com/emilien-etadam/lygodactylus.git
+cd lygodactylus
 npm install   # Node.js 22+
 npm run dev
 ```

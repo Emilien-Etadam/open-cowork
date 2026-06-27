@@ -9,7 +9,7 @@ Set-StrictMode -Version Latest
 
 function Write-Step {
   param([string]$Message)
-  Write-Host "[Open Cowork Cleanup] $Message"
+  Write-Host "[Lygodactylus Cleanup] $Message"
 }
 
 function Add-UniquePath {
@@ -51,7 +51,7 @@ function Get-ExecutablePathFromCommand {
   return $null
 }
 
-function Get-OpenCoworkRegistryEntries {
+function Get-LygodactylusRegistryEntries {
   $registryGlobs = @(
     "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
     "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
@@ -65,7 +65,10 @@ function Get-OpenCoworkRegistryEntries {
     }
 
     $items = Get-ItemProperty -Path $glob -ErrorAction SilentlyContinue | Where-Object {
-      $_.DisplayName -like "Open Cowork*" -or $_.Publisher -eq "Open Cowork Team"
+      $_.DisplayName -like "Lygodactylus*" -or
+      $_.DisplayName -like "Open Cowork*" -or
+      $_.Publisher -eq "Lygodactylus" -or
+      $_.Publisher -eq "Open Cowork Team"
     }
 
     if ($items) {
@@ -76,13 +79,16 @@ function Get-OpenCoworkRegistryEntries {
   return $entries
 }
 
-function Stop-OpenCoworkProcesses {
+function Stop-LygodactylusProcesses {
   $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
-    $_.Name -ieq "Open Cowork.exe" -or $_.ExecutablePath -like "*\Open Cowork.exe"
+    $_.Name -ieq "Lygodactylus.exe" -or
+    $_.Name -ieq "Open Cowork.exe" -or
+    $_.ExecutablePath -like "*\Lygodactylus.exe" -or
+    $_.ExecutablePath -like "*\Open Cowork.exe"
   })
 
   if ($processes.Count -eq 0) {
-    Write-Step "No running Open Cowork processes found."
+    Write-Step "No running Lygodactylus or Open Cowork processes found."
     return
   }
 
@@ -96,7 +102,7 @@ function Stop-OpenCoworkProcesses {
   }
 }
 
-$registryEntries = @(Get-OpenCoworkRegistryEntries)
+$registryEntries = @(Get-LygodactylusRegistryEntries)
 $installPaths = [System.Collections.Generic.List[string]]::new()
 
 foreach ($entry in $registryEntries) {
@@ -113,16 +119,23 @@ foreach ($entry in $registryEntries) {
   }
 }
 
+Add-UniquePath -List $installPaths -PathValue (Join-Path $env:LOCALAPPDATA "Programs\Lygodactylus")
 Add-UniquePath -List $installPaths -PathValue (Join-Path $env:LOCALAPPDATA "Programs\Open Cowork")
 
 $appDataPaths = [System.Collections.Generic.List[string]]::new()
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "Lygodactylus")
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "lygodactylus")
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:LOCALAPPDATA "Lygodactylus")
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:LOCALAPPDATA "lygodactylus")
 Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "Open Cowork")
 Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "open-cowork")
 Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:LOCALAPPDATA "Open Cowork")
 Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:LOCALAPPDATA "open-cowork")
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "com.opencowork.app")
+Add-UniquePath -List $appDataPaths -PathValue (Join-Path $env:APPDATA "com.lygodactylus.app")
 
 Write-Host ""
-Write-Step "This tool removes broken Open Cowork Windows install leftovers."
+Write-Step "This tool removes broken Lygodactylus or Open Cowork Windows install leftovers."
 Write-Step "Install directories and uninstall registry entries will be removed."
 if ($RemoveAppData) {
   Write-Step "AppData cleanup is enabled. Local settings and cached data will also be removed."
@@ -141,7 +154,7 @@ if (-not $Silent) {
 
 $failures = @()
 
-Stop-OpenCoworkProcesses
+Stop-LygodactylusProcesses
 
 foreach ($pathValue in $installPaths) {
   if (-not (Test-Path -LiteralPath $pathValue)) {
@@ -189,7 +202,7 @@ if ($RemoveAppData) {
 
 Write-Host ""
 if ($failures.Count -eq 0) {
-  Write-Step "Cleanup finished. You can rerun the Open Cowork installer now."
+  Write-Step "Cleanup finished. You can rerun the Lygodactylus installer now."
   if (-not $RemoveAppData) {
     Write-Step "If you also want to reset local settings, rerun this tool with -RemoveAppData."
   }
