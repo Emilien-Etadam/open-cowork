@@ -24,7 +24,7 @@ import {
   wrapBashToolForSudo,
   wrapBashToolWithDefaultTimeout,
   type CachedPiSession,
-} from '../../main/claude/agent-runner-pi-session';
+} from '../../main/agent/agent-runner-pi-session';
 
 function makeBashTool(execute = vi.fn(async () => ({ content: [{ type: 'text', text: 'ok' }] }))) {
   return {

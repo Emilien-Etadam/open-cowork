@@ -51,7 +51,7 @@ export async function executeAgentRun(
   existingMessages: Message[]
 ): Promise<void> {
   const runStartTime = Date.now();
-  logCtx('[ClaudeAgentRunner] run() started');
+  logCtx('[AgentRunner] run() started');
 
   const controller = new AbortController();
   try {
@@ -89,7 +89,7 @@ export async function executeAgentRun(
     logTiming('sendTraceStep (thinking)', runStartTime);
 
     const workingDir = session.cwd || undefined;
-    logCtx('[ClaudeAgentRunner] Working directory:', workingDir || '(none)');
+    logCtx('[AgentRunner] Working directory:', workingDir || '(none)');
 
     const sandbox = getSandboxAdapter();
     const sandboxEnabled = configStore.get('sandboxEnabled') !== false;
@@ -151,18 +151,18 @@ export async function executeAgentRun(
       abortedByStreamError: streamResult.abortedByStreamError,
     });
     if (controller.signal.aborted && streamResult.abortedByTimeout) {
-      logCtx('[ClaudeAgentRunner] Aborted due to timeout (detected after prompt returned)');
+      logCtx('[AgentRunner] Aborted due to timeout (detected after prompt returned)');
       sendTimeoutMessage(ctx, session.id, thinkingStepId);
       return;
     }
     if (controller.signal.aborted && shouldPreserveExistingTrace(abortDisposition)) {
       logCtx(
-        `[ClaudeAgentRunner] Aborted by ${abortDisposition === 'loop_guard' ? 'loop guard' : 'stream error'} (detected after prompt returned)`
+        `[AgentRunner] Aborted by ${abortDisposition === 'loop_guard' ? 'loop guard' : 'stream error'} (detected after prompt returned)`
       );
       return;
     }
     if (controller.signal.aborted) {
-      logCtx('[ClaudeAgentRunner] Aborted by user');
+      logCtx('[AgentRunner] Aborted by user');
       ctx.renderer.sendTraceUpdate(session.id, thinkingStepId, {
         status: 'completed',
         title: 'Cancelled',
@@ -175,13 +175,13 @@ export async function executeAgentRun(
     });
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logCtx('[ClaudeAgentRunner] Aborted by user');
+      logCtx('[AgentRunner] Aborted by user');
       ctx.renderer.sendTraceUpdate(session.id, thinkingStepId, {
         status: 'completed',
         title: 'Cancelled',
       });
     } else {
-      logCtxError('[ClaudeAgentRunner] Error:', error);
+      logCtxError('[AgentRunner] Error:', error);
 
       const errorText = toUserFacingErrorText(
         error instanceof Error ? error.message : String(error)
@@ -216,25 +216,25 @@ export async function executeAgentRun(
         const sandbox = getSandboxAdapter();
 
         if (sandbox.isWSL) {
-          log('[ClaudeAgentRunner] Syncing sandbox changes to Windows...');
+          log('[AgentRunner] Syncing sandbox changes to Windows...');
           const syncResult = await SandboxSync.syncToWindows(session.id);
           if (syncResult.success) {
-            log('[ClaudeAgentRunner] Sync completed successfully');
+            log('[AgentRunner] Sync completed successfully');
           } else {
-            logError('[ClaudeAgentRunner] Sync failed:', syncResult.error);
+            logError('[AgentRunner] Sync failed:', syncResult.error);
           }
         } else if (sandbox.isLima) {
-          log('[ClaudeAgentRunner] Syncing sandbox changes to macOS...');
+          log('[AgentRunner] Syncing sandbox changes to macOS...');
           const { LimaSync } = await import('../sandbox/lima-sync');
           const syncResult = await LimaSync.syncToMac(session.id);
           if (syncResult.success) {
-            log('[ClaudeAgentRunner] Sync completed successfully');
+            log('[AgentRunner] Sync completed successfully');
           } else {
-            logError('[ClaudeAgentRunner] Sync failed:', syncResult.error);
+            logError('[AgentRunner] Sync failed:', syncResult.error);
           }
         }
       } catch (syncErr) {
-        logError('[ClaudeAgentRunner] Sandbox sync error:', syncErr);
+        logError('[AgentRunner] Sandbox sync error:', syncErr);
         ctx.renderer.sendMessage(session.id, {
           id: uuidv4(),
           sessionId: session.id,

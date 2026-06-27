@@ -2,47 +2,47 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-const agentRunnerPath = path.resolve(process.cwd(), 'src/main/claude/agent-runner.ts');
-const agentRunnerRunPath = path.resolve(process.cwd(), 'src/main/claude/agent-runner-run.ts');
+const agentRunnerPath = path.resolve(process.cwd(), 'src/main/agent/agent-runner.ts');
+const agentRunnerRunPath = path.resolve(process.cwd(), 'src/main/agent/agent-runner-run.ts');
 const agentRunnerContextPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-run-context.ts'
+  'src/main/agent/agent-runner-run-context.ts'
 );
 const agentRunnerPiSetupPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-pi-setup.ts'
+  'src/main/agent/agent-runner-pi-setup.ts'
 );
 const agentRunnerPromptsPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-prompts.ts'
+  'src/main/agent/agent-runner-prompts.ts'
 );
 const agentRunnerMcpServersPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-mcp-servers.ts'
+  'src/main/agent/agent-runner-mcp-servers.ts'
 );
 const agentRunnerStreamHandlerPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-handler.ts'
+  'src/main/agent/agent-runner-stream-handler.ts'
 );
 const agentRunnerStreamEventsPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-events.ts'
+  'src/main/agent/agent-runner-stream-events.ts'
 );
 const agentRunnerStreamMessageEventsPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-message-events.ts'
+  'src/main/agent/agent-runner-stream-message-events.ts'
 );
 const agentRunnerStreamToolEventsPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-stream-tool-events.ts'
+  'src/main/agent/agent-runner-stream-tool-events.ts'
 );
 const agentRunnerHistoryPath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-history.ts'
+  'src/main/agent/agent-runner-history.ts'
 );
 const agentRunnerMcpBridgePath = path.resolve(
   process.cwd(),
-  'src/main/claude/agent-runner-mcp-bridge.ts'
+  'src/main/agent/agent-runner-mcp-bridge.ts'
 );
 const agentRunnerContent = readFileSync(agentRunnerPath, 'utf8');
 const agentRunnerRunContent = readFileSync(agentRunnerRunPath, 'utf8');
@@ -65,7 +65,7 @@ const agentRunnerStreamCombinedContent = [
 const agentRunnerHistoryContent = readFileSync(agentRunnerHistoryPath, 'utf8');
 const agentRunnerMcpBridgeContent = readFileSync(agentRunnerMcpBridgePath, 'utf8');
 
-describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
+describe('AgentRunner Lygodactylus SDK integration', () => {
   it('avoids dynamic re-import shadowing for config store singletons', () => {
     expect(agentRunnerPiSetupContent).toContain(
       "import { configStore } from '../config/config-store'"
@@ -114,13 +114,13 @@ describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
 
   it('keeps MCP server logging compact unless full debug logging is enabled', () => {
     expect(agentRunnerMcpServersContent).toContain(
-      "log('[ClaudeAgentRunner] Final mcpServers summary:'"
+      "log('[AgentRunner] Final mcpServers summary:'"
     );
     expect(agentRunnerMcpServersContent).toContain(
       "if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {"
     );
     expect(agentRunnerMcpServersContent).toContain(
-      "log('[ClaudeAgentRunner] Final mcpServers config:'"
+      "log('[AgentRunner] Final mcpServers config:'"
     );
   });
 
@@ -131,7 +131,7 @@ describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
     expect(agentRunnerStreamEventsContent).toContain(
       "if (updateType !== 'text_delta' && updateType !== 'thinking_delta') {"
     );
-    expect(agentRunnerStreamEventsContent).toContain("'[ClaudeAgentRunner] Event: message_end'");
+    expect(agentRunnerStreamEventsContent).toContain("'[AgentRunner] Event: message_end'");
     expect(agentRunnerStreamEventsContent).toContain(
       'messageUpdateCounts: deps.getStreamEventSummary()'
     );
@@ -139,7 +139,7 @@ describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
       "if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {"
     );
     expect(agentRunnerStreamMessageEventsContent).toContain(
-      "'[ClaudeAgentRunner] message_end raw message:'"
+      "'[AgentRunner] message_end raw message:'"
     );
   });
 
@@ -156,13 +156,13 @@ describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
     expect(agentRunnerPiSetupContent).not.toContain('systemPromptOverride');
     expect(
       readFileSync(
-        path.resolve(process.cwd(), 'src/main/claude/agent-runner-pi-session.ts'),
+        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
         'utf8'
       )
     ).toContain('additionalSkillPaths: skillPaths');
     expect(
       readFileSync(
-        path.resolve(process.cwd(), 'src/main/claude/agent-runner-pi-session.ts'),
+        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
         'utf8'
       )
     ).toContain('appendSystemPrompt: coworkAppendPrompt');
@@ -181,7 +181,7 @@ describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
     expect(agentRunnerPiSetupContent).toContain('Runtime changed, recreating cached pi session:');
     expect(
       readFileSync(
-        path.resolve(process.cwd(), 'src/main/claude/agent-runner-pi-session.ts'),
+        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
         'utf8'
       )
     ).toContain('runtimeSignature: sessionRuntimeSignature');

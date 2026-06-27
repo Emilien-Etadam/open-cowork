@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('electron-store', () => {
   class MockStore<T extends Record<string, unknown>> {
     public store: Record<string, unknown>;
-    public path = '/tmp/mock-claude-sdk-one-shot-config.json';
+    public path = '/tmp/mock-pi-ai-one-shot-config.json';
 
     constructor(options: { defaults?: Record<string, unknown> }) {
       this.store = {
@@ -48,13 +48,13 @@ vi.mock('@earendil-works/pi-ai/compat', () => ({
   completeSimple: mocks.completeSimple,
 }));
 
-vi.mock('../src/main/claude/shared-auth', () => ({
+vi.mock('../src/main/agent/shared-auth', () => ({
   getSharedAuthStorage: () => ({
     setRuntimeApiKey: mocks.setRuntimeApiKey,
   }),
 }));
 
-vi.mock('../src/main/claude/pi-model-resolution', () => ({
+vi.mock('../src/main/agent/pi-model-resolution', () => ({
   resolvePiRouteProtocol: (provider?: string, customProtocol?: string) => {
     if (provider === 'custom') {
       if (customProtocol === 'openai' || customProtocol === 'gemini') {
@@ -121,7 +121,7 @@ vi.mock('../src/main/claude/pi-model-resolution', () => ({
   },
 }));
 
-import { probeWithClaudeSdk } from '../src/main/claude/claude-sdk-one-shot';
+import { probeWithPiAi } from '../src/main/agent/pi-ai-one-shot';
 
 function createConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   return {
@@ -145,7 +145,7 @@ function createConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   };
 }
 
-describe('probeWithClaudeSdk', () => {
+describe('probeWithPiAi', () => {
   beforeEach(() => {
     mocks.completeSimple.mockReset();
     mocks.setRuntimeApiKey.mockReset();
@@ -164,7 +164,7 @@ describe('probeWithClaudeSdk', () => {
   });
 
   it('does not fall back to saved api key when the draft explicitly clears it', async () => {
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'openai',
         apiKey: '',
@@ -182,7 +182,7 @@ describe('probeWithClaudeSdk', () => {
   });
 
   it('does not fall back to saved model when the draft explicitly clears it', async () => {
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'openai',
         apiKey: 'sk-current',
@@ -200,7 +200,7 @@ describe('probeWithClaudeSdk', () => {
   });
 
   it('allows empty key for loopback anthropic probe requests', async () => {
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'anthropic',
         customProtocol: 'anthropic',
@@ -230,7 +230,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'thinking', thinking: 'Let me think about this probe request...' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'kimi-k2.5' },
       createConfig()
     );
@@ -244,7 +244,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'thinking', thinking: '' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'kimi-k2.5' },
       createConfig()
     );
@@ -261,7 +261,7 @@ describe('probeWithClaudeSdk', () => {
       ],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'kimi-k2.5' },
       createConfig()
     );
@@ -274,7 +274,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'text', text: '**sdk_probe_ok**' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'gpt-5.4' },
       createConfig()
     );
@@ -287,7 +287,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'text', text: 'sdk_probe_ok.' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'gpt-5.4' },
       createConfig()
     );
@@ -300,7 +300,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'text', text: 'Sure! sdk_probe_ok' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'gpt-5.4' },
       createConfig()
     );
@@ -311,7 +311,7 @@ describe('probeWithClaudeSdk', () => {
   it('maps ECONNREFUSED to ollama_not_running for ollama provider', async () => {
     mocks.completeSimple.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:11434'));
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'openai',
         apiKey: '',
@@ -335,7 +335,7 @@ describe('probeWithClaudeSdk', () => {
   it('maps ECONNREFUSED to network_error for anthropic provider', async () => {
     mocks.completeSimple.mockRejectedValue(new Error('connect ECONNREFUSED 127.0.0.1:8080'));
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'anthropic',
         customProtocol: 'anthropic',
@@ -366,7 +366,7 @@ describe('probeWithClaudeSdk', () => {
       baseUrl: 'http://localhost:11434/v1',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'openai',
         apiKey: '',
@@ -401,7 +401,7 @@ describe('probeWithClaudeSdk', () => {
       baseUrl: 'https://openrouter.ai/api/v1',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       {
         provider: 'openai',
         apiKey: 'sk-or-test',
@@ -437,7 +437,7 @@ describe('probeWithClaudeSdk', () => {
       errorMessage: 'API key not valid. Please pass a valid API key.',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'AIza-bad-key', model: 'gemini-2.5-flash' },
       createConfig({
         provider: 'openai',
@@ -460,7 +460,7 @@ describe('probeWithClaudeSdk', () => {
       errorMessage: 'Request was aborted',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'sk-test', model: 'gpt-5.4' },
       createConfig()
     );
@@ -476,7 +476,7 @@ describe('probeWithClaudeSdk', () => {
       errorMessage: 'API_KEY_INVALID',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'bad', model: 'gemini-2.5-flash' },
       createConfig({
         provider: 'openai',
@@ -497,7 +497,7 @@ describe('probeWithClaudeSdk', () => {
       errorMessage: 'PERMISSION_DENIED: The caller does not have permission',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'bad', model: 'gemini-2.5-flash' },
       createConfig({
         provider: 'openai',
@@ -518,7 +518,7 @@ describe('probeWithClaudeSdk', () => {
       errorMessage: 'An unknown error occurred',
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'key', model: 'gemini-2.5-flash' },
       createConfig({
         provider: 'openai',
@@ -538,7 +538,7 @@ describe('probeWithClaudeSdk', () => {
       content: [{ type: 'text', text: '2+2 = 4\n\nsdk_probe_ok' }],
     });
 
-    const result = await probeWithClaudeSdk(
+    const result = await probeWithPiAi(
       { provider: 'openai', apiKey: 'key', model: 'gemini-2.5-flash' },
       createConfig({
         provider: 'openai',

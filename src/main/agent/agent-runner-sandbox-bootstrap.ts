@@ -61,7 +61,7 @@ async function bootstrapWslSandbox(
     return;
   }
 
-  log('[ClaudeAgentRunner] WSL mode active, initializing sandbox sync...');
+  log('[AgentRunner] WSL mode active, initializing sandbox sync...');
   const isNewSession = !SandboxSync.hasSession(sessionId);
 
   if (isNewSession) {
@@ -81,9 +81,9 @@ async function bootstrapWslSandbox(
   if (syncResult.success) {
     result.sandboxPath = syncResult.sandboxPath;
     result.useSandboxIsolation = true;
-    log(`[ClaudeAgentRunner] Sandbox initialized: ${result.sandboxPath}`);
+    log(`[AgentRunner] Sandbox initialized: ${result.sandboxPath}`);
     log(
-      `[ClaudeAgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
+      `[AgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
     );
 
     if (isNewSession) {
@@ -114,7 +114,7 @@ async function bootstrapWslSandbox(
         if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
           const wslSourcePath = pathConverter.toWSL(builtinSkillsPath);
           log(
-            `[ClaudeAgentRunner] Copying skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
+            `[AgentRunner] Copying skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
           );
 
           execFileSync(
@@ -137,7 +137,7 @@ async function bootstrapWslSandbox(
         if (fs.existsSync(appSkillsDir)) {
           const wslSourcePath = pathConverter.toWSL(appSkillsDir);
           log(
-            `[ClaudeAgentRunner] Copying app skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
+            `[AgentRunner] Copying app skills with rsync: ${wslSourcePath}/ -> ${sandboxSkillsPath}/`
           );
 
           execFileSync(
@@ -158,10 +158,10 @@ async function bootstrapWslSandbox(
           .split(/\r?\n/)
           .filter(Boolean);
 
-        log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-        log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
+        log(`[AgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
+        log(`[AgentRunner]   Skills: ${copiedSkills.join(', ')}`);
       } catch (error) {
-        logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+        logError('[AgentRunner] Failed to copy skills to sandbox:', error);
       }
     }
 
@@ -181,7 +181,7 @@ async function bootstrapWslSandbox(
     return;
   }
 
-  logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
+  logError('[AgentRunner] Sandbox sync failed:', syncResult.error);
   const syncBlockReason = getSandboxExecutionBlockReason({
     sandboxEnabled: deps.sandboxEnabled,
     platform: process.platform,
@@ -217,7 +217,7 @@ async function bootstrapLimaSandbox(
     return;
   }
 
-  log('[ClaudeAgentRunner] Lima mode active, initializing sandbox sync...');
+  log('[AgentRunner] Lima mode active, initializing sandbox sync...');
   const { LimaSync } = await import('../sandbox/lima-sync');
   const isNewLimaSession = !LimaSync.hasSession(sessionId);
 
@@ -238,9 +238,9 @@ async function bootstrapLimaSandbox(
   if (syncResult.success) {
     result.sandboxPath = syncResult.sandboxPath;
     result.useSandboxIsolation = true;
-    log(`[ClaudeAgentRunner] Sandbox initialized: ${result.sandboxPath}`);
+    log(`[AgentRunner] Sandbox initialized: ${result.sandboxPath}`);
     log(
-      `[ClaudeAgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
+      `[AgentRunner]   Files: ${syncResult.fileCount}, Size: ${syncResult.totalSize} bytes`
     );
 
     if (isNewLimaSession) {
@@ -273,7 +273,7 @@ async function bootstrapLimaSandbox(
 
         if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
           log(
-            `[ClaudeAgentRunner] Copying skills with rsync: ${builtinSkillsPath}/ -> ${sandboxSkillsPath}/`
+            `[AgentRunner] Copying skills with rsync: ${builtinSkillsPath}/ -> ${sandboxSkillsPath}/`
           );
 
           execFileSync(
@@ -303,7 +303,7 @@ async function bootstrapLimaSandbox(
 
         if (fs.existsSync(appSkillsDir)) {
           log(
-            `[ClaudeAgentRunner] Copying app skills with rsync: ${appSkillsDir}/ -> ${sandboxSkillsPath}/`
+            `[AgentRunner] Copying app skills with rsync: ${appSkillsDir}/ -> ${sandboxSkillsPath}/`
           );
 
           execFileSync(
@@ -336,10 +336,10 @@ async function bootstrapLimaSandbox(
           .split(/\r?\n/)
           .filter(Boolean);
 
-        log(`[ClaudeAgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
-        log(`[ClaudeAgentRunner]   Skills: ${copiedSkills.join(', ')}`);
+        log(`[AgentRunner] Skills copied to sandbox: ${sandboxSkillsPath}`);
+        log(`[AgentRunner]   Skills: ${copiedSkills.join(', ')}`);
       } catch (error) {
-        logError('[ClaudeAgentRunner] Failed to copy skills to sandbox:', error);
+        logError('[AgentRunner] Failed to copy skills to sandbox:', error);
       }
     }
 
@@ -359,7 +359,7 @@ async function bootstrapLimaSandbox(
     return;
   }
 
-  logError('[ClaudeAgentRunner] Sandbox sync failed:', syncResult.error);
+  logError('[AgentRunner] Sandbox sync failed:', syncResult.error);
   const limaSyncBlockReason = getSandboxExecutionBlockReason({
     sandboxEnabled: deps.sandboxEnabled,
     platform: process.platform,
@@ -404,7 +404,7 @@ export async function bootstrapSandboxEnvironment(
     sandbox: deps.sandbox,
   });
   if (initialSandboxBlock) {
-    logError('[ClaudeAgentRunner] Sandbox execution blocked:', initialSandboxBlock);
+    logError('[AgentRunner] Sandbox execution blocked:', initialSandboxBlock);
     sendSandboxUnavailable(deps, initialSandboxBlock, 'Sandbox unavailable');
     result.aborted = true;
     return result;

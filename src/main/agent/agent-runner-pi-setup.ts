@@ -90,9 +90,9 @@ export async function preparePiSessionRun({
   runStartTime,
 }: PreparePiSessionRunOptions): Promise<PreparedPiSessionRun> {
   const lastUserMessage = existingMessages.at(-1) ?? null;
-  logCtx('[ClaudeAgentRunner] Total messages:', existingMessages.length);
+  logCtx('[AgentRunner] Total messages:', existingMessages.length);
   if (lastUserMessage?.content.some((content) => (content as { type?: string }).type === 'image')) {
-    log('[ClaudeAgentRunner] User message contains images');
+    log('[AgentRunner] User message contains images');
   }
 
   logTiming('before pi-ai model resolution', runStartTime);
@@ -149,13 +149,13 @@ export async function preparePiSessionRun({
 
   if (usedSyntheticModel) {
     logCtxWarn(
-      '[ClaudeAgentRunner] Model not in pi-ai registry, using synthetic model:',
+      '[AgentRunner] Model not in pi-ai registry, using synthetic model:',
       modelString,
       '→',
       piModel.api
     );
   }
-  logCtx('[ClaudeAgentRunner] Resolved pi-ai model:', piModel.provider, piModel.id);
+  logCtx('[AgentRunner] Resolved pi-ai model:', piModel.provider, piModel.id);
 
   const provider = runtimeConfig.provider || 'anthropic';
   if (
@@ -170,7 +170,7 @@ export async function preparePiSessionRun({
     });
     if (ollamaInfo.contextWindow) {
       log(
-        '[ClaudeAgentRunner] Ollama /api/show reported contextWindow:',
+        '[AgentRunner] Ollama /api/show reported contextWindow:',
         ollamaInfo.contextWindow,
         '(was:',
         piModel.contextWindow,
@@ -197,15 +197,15 @@ export async function preparePiSessionRun({
     authStorage.setRuntimeApiKey(provider, apiKey);
     if (piModel.provider !== provider) {
       authStorage.setRuntimeApiKey(piModel.provider, apiKey);
-      log('[ClaudeAgentRunner] Set runtime API key for model provider:', piModel.provider);
+      log('[AgentRunner] Set runtime API key for model provider:', piModel.provider);
     }
-    log('[ClaudeAgentRunner] Set runtime API key for config provider:', provider);
+    log('[AgentRunner] Set runtime API key for config provider:', provider);
   } else if (
     provider === 'openai' &&
     isLoopbackOpenAIEndpoint({ provider, baseUrl: runtimeConfig.baseUrl })
   ) {
     log(
-      '[ClaudeAgentRunner] Ollama configured without explicit API key; relying on OpenAI-compatible placeholder/env auth path',
+      '[AgentRunner] Ollama configured without explicit API key; relying on OpenAI-compatible placeholder/env auth path',
       safeStringify({
         provider,
         modelProvider: piModel.provider,
@@ -214,10 +214,10 @@ export async function preparePiSessionRun({
       })
     );
   } else {
-    logWarn('[ClaudeAgentRunner] No API key configured for provider:', provider);
+    logWarn('[AgentRunner] No API key configured for provider:', provider);
   }
 
-  logCtx('[ClaudeAgentRunner] Model baseUrl:', piModel.baseUrl, 'api:', piModel.api);
+  logCtx('[AgentRunner] Model baseUrl:', piModel.baseUrl, 'api:', piModel.api);
   logTiming('after pi-ai model resolution', runStartTime);
 
   const imageCapable = true;
@@ -230,14 +230,14 @@ export async function preparePiSessionRun({
         : workingDir || process.cwd();
 
   ensureSkillsSetup(ctx);
-  log('[ClaudeAgentRunner] App claude dir:', ctx.skillsPaths.getAppClaudeDir());
-  log('[ClaudeAgentRunner] User working directory:', workingDir);
+  log('[AgentRunner] App claude dir:', ctx.skillsPaths.getAppClaudeDir());
+  log('[AgentRunner] User working directory:', workingDir);
 
   logTiming('before building conversation context', runStartTime);
-  logCtx('[ClaudeAgentRunner] Using pi-ai native routing for:', piModel.provider, piModel.id);
+  logCtx('[AgentRunner] Using pi-ai native routing for:', piModel.provider, piModel.id);
   const thinkingLevel: PreparedPiSessionRun['thinkingLevel'] =
     (configStore.get('enableThinking') ?? false) ? 'medium' : 'off';
-  logCtx('[ClaudeAgentRunner] Enable thinking mode:', thinkingLevel !== 'off');
+  logCtx('[AgentRunner] Enable thinking mode:', thinkingLevel !== 'off');
 
   const sessionRuntimeSignature = buildPiSessionRuntimeSignature({
     configProvider: runtimeConfig.provider,
@@ -262,8 +262,8 @@ export async function preparePiSessionRun({
   const skillPaths = await ctx.skillsPaths.resolveSkillPaths(session.id);
   const promptTemplatePaths = await ctx.skillsPaths.resolvePluginPromptTemplatePaths();
   const skillsSignature = JSON.stringify({ skillPaths, promptTemplatePaths });
-  log('[ClaudeAgentRunner] Skill paths for pi ResourceLoader:', skillPaths);
-  log('[ClaudeAgentRunner] Prompt template paths for pi ResourceLoader:', promptTemplatePaths);
+  log('[AgentRunner] Skill paths for pi ResourceLoader:', skillPaths);
+  log('[AgentRunner] Prompt template paths for pi ResourceLoader:', promptTemplatePaths);
 
   let cachedSession = ctx.piSessions.get(session.id);
   const invalidateCachedSession = (reason: string, warningLabel: string) => {
@@ -281,14 +281,14 @@ export async function preparePiSessionRun({
   };
   if (cachedSession?.runtimeSignature !== sessionRuntimeSignature) {
     invalidateCachedSession(
-      '[ClaudeAgentRunner] Runtime changed, recreating cached pi session:',
-      '[ClaudeAgentRunner] dispose error while recreating pi session:'
+      '[AgentRunner] Runtime changed, recreating cached pi session:',
+      '[AgentRunner] dispose error while recreating pi session:'
     );
   }
   if (cachedSession?.skillsSignature !== skillsSignature) {
     invalidateCachedSession(
-      '[ClaudeAgentRunner] Skills changed, recreating cached pi session:',
-      '[ClaudeAgentRunner] dispose error while recreating pi session for skills:'
+      '[AgentRunner] Skills changed, recreating cached pi session:',
+      '[AgentRunner] dispose error while recreating pi session for skills:'
     );
   }
 
@@ -315,7 +315,7 @@ export async function preparePiSessionRun({
         contextWindow: modelContextWindow,
       });
   if (cachedSession) {
-    logCtx('[ClaudeAgentRunner] Reusing existing SDK session for:', session.id);
+    logCtx('[AgentRunner] Reusing existing SDK session for:', session.id);
   }
   if (extensionResult.promptPrefix?.trim()) {
     contextualPrompt = `${extensionResult.promptPrefix.trim()}\n\n${contextualPrompt}`;
@@ -336,19 +336,19 @@ export async function preparePiSessionRun({
   const extensionCustomTools = extensionResult.customTools || [];
   if (mcpCustomTools.length > 0) {
     log(
-      `[ClaudeAgentRunner] Registered ${mcpCustomTools.length} MCP tools as customTools:`,
+      `[AgentRunner] Registered ${mcpCustomTools.length} MCP tools as customTools:`,
       mcpCustomTools.map((tool) => tool.name).join(', ')
     );
   }
   if (webSearchCustomTools.length > 0) {
     log(
-      `[ClaudeAgentRunner] Registered ${webSearchCustomTools.length} web search tools as customTools:`,
+      `[AgentRunner] Registered ${webSearchCustomTools.length} web search tools as customTools:`,
       webSearchCustomTools.map((tool) => tool.name).join(', ')
     );
   }
   if (extensionCustomTools.length > 0) {
     log(
-      `[ClaudeAgentRunner] Registered ${extensionCustomTools.length} extension tools as customTools:`,
+      `[AgentRunner] Registered ${extensionCustomTools.length} extension tools as customTools:`,
       extensionCustomTools.map((tool) => tool.name).join(', ')
     );
   }
@@ -370,7 +370,7 @@ export async function preparePiSessionRun({
       : undefined;
   if (useWslSandboxBash) {
     log(
-      `[ClaudeAgentRunner] Using WSL sandbox bash (distro=${sandbox.wslStatus!.distro}, sandbox=${sandboxPath})`
+      `[AgentRunner] Using WSL sandbox bash (distro=${sandbox.wslStatus!.distro}, sandbox=${sandboxPath})`
     );
   }
 
@@ -388,11 +388,11 @@ export async function preparePiSessionRun({
     ...extensionCustomTools,
   ];
 
-  logCtx(`[ClaudeAgentRunner] Session reuse check: cached=${!!cachedSession}`);
-  logCtx(`[ClaudeAgentRunner] Model=${piModel.id}, thinkingLevel=${thinkingLevel}`);
-  log('[ClaudeAgentRunner] Built-in tools: read, bash, edit, write');
+  logCtx(`[AgentRunner] Session reuse check: cached=${!!cachedSession}`);
+  logCtx(`[AgentRunner] Model=${piModel.id}, thinkingLevel=${thinkingLevel}`);
+  log('[AgentRunner] Built-in tools: read, bash, edit, write');
   log(
-    `[ClaudeAgentRunner] Custom tools (${allCustomTools.length}): ${allCustomTools.map((tool) => tool.name).join(', ')}`
+    `[AgentRunner] Custom tools (${allCustomTools.length}): ${allCustomTools.map((tool) => tool.name).join(', ')}`
   );
   logTiming('before agent session creation', runStartTime);
 

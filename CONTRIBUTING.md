@@ -40,7 +40,7 @@ npm install        # postinstall: downloads Node binaries + rebuilds native modu
 ```
 src/
 ├── main/                    # Electron main process
-│   ├── claude/              # Agent runner (pi-coding-agent)
+│   ├── agent/               # Agent runner (pi-coding-agent)
 │   ├── config/              # Settings, API keys, provider migration
 │   ├── mcp/                 # MCP lifecycle (stdio / SSE / Streamable HTTP)
 │   ├── session/             # Sessions, compaction, message branching

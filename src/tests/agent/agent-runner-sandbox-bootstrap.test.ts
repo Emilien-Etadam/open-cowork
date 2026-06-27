@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SandboxBootstrapDeps } from '../../main/claude/agent-runner-sandbox-bootstrap';
+import type { SandboxBootstrapDeps } from '../../main/agent/agent-runner-sandbox-bootstrap';
 
 const getSandboxExecutionBlockReason = vi.fn();
 const sandboxSyncInit = vi.fn();
@@ -43,7 +43,7 @@ vi.mock('fs', async (importOriginal) => {
   };
 });
 
-import { bootstrapSandboxEnvironment } from '../../main/claude/agent-runner-sandbox-bootstrap';
+import { bootstrapSandboxEnvironment } from '../../main/agent/agent-runner-sandbox-bootstrap';
 
 function makeDeps(overrides: Partial<SandboxBootstrapDeps> = {}): SandboxBootstrapDeps {
   const events: unknown[] = [];

@@ -3,7 +3,7 @@ import type { Message } from '../../renderer/types';
 import {
   buildColdStartContextualPrompt,
   estimateCharsPerToken,
-} from '../../main/claude/agent-runner-history';
+} from '../../main/agent/agent-runner-history';
 
 function msg(role: Message['role'], text: string, extra: Message['content'] = []): Message {
   return {

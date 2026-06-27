@@ -101,14 +101,14 @@ export function logStreamEvent(event: PiSessionEvent, deps: StreamEventDeps): vo
     const updateType = event.assistantMessageEvent.type;
     deps.recordStreamEvent(updateType);
     if (updateType !== 'text_delta' && updateType !== 'thinking_delta') {
-      log(`[ClaudeAgentRunner] Event: ${event.type} → ${updateType}`);
+      log(`[AgentRunner] Event: ${event.type} → ${updateType}`);
     }
     return;
   }
 
   if (event.type === 'message_start') {
     log(
-      '[ClaudeAgentRunner] Event: message_start',
+      '[AgentRunner] Event: message_start',
       safeStringify(summarizeMessageForLog(event.message), 2)
     );
     return;
@@ -116,7 +116,7 @@ export function logStreamEvent(event: PiSessionEvent, deps: StreamEventDeps): vo
 
   if (event.type === 'message_end') {
     log(
-      '[ClaudeAgentRunner] Event: message_end',
+      '[AgentRunner] Event: message_end',
       safeStringify(
         {
           message: summarizeMessageForLog(event.message),
@@ -128,7 +128,7 @@ export function logStreamEvent(event: PiSessionEvent, deps: StreamEventDeps): vo
     return;
   }
 
-  log(`[ClaudeAgentRunner] Event: ${event.type}`);
+  log(`[AgentRunner] Event: ${event.type}`);
 }
 
 export function handleStreamSubscriptionError(
@@ -136,7 +136,7 @@ export function handleStreamSubscriptionError(
   state: StreamEventState,
   deps: StreamEventDeps
 ): void {
-  logError('[ClaudeAgentRunner] Error in subscribe callback:', error);
+  logError('[AgentRunner] Error in subscribe callback:', error);
   if (state.compactionStepId) {
     deps.ctx.renderer.sendTraceUpdate(deps.session.id, state.compactionStepId, {
       status: 'error',

@@ -74,7 +74,7 @@ export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
           const linkTarget = fs.readlinkSync(userSkillPath);
           if (/\.asar[/\\]/.test(linkTarget)) {
             fs.unlinkSync(userSkillPath);
-            log(`[ClaudeAgentRunner] Removed broken asar symlink: ${userSkillPath}`);
+            log(`[AgentRunner] Removed broken asar symlink: ${userSkillPath}`);
           }
         }
       } catch {
@@ -84,13 +84,13 @@ export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
       if (fs.statSync(builtinSkillPath).isDirectory() && !fs.existsSync(userSkillPath)) {
         if (sourceInsideAsar) {
           ctx.skillsPaths.copyDirectorySync(builtinSkillPath, userSkillPath);
-          log(`[ClaudeAgentRunner] Copied built-in skill from asar: ${skillName}`);
+          log(`[AgentRunner] Copied built-in skill from asar: ${skillName}`);
         } else {
           try {
             fs.symlinkSync(builtinSkillPath, userSkillPath, 'dir');
-            log(`[ClaudeAgentRunner] Linked built-in skill: ${skillName}`);
+            log(`[AgentRunner] Linked built-in skill: ${skillName}`);
           } catch (error) {
-            logWarn(`[ClaudeAgentRunner] Failed to symlink ${skillName}, copying instead:`, error);
+            logWarn(`[AgentRunner] Failed to symlink ${skillName}, copying instead:`, error);
             ctx.skillsPaths.copyDirectorySync(builtinSkillPath, userSkillPath);
           }
         }

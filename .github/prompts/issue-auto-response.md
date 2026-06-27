@@ -34,7 +34,7 @@ All AI requests go through Claude Agent SDK directly.
 
 **Key modules:**
 
-- `src/main/claude/` - AI execution, model/provider routing, auth
+- `src/main/agent/` - AI execution, model/provider routing, auth
 - `src/main/config/config-store.ts` - API keys, presets (electron-store)
 - `src/main/mcp/` - MCP server lifecycle (stdio, SSE, Streamable HTTP)
 - `src/main/session/` - Session CRUD, chat history

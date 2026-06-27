@@ -2,7 +2,7 @@ import type {
   AgentRuntimeExtension,
   BeforeSessionRunResult,
 } from '../extensions/agent-runtime-extension';
-import { computeMemoryPrefixBudget } from '../claude/context-budget';
+import { computeMemoryPrefixBudget } from '../agent/context-budget';
 import type { MemoryService } from './memory-service';
 
 export class MemoryExtension implements AgentRuntimeExtension {

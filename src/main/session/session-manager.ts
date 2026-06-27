@@ -7,8 +7,8 @@ import type {
   TraceStep,
 } from '../../renderer/types';
 import type { DatabaseInstance } from '../db/database';
-import { ClaudeAgentRunner } from '../claude/agent-runner';
-import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { AgentRunner as AgentRunnerImpl } from '../agent/agent-runner';
+import { generateTitleWithPiAi } from '../agent/pi-ai-one-shot';
 import { configStore } from '../config/config-store';
 import { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
@@ -105,7 +105,7 @@ export class SessionManager {
   }
 
   private createAgentRunner(): void {
-    this.agentRunner = new ClaudeAgentRunner(
+    this.agentRunner = new AgentRunnerImpl(
       {
         sendToRenderer: this.sendToRenderer,
         saveMessage: (message) => this.saveMessage(message),
@@ -134,13 +134,13 @@ export class SessionManager {
 
   invalidateMcpServersCache(): void {
     if ('invalidateMcpServersCache' in this.agentRunner) {
-      (this.agentRunner as ClaudeAgentRunner).invalidateMcpServersCache();
+      (this.agentRunner as AgentRunnerImpl).invalidateMcpServersCache();
     }
   }
 
   invalidateSkillsSetup(): void {
     if ('invalidateSkillsSetup' in this.agentRunner) {
-      (this.agentRunner as ClaudeAgentRunner).invalidateSkillsSetup();
+      (this.agentRunner as AgentRunnerImpl).invalidateSkillsSetup();
     }
   }
 
@@ -468,7 +468,7 @@ export class SessionManager {
 
   private async generateTitleWithConfig(titlePrompt: string): Promise<string | null> {
     return normalizeGeneratedTitle(
-      await generateTitleWithClaudeSdk(titlePrompt, configStore.getAll())
+      await generateTitleWithPiAi(titlePrompt, configStore.getAll())
     );
   }
 }

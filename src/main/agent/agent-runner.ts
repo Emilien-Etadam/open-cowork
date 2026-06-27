@@ -1,7 +1,7 @@
 /**
- * @module main/claude/agent-runner
+ * @module main/agent/agent-runner
  *
- * Claude agent runner entrypoint and long-lived runner state.
+ * Agent runner entrypoint and long-lived runner state.
  */
 import type { Message, ServerEvent, Session } from '../../renderer/types';
 import { PathResolver } from '../sandbox/path-resolver';
@@ -16,7 +16,7 @@ import {
   buildHandoffSummaryUserPrompt,
   HANDOFF_SUMMARY_SYSTEM_PROMPT,
 } from '../../shared/compaction-handoff';
-import { runPiAiOneShot } from './claude-sdk-one-shot';
+import { runPiAiOneShot } from './pi-ai-one-shot';
 import { mt } from '../i18n';
 import { serializeMessageContentForHistory } from './agent-runner-history';
 export { serializeMessageContentForHistory } from './agent-runner-history';
@@ -47,14 +47,14 @@ interface AgentRunnerOptions {
 }
 
 /**
- * ClaudeAgentRunner - Uses @earendil-works/pi-coding-agent SDK
+ * AgentRunner - Uses @earendil-works/pi-coding-agent SDK
  *
  * Environment variables should be set before running:
  *   ANTHROPIC_BASE_URL=https://openrouter.ai/api
  *   ANTHROPIC_AUTH_TOKEN=your_openrouter_api_key
  *   ANTHROPIC_API_KEY="" (must be empty)
  */
-export class ClaudeAgentRunner {
+export class AgentRunner {
   private readonly renderer: AgentRunnerRenderer;
   private readonly pathResolver: PathResolver;
   private readonly mcpManager?: MCPManager;
@@ -86,7 +86,7 @@ export class ClaudeAgentRunner {
     if (cached) {
       disposeCachedPiSession(cached);
       this.piSessions.delete(sessionId);
-      log('[ClaudeAgentRunner] Disposed pi session for:', sessionId);
+      log('[AgentRunner] Disposed pi session for:', sessionId);
     }
   }
 
@@ -105,7 +105,7 @@ export class ClaudeAgentRunner {
   /** Call after the user changes MCP server config so the next query rebuilds mcpServers. */
   invalidateMcpServersCache(): void {
     this._mcpServersCache = null;
-    log('[ClaudeAgentRunner] MCP servers cache invalidated — tools will rebuild on next query');
+    log('[AgentRunner] MCP servers cache invalidated — tools will rebuild on next query');
   }
 
   constructor(
@@ -128,10 +128,10 @@ export class ClaudeAgentRunner {
       sendToRenderer: (event) => this.renderer.dispatch(event),
     });
 
-    log('[ClaudeAgentRunner] Initialized with Lygodactylus agent SDK');
-    log('[ClaudeAgentRunner] Skills enabled: settingSources=[user, project], Skill tool enabled');
+    log('[AgentRunner] Initialized with Lygodactylus agent SDK');
+    log('[AgentRunner] Skills enabled: settingSources=[user, project], Skill tool enabled');
     if (mcpManager) {
-      log('[ClaudeAgentRunner] MCP support enabled');
+      log('[AgentRunner] MCP support enabled');
     }
   }
 
@@ -146,9 +146,9 @@ export class ClaudeAgentRunner {
     const routeModel = preferredModel?.trim();
     const configuredModel = configStore.get('model')?.trim();
     const model = routeModel || configuredModel || 'anthropic/claude-sonnet-4-6';
-    logCtx('[ClaudeAgentRunner] Current model:', model);
+    logCtx('[AgentRunner] Current model:', model);
     logCtx(
-      '[ClaudeAgentRunner] Model source:',
+      '[AgentRunner] Model source:',
       routeModel ? 'runtimeRoute.model' : configuredModel ? 'configStore.model' : 'default'
     );
     return model;

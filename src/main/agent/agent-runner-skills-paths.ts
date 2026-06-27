@@ -131,7 +131,7 @@ ${hints.join('\n')}
         }
       }
     } catch (error) {
-      logWarn('[ClaudeAgentRunner] Failed to resolve runtime plugin paths:', error);
+      logWarn('[AgentRunner] Failed to resolve runtime plugin paths:', error);
     }
 
     this.cachedPluginPaths = {
@@ -195,12 +195,12 @@ ${hints.join('\n')}
 
     for (const candidatePath of possiblePaths) {
       if (fs.existsSync(candidatePath)) {
-        log('[ClaudeAgentRunner] Found built-in skills at:', candidatePath);
+        log('[AgentRunner] Found built-in skills at:', candidatePath);
         return candidatePath;
       }
     }
 
-    logWarn('[ClaudeAgentRunner] No built-in skills directory found');
+    logWarn('[AgentRunner] No built-in skills directory found');
     return '';
   }
 
@@ -241,12 +241,12 @@ ${hints.join('\n')}
         return resolvedPath;
       }
       logWarn(
-        '[ClaudeAgentRunner] Configured skills path is not a directory, fallback to runtime path:',
+        '[AgentRunner] Configured skills path is not a directory, fallback to runtime path:',
         resolvedPath
       );
     } catch (error) {
       logWarn(
-        '[ClaudeAgentRunner] Configured skills path is unavailable, fallback to runtime path:',
+        '[AgentRunner] Configured skills path is unavailable, fallback to runtime path:',
         resolvedPath,
         error
       );
@@ -289,7 +289,7 @@ ${hints.join('\n')}
         try {
           this.copyDirectorySync(sourcePath, targetPath);
         } catch (copyErr) {
-          logWarn('[ClaudeAgentRunner] Failed to import user skill:', entry.name, copyErr);
+          logWarn('[AgentRunner] Failed to import user skill:', entry.name, copyErr);
         }
       }
     }
@@ -324,7 +324,7 @@ ${hints.join('\n')}
         try {
           this.copyDirectorySync(sourcePath, targetPath);
         } catch (copyErr) {
-          logWarn('[ClaudeAgentRunner] Failed to sync configured skill:', entry.name, copyErr);
+          logWarn('[AgentRunner] Failed to sync configured skill:', entry.name, copyErr);
         }
       }
     }

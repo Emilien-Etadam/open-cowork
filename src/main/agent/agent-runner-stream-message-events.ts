@@ -60,7 +60,7 @@ export function markFirstStreamEvent(
 
   if (deps.piSetup.provider === 'ollama') {
     log(
-      '[ClaudeAgentRunner] Ollama first stream event received',
+      '[AgentRunner] Ollama first stream event received',
       safeStringify({
         sessionId: deps.session.id,
         eventType,
@@ -133,7 +133,7 @@ export function emitTerminalError(
     try {
       deps.controller.abort();
     } catch (abortError) {
-      logWarn('[ClaudeAgentRunner] stream-error abort failed:', abortError);
+      logWarn('[AgentRunner] stream-error abort failed:', abortError);
     }
   }
 }
@@ -195,7 +195,7 @@ export function handleMessageUpdateEvent(
   }
 
   if (assistantMessageEvent.type === 'done') {
-    log('[ClaudeAgentRunner] message_update done event (handled in message_end)');
+    log('[AgentRunner] message_update done event (handled in message_end)');
     return;
   }
 
@@ -203,7 +203,7 @@ export function handleMessageUpdateEvent(
     deps.markFirstStreamEvent(assistantMessageEvent.type);
     const errorDetail = JSON.stringify(assistantMessageEvent.error?.content || 'no content');
     logCtxError(
-      '[ClaudeAgentRunner] pi-ai stream error:',
+      '[AgentRunner] pi-ai stream error:',
       assistantMessageEvent.reason,
       errorDetail
     );
@@ -237,7 +237,7 @@ export function handleMessageEndEvent(
 
   const message = event.message;
   if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {
-    log('[ClaudeAgentRunner] message_end raw message:', safeStringify(message, 2));
+    log('[AgentRunner] message_end raw message:', safeStringify(message, 2));
   }
 
   const resolvedPayload = resolveMessageEndPayload({
@@ -248,7 +248,7 @@ export function handleMessageEndEvent(
 
   if (deps.piSetup.provider === 'ollama') {
     log(
-      '[ClaudeAgentRunner] Ollama message_end diagnostics',
+      '[AgentRunner] Ollama message_end diagnostics',
       safeStringify({
         sessionId: deps.session.id,
         modelId: deps.piSetup.piModel.id,
@@ -305,7 +305,7 @@ export function handleMessageEndEvent(
     }
 
     const unknownBlock = block as { type?: string; text?: string };
-    log(`[ClaudeAgentRunner] Unknown content block type: ${unknownBlock.type}`);
+    log(`[AgentRunner] Unknown content block type: ${unknownBlock.type}`);
     const text = unknownBlock.text || JSON.stringify(block);
     if (text) {
       contentBlocks.push({ type: 'text', text });
@@ -344,7 +344,7 @@ export function handleMessageEndEvent(
   const tokenUsage = normalizeTokenUsage(messageWithUsage.usage);
   if (messageWithUsage.usage) {
     log(
-      '[ClaudeAgentRunner] normalized usage:',
+      '[AgentRunner] normalized usage:',
       safeStringify({ raw: messageWithUsage.usage, normalized: tokenUsage }, 2)
     );
   }

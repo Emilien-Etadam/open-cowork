@@ -4,7 +4,7 @@ import type { ChildProcess, SpawnOptions } from 'child_process';
 import {
   createWslSandboxBashOperations,
   resetWslSandboxBashSessionsForTests,
-} from '../../main/claude/wsl-sandbox-bash-operations';
+} from '../../main/agent/wsl-sandbox-bash-operations';
 
 class FakeChildProcess extends EventEmitter {
   stdout = new EventEmitter();
