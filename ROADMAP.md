@@ -68,7 +68,8 @@
 
 | Tag             | Date       | Highlights                                                                     |
 | --------------- | ---------- | ------------------------------------------------------------------------------ |
-| `v3.3.1-EE4.98` | 2026-06-26 | **Latest** — rebranding Lygodactylus |
+| `v5` | 2026-06-27 | **Latest** — logo gecko, rebranding Lygodactylus, série v5 |
+| `v3.3.1-EE4.98` | 2026-06-26 | rebranding Lygodactylus |
 | `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar |
 | `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input                    |
 | `v3.3.1-EE4.95` | 2026-06-25 | Fix auto-update Windows (`latest.yml` + nom installateur)                      |
@@ -88,7 +89,7 @@
 | `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                               |
 | `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                        |
 
-Current stable fork baseline: **`3.3.1-EE4.98`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v3.3.1-EE4.98) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5) · [CHANGELOG](CHANGELOG.md)
 
 ## 🚧 In Progress
 

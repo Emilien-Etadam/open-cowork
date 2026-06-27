@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-06-27
+
+### Changed
+
+- **Versioning** : passage à la série **v5** (semver `5.0.0`)
+- **Logo** : nouveau gecko bleu Lygodactylus (`logolygo.png`) — icônes app, tray, favicon et UI régénérés
+- **Rebranding** : application **Lygodactylus** (`com.lygodactylus.app`, dépôt `Emilien-Etadam/lygodactylus`)
+- **Recherche web** : providers configurables (DuckDuckGo, SearXNG, YaCy)
+
 ## [3.3.1-EE4.98] - 2026-06-26
 
 ### Changed
