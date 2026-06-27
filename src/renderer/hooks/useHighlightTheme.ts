@@ -1,19 +1,15 @@
 import { useEffect } from 'react';
-import type { ThemePreset } from '../types';
 
 const HLJS_THEME_LINK_ID = 'hljs-theme-stylesheet';
 
-const HLJS_THEME_LOADERS: Record<string, () => Promise<{ default: string }>> = {
-  'default-dark': () => import('highlight.js/styles/github-dark-dimmed.min.css?url'),
-  'default-light': () => import('highlight.js/styles/github.min.css?url'),
-  'vscode-dark': () => import('highlight.js/styles/vs2015.min.css?url'),
-  'vscode-light': () => import('highlight.js/styles/github.min.css?url'),
+const HLJS_THEME_LOADERS: Record<'dark' | 'light', () => Promise<{ default: string }>> = {
+  dark: () => import('highlight.js/styles/vs2015.min.css?url'),
+  light: () => import('highlight.js/styles/github.min.css?url'),
 };
 
-export function useHighlightTheme(preset: ThemePreset, effectiveTheme: 'dark' | 'light'): void {
+export function useHighlightTheme(effectiveTheme: 'dark' | 'light'): void {
   useEffect(() => {
-    const key = `${preset}-${effectiveTheme}`;
-    const loadTheme = HLJS_THEME_LOADERS[key];
+    const loadTheme = HLJS_THEME_LOADERS[effectiveTheme];
     if (!loadTheme) {
       return;
     }
@@ -42,5 +38,5 @@ export function useHighlightTheme(preset: ThemePreset, effectiveTheme: 'dark' | 
     return () => {
       cancelled = true;
     };
-  }, [preset, effectiveTheme]);
+  }, [effectiveTheme]);
 }

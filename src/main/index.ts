@@ -35,7 +35,6 @@ import {
   setupTray,
   buildApplicationMenu,
   getSavedThemePreference,
-  getSavedThemePreset,
   applyWindowBackground,
 } from './main-app-window';
 import { registerAppBootstrap } from './main-app-bootstrap';
@@ -177,9 +176,8 @@ app
         mainAppState.mainWindow &&
         !mainAppState.mainWindow.isDestroyed()
       ) {
-        const preset = getSavedThemePreset();
         const effectiveTheme = nativeTheme.shouldUseDarkColors ? 'dark' : 'light';
-        applyWindowBackground(preset, effectiveTheme);
+        applyWindowBackground(effectiveTheme);
       }
     });
 

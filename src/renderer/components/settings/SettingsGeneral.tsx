@@ -143,11 +143,6 @@ export function SettingsGeneral() {
     { value: 'system' as const, label: t('general.themeSystem', 'System') },
   ];
 
-  const themePresetOptions = [
-    { value: 'default' as const, label: t('general.themePresetDefault') },
-    { value: 'vscode' as const, label: t('general.themePresetVscode') },
-  ];
-
   const canInstallUpdate = Boolean(updateState?.canInstall);
   const showManualDownloadHint =
     updateState?.status === 'update-available' &&
@@ -171,25 +166,6 @@ export function SettingsGeneral() {
               onClick={() => updateSettings({ theme: opt.value })}
               className={`flex-1 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
                 settings.theme === opt.value
-                  ? 'border-accent bg-accent/5 text-text-primary'
-                  : 'border-border bg-surface hover:border-accent/50 text-text-secondary'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        <h4 className="text-sm font-medium text-text-primary">{t('general.themePreset')}</h4>
-        <div className="flex gap-2">
-          {themePresetOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => updateSettings({ themePreset: opt.value })}
-              className={`flex-1 px-4 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
-                (settings.themePreset ?? 'default') === opt.value
                   ? 'border-accent bg-accent/5 text-text-primary'
                   : 'border-border bg-surface hover:border-accent/50 text-text-secondary'
               }`}

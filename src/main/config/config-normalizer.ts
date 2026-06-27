@@ -22,7 +22,6 @@ import {
   isProfileKey,
   isProviderType,
   isAppTheme,
-  isThemePreset,
   normalizeMemoryRuntimeConfig,
   normalizeWebSearchConfig,
   nowISO,
@@ -38,7 +37,6 @@ import {
   type ProviderProfile,
   type ProviderProfileKey,
   type ProviderType,
-  type ThemePreset,
 } from './config-schema';
 
 function getDefaultProfile(profileKey: ProviderProfileKey): ProviderProfile {
@@ -443,7 +441,6 @@ export function normalizeConfig(rawConfig: Partial<AppConfig> | undefined): AppC
         : defaultConfig.globalSkillsPath,
     enableDevLogs: toBoolean(raw.enableDevLogs, defaultConfig.enableDevLogs),
     theme: isAppTheme(raw.theme) ? raw.theme : defaultConfig.theme,
-    themePreset: isThemePreset(raw.themePreset) ? raw.themePreset : defaultConfig.themePreset,
     uiLanguage:
       typeof raw.uiLanguage === 'string' && raw.uiLanguage.trim()
         ? raw.uiLanguage
@@ -570,4 +567,4 @@ export class ConfigNormalizer {
   buildBlankConfigSet = buildBlankConfigSet;
 }
 
-export type { AppTheme, CreateSetMode, ThemePreset };
+export type { AppTheme, CreateSetMode };

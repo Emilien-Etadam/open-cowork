@@ -5,7 +5,7 @@
  */
 import { dialog } from 'electron';
 import { isAbsolute } from 'path';
-import { configStore, type AppTheme, type ThemePreset } from './config/config-store';
+import { configStore, type AppTheme } from './config/config-store';
 import { setPermissionRules } from './config/permission-rules-store';
 import { mt } from './i18n';
 import { eventRequiresSessionManager } from './client-event-utils';
@@ -22,7 +22,6 @@ import {
   applyNativeThemePreference,
   applyWindowBackground,
   getSavedThemePreference,
-  getSavedThemePreset,
   resolveEffectiveTheme,
 } from './main-app-window';
 
@@ -155,7 +154,6 @@ export async function handleClientEvent(event: ClientEvent): Promise<unknown> {
     case 'settings.update': {
       const payload = event.payload as Record<string, unknown>;
       let themeChanged = false;
-      let presetChanged = false;
 
       if (payload.theme === 'dark' || payload.theme === 'light' || payload.theme === 'system') {
         const nextTheme = payload.theme as AppTheme;
@@ -164,16 +162,10 @@ export async function handleClientEvent(event: ClientEvent): Promise<unknown> {
         themeChanged = true;
       }
 
-      if (payload.themePreset === 'default' || payload.themePreset === 'vscode') {
-        configStore.update({ themePreset: payload.themePreset as ThemePreset });
-        presetChanged = true;
-      }
-
-      if (themeChanged || presetChanged) {
+      if (themeChanged) {
         const savedTheme = getSavedThemePreference();
-        const savedPreset = getSavedThemePreset();
         const effectiveTheme = resolveEffectiveTheme(savedTheme);
-        applyWindowBackground(savedPreset, effectiveTheme);
+        applyWindowBackground(effectiveTheme);
         sendToRenderer({
           type: 'config.status',
           payload: {
