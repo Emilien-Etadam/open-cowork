@@ -2,6 +2,7 @@
  * @module main/chat-lan-server/chat-lan-server
  *
  * LAN-only HTTP + SSE chat API (no third-party relay).
+ * Recommended access path: WireGuard VPN tunnel.
  */
 import * as fs from 'fs';
 import * as http from 'http';
@@ -17,8 +18,10 @@ import { configStore } from '../config/config-store';
 import { getWorkingDir, getWorkspacePathUnsupportedReason } from '../main-working-dir';
 import { chatLanConfigStore } from './chat-lan-config-store';
 import { subscribeChatLanEvents } from './chat-lan-event-bus';
+import { applyChatLanSecurityHeaders, isChatLanAuthorized } from './chat-lan-auth';
 
 const BIND_HOST = '0.0.0.0';
+const MAX_BODY_BYTES = 1024 * 1024;
 
 export interface ChatLanStatus {
   running: boolean;
@@ -34,35 +37,30 @@ const sseClients = new Set<ServerResponse>();
 function readBody(req: IncomingMessage): Promise<string> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+    let totalBytes = 0;
+
+    req.on('data', (chunk) => {
+      totalBytes += chunk.length;
+      if (totalBytes > MAX_BODY_BYTES) {
+        reject(new Error('request_body_too_large'));
+        req.destroy();
+        return;
+      }
+      chunks.push(Buffer.from(chunk));
+    });
     req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
     req.on('error', reject);
   });
 }
 
 function json(res: ServerResponse, status: number, body: unknown): void {
+  applyChatLanSecurityHeaders(res);
   const payload = JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': 'application/json',
     'Content-Length': Buffer.byteLength(payload),
-    'Cache-Control': 'no-store',
   });
   res.end(payload);
-}
-
-function getTokenFromRequest(req: IncomingMessage, url: URL): string | null {
-  const auth = req.headers.authorization;
-  if (auth?.startsWith('Bearer ')) {
-    return auth.slice('Bearer '.length).trim();
-  }
-  const queryToken = url.searchParams.get('token');
-  return queryToken?.trim() || null;
-}
-
-function isAuthorized(req: IncomingMessage, url: URL): boolean {
-  const expected = chatLanConfigStore.getAll().token;
-  const provided = getTokenFromRequest(req, url);
-  return Boolean(provided && expected && provided === expected);
 }
 
 function unauthorized(res: ServerResponse): void {
@@ -141,17 +139,19 @@ function resolveChatLanUiPath(): string {
 function serveChatUi(res: ServerResponse): void {
   try {
     const html = fs.readFileSync(resolveChatLanUiPath(), 'utf8');
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    applyChatLanSecurityHeaders(res);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(html);
   } catch (error) {
     logError('[ChatLan] Failed to load UI:', error);
+    applyChatLanSecurityHeaders(res);
     res.writeHead(500);
     res.end('Chat UI missing');
   }
 }
 
 async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): Promise<void> {
-  if (!isAuthorized(req, url)) {
+  if (!isChatLanAuthorized(req, url)) {
     unauthorized(res);
     return;
   }
@@ -254,9 +254,9 @@ async function handleApi(req: IncomingMessage, res: ServerResponse, url: URL): P
   }
 
   if (method === 'GET' && url.pathname === '/api/events') {
+    applyChatLanSecurityHeaders(res);
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
     res.write('\n');
@@ -287,6 +287,10 @@ async function onRequest(req: IncomingMessage, res: ServerResponse): Promise<voi
   } catch (error) {
     logError('[ChatLan] Request failed:', error);
     if (!res.headersSent) {
+      if (error instanceof Error && error.message === 'request_body_too_large') {
+        json(res, 413, { error: 'request_body_too_large' });
+        return;
+      }
       json(res, 500, { error: 'internal_error' });
     }
   }
@@ -326,7 +330,7 @@ export async function startChatLanServer(): Promise<void> {
   });
 
   const urls = getLanUrls(config.port);
-  log(`[ChatLan] Listening on ${BIND_HOST}:${config.port}`);
+  log(`[ChatLan] Listening on ${BIND_HOST}:${config.port} (use over WireGuard when remote)`);
   for (const u of urls) {
     log(`[ChatLan] LAN URL: ${u}`);
   }

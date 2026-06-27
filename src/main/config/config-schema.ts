@@ -155,7 +155,7 @@ export const defaultConfigSet: ApiConfigSet = {
 };
 
 export function getDefaultSandboxEnabled(): boolean {
-  return process.platform === 'win32';
+  return process.platform === 'win32' || process.platform === 'darwin';
 }
 
 export function configHasStoredCredentials(config: Partial<AppConfig>): boolean {

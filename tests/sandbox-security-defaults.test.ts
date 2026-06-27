@@ -8,9 +8,10 @@ const configSchemaPath = path.resolve('src/main/config/config-schema.ts');
 const configSchemaSource = fs.readFileSync(configSchemaPath, 'utf8');
 
 describe('sandbox security defaults', () => {
-  it('defaults sandbox to enabled on Windows', () => {
+  it('defaults sandbox to enabled on Windows and macOS', () => {
     expect(configSchemaSource).toContain('getDefaultSandboxEnabled');
     expect(configSchemaSource).toContain("process.platform === 'win32'");
+    expect(configSchemaSource).toContain("process.platform === 'darwin'");
   });
 
   it('blocks instead of falling back to native when WSL is unavailable', () => {

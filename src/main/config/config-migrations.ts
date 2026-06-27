@@ -6,6 +6,7 @@ import type { AppConfig } from './config-schema';
 
 interface ConfigMigrationState {
   win32SandboxDefault?: boolean;
+  darwinSandboxDefault?: boolean;
 }
 
 function getMigrationFilePath(): string {
@@ -34,15 +35,22 @@ function writeMigrationState(state: ConfigMigrationState): void {
  * One-time migrations for persisted app config.
  */
 export function runConfigMigrations(_store: Store<AppConfig>): void {
-  if (process.platform !== 'win32') {
-    return;
-  }
-
   const state = readMigrationState();
-  if (state.win32SandboxDefault) {
-    return;
+  let nextState = { ...state };
+
+  if (process.platform === 'win32' && !state.win32SandboxDefault) {
+    // Record migration without overriding an explicit user choice (sandboxEnabled=false).
+    nextState = { ...nextState, win32SandboxDefault: true };
   }
 
-  // Record migration without overriding an explicit user choice (sandboxEnabled=false).
-  writeMigrationState({ ...state, win32SandboxDefault: true });
+  if (process.platform === 'darwin' && !state.darwinSandboxDefault) {
+    nextState = { ...nextState, darwinSandboxDefault: true };
+  }
+
+  if (
+    nextState.win32SandboxDefault !== state.win32SandboxDefault ||
+    nextState.darwinSandboxDefault !== state.darwinSandboxDefault
+  ) {
+    writeMigrationState(nextState);
+  }
 }
