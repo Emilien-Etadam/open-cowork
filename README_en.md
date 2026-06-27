@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="resources/logo.png" alt="Open Cowork Logo" width="200" />
+  <img src="resources/logo.png" alt="Lygodactylus Logo" width="200" />
 </p>
 
-<h1 align="center">Open Cowork — Fork EE</h1>
+<h1 align="center">Lygodactylus</h1>
 
 <p align="center">
   Personal fork of <a href="https://github.com/OpenCoworkAI/open-cowork">Open Cowork</a> by <a href="https://github.com/Emilien-Etadam">Emilien-Etadam</a>
@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
-  <img src="https://img.shields.io/badge/version-3.3.1--EE4.97-orange" alt="Version" />
+  <img src="https://img.shields.io/badge/version-3.3.1--EE4.98-orange" alt="Version" />
   <img src="https://img.shields.io/badge/status-alpha-yellow" alt="Status" />
 </p>
 
@@ -24,7 +24,7 @@
 
 ## What is it?
 
-**Open Cowork** is a desktop AI agent app (Electron) for Windows and macOS. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a local web UI on your network).
+**Lygodactylus** is a desktop AI agent app (Electron) for Windows and macOS. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a local web UI on your network).
 
 > [!NOTE]
 > This repository is a **personal fork**. `EE*` releases are experimental **alpha** builds. For the official stable version, see [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
@@ -62,7 +62,7 @@ On **Windows**, the app checks for EE updates on startup. Otherwise use **Settin
 
 ```bash
 git clone https://github.com/emilien-etadam/open-cowork.git
-cd open-cowork
+cd lygodactylus
 npm install   # Node.js 22+
 npm run dev
 ```

@@ -35,8 +35,8 @@ describe('extractFilePathFromToolOutput', () => {
   });
 
   it('extracts absolute path from updated-file messages', () => {
-    const output = 'The file /Users/haoqing/Library/Application Support/open-cowork/default_working_dir/slide2.html has been updated successfully.';
-    expect(extractFilePathFromToolOutput(output)).toBe('/Users/haoqing/Library/Application Support/open-cowork/default_working_dir/slide2.html');
+    const output = 'The file /Users/haoqing/Library/Application Support/lygodactylus/default_working_dir/slide2.html has been updated successfully.';
+    expect(extractFilePathFromToolOutput(output)).toBe('/Users/haoqing/Library/Application Support/lygodactylus/default_working_dir/slide2.html');
   });
 
   it('extracts screenshot path from wrapped screenshot output', () => {
@@ -44,11 +44,11 @@ describe('extractFilePathFromToolOutput', () => {
       content: [
         {
           type: 'text',
-          text: 'Took a screenshot of the full current page.\nSaved screenshot to /Users/haoqing/Desktop/open-cowork/agent_papers_summary_screenshot.png.',
+          text: 'Took a screenshot of the full current page.\nSaved screenshot to /Users/haoqing/Desktop/lygodactylus/agent_papers_summary_screenshot.png.',
         },
       ],
     });
-    expect(extractFilePathFromToolOutput(output)).toBe('/Users/haoqing/Desktop/open-cowork/agent_papers_summary_screenshot.png');
+    expect(extractFilePathFromToolOutput(output)).toBe('/Users/haoqing/Desktop/lygodactylus/agent_papers_summary_screenshot.png');
   });
 
   it('returns null for unrelated output', () => {

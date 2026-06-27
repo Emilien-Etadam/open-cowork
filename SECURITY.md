@@ -8,13 +8,13 @@
 | Older `EE*` builds                   | Best effort                 |
 | Upstream `3.3.x` without `EE` suffix | Not maintained in this fork |
 
-Security fixes are published as new `EE*` releases on [GitHub Releases](https://github.com/Emilien-Etadam/open-cowork/releases).
+Security fixes are published as new `EE*` releases on [GitHub Releases](https://github.com/Emilien-Etadam/lygodactylus/releases).
 
 ## Reporting a Vulnerability
 
 **Please do not open a public GitHub issue for security vulnerabilities.**
 
-Report security issues through a [GitHub Private Vulnerability Report](https://github.com/Emilien-Etadam/open-cowork/security/advisories/new) on this fork.
+Report security issues through a [GitHub Private Vulnerability Report](https://github.com/Emilien-Etadam/lygodactylus/security/advisories/new) on this fork.
 
 Include:
 
@@ -54,7 +54,7 @@ Out of scope:
 
 ## Security Best Practices for Users
 
-- Install builds from [official EE releases](https://github.com/Emilien-Etadam/open-cowork/releases) only.
+- Install builds from [official EE releases](https://github.com/Emilien-Etadam/lygodactylus/releases) only.
 - Keep the app updated (`Réglages → Général → Vérifier les mises à jour` on Windows/macOS).
 - Store API keys only in the built-in settings — never in plain text files in your workspace.
 - Review marketplace extensions before installing; MCP stdio servers run local code.

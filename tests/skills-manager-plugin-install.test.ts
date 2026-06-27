@@ -72,7 +72,7 @@ function createPluginDirectory(
 
 describe('SkillsManager installPluginFromDirectory', () => {
   beforeEach(() => {
-    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'open-cowork-plugin-test-'));
+    testRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lygodactylus-plugin-test-'));
     fs.mkdirSync(path.join(testRoot, 'userData'), { recursive: true });
     fs.mkdirSync(path.join(testRoot, 'home'), { recursive: true });
   });

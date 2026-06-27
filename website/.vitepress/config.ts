@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress';
 
 const SITE_ORIGIN = 'https://opencoworkai.github.io';
-const SITE_BASE = '/open-cowork/';
+const SITE_BASE = '/lygodactylus/';
 const SITE_URL = `${SITE_ORIGIN}${SITE_BASE}`;
 const OG_IMAGE = `${SITE_URL}og-image.png`;
 const GITHUB_URL = 'https://github.com/OpenCoworkAI/open-cowork';
@@ -17,33 +17,33 @@ const FEATURE_LIST = [
   'MCP integration for browsers, Notion, and other desktop tools',
   'GUI automation through computer use',
   'Remote control through Feishu (Lark) and Slack',
-  'Local-first operation with no Open Cowork telemetry',
+  'Local-first operation with no Lygodactylus telemetry',
 ];
 const FAQ_ITEMS = [
   {
-    question: 'What is Open Cowork?',
+    question: 'What is Lygodactylus?',
     answer:
-      'Open Cowork is a free, open-source AI agent desktop application for Windows and macOS. It wraps AI models into a user-friendly GUI with one-click installation.',
+      'Lygodactylus is a free, open-source AI agent desktop application for Windows and macOS. It wraps AI models into a user-friendly GUI with one-click installation.',
   },
   {
     question: 'What AI models are supported?',
     answer:
-      'Open Cowork supports Claude through Anthropic or OpenRouter, OpenAI-compatible APIs, and models such as Gemini, DeepSeek, GLM, MiniMax, and Kimi.',
+      'Lygodactylus supports Claude through Anthropic or OpenRouter, OpenAI-compatible APIs, and models such as Gemini, DeepSeek, GLM, MiniMax, and Kimi.',
   },
   {
-    question: 'Is Open Cowork free?',
+    question: 'Is Lygodactylus free?',
     answer:
-      'Yes. Open Cowork is free and open-source under the MIT license. Users pay only for usage from their chosen AI model provider.',
+      'Yes. Lygodactylus is free and open-source under the MIT license. Users pay only for usage from their chosen AI model provider.',
   },
   {
     question: 'How does sandbox isolation work?',
     answer:
-      'Open Cowork uses WSL2 on Windows and Lima on macOS to run AI-executed commands inside an isolated Linux VM when available, with path-based workspace restrictions as a baseline.',
+      'Lygodactylus uses WSL2 on Windows and Lima on macOS to run AI-executed commands inside an isolated Linux VM when available, with path-based workspace restrictions as a baseline.',
   },
   {
-    question: 'Does Open Cowork send data to its own servers?',
+    question: 'Does Lygodactylus send data to its own servers?',
     answer:
-      'No. Open Cowork runs locally. The only external communication is with the AI model API configured by the user.',
+      'No. Lygodactylus runs locally. The only external communication is with the AI model API configured by the user.',
   },
 ];
 const STRUCTURED_DATA = {
@@ -59,7 +59,7 @@ const STRUCTURED_DATA = {
     {
       '@type': 'WebSite',
       '@id': `${SITE_URL}#website`,
-      name: 'Open Cowork',
+      name: 'Lygodactylus',
       url: SITE_URL,
       inLanguage: ['en', 'zh-CN'],
       publisher: { '@id': `${SITE_URL}#organization` },
@@ -67,7 +67,7 @@ const STRUCTURED_DATA = {
     {
       '@type': 'SoftwareApplication',
       '@id': `${SITE_URL}#software`,
-      name: 'Open Cowork',
+      name: 'Lygodactylus',
       description: PROJECT_DESCRIPTION,
       url: SITE_URL,
       image: OG_IMAGE,
@@ -100,17 +100,17 @@ const STRUCTURED_DATA = {
 };
 
 export default defineConfig({
-  title: 'Open Cowork',
+  title: 'Lygodactylus',
   description:
     'Open-source AI agent desktop app for Windows & macOS — one-click install Claude Code, MCP tools, and Skills with sandbox isolation and multi-model support.',
 
   base: SITE_BASE,
 
   head: [
-    ['link', { rel: 'icon', href: '/open-cowork/logo.png' }],
+    ['link', { rel: 'icon', href: '/lygodactylus/logo.png' }],
     [
       'link',
-      { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/open-cowork/llms.txt' },
+      { rel: 'alternate', type: 'text/plain', title: 'llms.txt', href: '/lygodactylus/llms.txt' },
     ],
     [
       'link',
@@ -118,7 +118,7 @@ export default defineConfig({
         rel: 'alternate',
         type: 'text/markdown',
         title: 'Full AI context',
-        href: '/open-cowork/llms-full.txt',
+        href: '/lygodactylus/llms-full.txt',
       },
     ],
     [
@@ -126,11 +126,11 @@ export default defineConfig({
       {
         rel: 'alternate',
         type: 'application/json',
-        title: 'Open Cowork project metadata',
-        href: '/open-cowork/project.json',
+        title: 'Lygodactylus project metadata',
+        href: '/lygodactylus/project.json',
       },
     ],
-    ['meta', { name: 'application-name', content: 'Open Cowork' }],
+    ['meta', { name: 'application-name', content: 'Lygodactylus' }],
     [
       'meta',
       {
@@ -140,7 +140,7 @@ export default defineConfig({
     ],
     // Open Graph
     ['meta', { property: 'og:type', content: 'website' }],
-    ['meta', { property: 'og:title', content: 'Open Cowork — Open-Source AI Agent Desktop App' }],
+    ['meta', { property: 'og:title', content: 'Lygodactylus — Open-Source AI Agent Desktop App' }],
     [
       'meta',
       {
@@ -153,7 +153,7 @@ export default defineConfig({
     ['meta', { property: 'og:url', content: SITE_URL }],
     // Twitter Card
     ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-    ['meta', { name: 'twitter:title', content: 'Open Cowork — Open-Source AI Agent Desktop App' }],
+    ['meta', { name: 'twitter:title', content: 'Lygodactylus — Open-Source AI Agent Desktop App' }],
     [
       'meta',
       {
@@ -169,7 +169,7 @@ export default defineConfig({
       {
         name: 'keywords',
         content:
-          'Open Cowork, AI agent, desktop app, Claude Code, MCP, Skills, sandbox, open source, Windows, macOS, multi-model, PPTX generator, Feishu, Slack',
+          'Lygodactylus, AI agent, desktop app, Claude Code, MCP, Skills, sandbox, open source, Windows, macOS, multi-model, PPTX generator, Feishu, Slack',
       },
     ],
     // Schema.org JSON-LD

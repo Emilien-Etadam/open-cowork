@@ -73,7 +73,7 @@ export class ConfigStore {
   constructor() {
     const storeOptions: StoreOptions<AppConfig> & { projectName?: string } = {
       name: 'config',
-      projectName: 'open-cowork',
+      projectName: 'lygodactylus',
       defaults: defaultConfig,
     };
 
@@ -82,12 +82,12 @@ export class ConfigStore {
       stableKey: getMachineEncryptionKey(),
       legacyKeys: [
         ...LEGACY_STATIC_ENCRYPTION_KEYS,
-        'open-cowork-config-v1',
+        'lygodactylus-config-v1',
         ...getLegacyDerivedKeyHexes({
           moduleDirname: __dirname,
-          stableSeed: 'open-cowork-config-stable-v1',
-          legacySeed: 'open-cowork-config-v1',
-          salt: 'open-cowork-config-salt',
+          stableSeed: 'lygodactylus-config-stable-v1',
+          legacySeed: 'lygodactylus-config-v1',
+          salt: 'lygodactylus-config-salt',
         }),
       ],
       storeOptions: storeOptions as StoreOptions<AppConfigRecord> & { projectName?: string },

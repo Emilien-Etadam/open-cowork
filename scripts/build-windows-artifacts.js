@@ -3,12 +3,12 @@ const path = require('node:path');
 
 const LEGACY_CLEANUP_ARTIFACTS = [
   {
-    source: path.join('resources', 'windows', 'Open-Cowork-Legacy-Cleanup.cmd'),
-    target: 'Open-Cowork-Legacy-Cleanup.cmd',
+    source: path.join('resources', 'windows', 'Lygodactylus-Legacy-Cleanup.cmd'),
+    target: 'Lygodactylus-Legacy-Cleanup.cmd',
   },
   {
-    source: path.join('resources', 'windows', 'Open-Cowork-Legacy-Cleanup.ps1'),
-    target: 'Open-Cowork-Legacy-Cleanup.ps1',
+    source: path.join('resources', 'windows', 'Lygodactylus-Legacy-Cleanup.ps1'),
+    target: 'Lygodactylus-Legacy-Cleanup.ps1',
   },
 ];
 

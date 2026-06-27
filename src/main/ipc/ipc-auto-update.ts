@@ -9,7 +9,7 @@ import {
 } from '../auto-updater';
 import { logError } from '../utils/logger';
 
-const RELEASES_URL = 'https://github.com/Emilien-Etadam/open-cowork/releases/latest';
+const RELEASES_URL = 'https://github.com/Emilien-Etadam/lygodactylus/releases/latest';
 
 export function registerAutoUpdateIpc(): void {
   ipcMain.handle('app.checkForUpdates', async () => {

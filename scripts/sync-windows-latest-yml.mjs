@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Align latest.yml installer filename with the actual .exe uploaded to GitHub Releases.
- * electron-builder can emit Open-Cowork-*.exe in YAML while the artifact is Open.Cowork-*.exe.
+ * electron-builder can emit Lygodactylus-*.exe in YAML while the artifact is Lygodactylus-*.exe.
  */
 import fs from 'node:fs';
 import path from 'node:path';

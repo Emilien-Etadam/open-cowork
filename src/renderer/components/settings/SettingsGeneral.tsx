@@ -117,7 +117,7 @@ export function SettingsGeneral() {
     }
 
     await window.electronAPI?.openExternal?.(
-      'https://github.com/Emilien-Etadam/open-cowork/releases/latest'
+      'https://github.com/Emilien-Etadam/lygodactylus/releases/latest'
     );
   }, []);
 
@@ -272,7 +272,7 @@ export function SettingsGeneral() {
 
       {appVer && (
         <div className="pt-2 border-t border-border">
-          <p className="text-xs text-text-muted">Open Cowork {displayVersion}</p>
+          <p className="text-xs text-text-muted">Lygodactylus {displayVersion}</p>
         </div>
       )}
     </div>

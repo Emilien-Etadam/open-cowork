@@ -1,11 +1,11 @@
 {
   "schemaVersion": "1.0",
-  "name": "Open Cowork",
+  "name": "Lygodactylus",
   "organization": "OpenCoworkAI",
-  "canonicalUrl": "https://opencoworkai.github.io/open-cowork/",
+  "canonicalUrl": "https://opencoworkai.github.io/lygodactylus/",
   "localizedUrls": {
-    "en": "https://opencoworkai.github.io/open-cowork/",
-    "zh-CN": "https://opencoworkai.github.io/open-cowork/zh/"
+    "en": "https://opencoworkai.github.io/lygodactylus/",
+    "zh-CN": "https://opencoworkai.github.io/lygodactylus/zh/"
   },
   "repository": "https://github.com/OpenCoworkAI/open-cowork",
   "releases": "https://github.com/OpenCoworkAI/open-cowork/releases",
@@ -31,7 +31,7 @@
     {
       "platform": "macOS",
       "method": "Homebrew",
-      "commands": ["brew tap OpenCoworkAI/tap", "brew install --cask --no-quarantine open-cowork"]
+      "commands": ["brew tap OpenCoworkAI/tap", "brew install --cask --no-quarantine lygodactylus"]
     },
     {
       "platform": "Windows and macOS",
@@ -80,14 +80,14 @@
     "localFirst": true,
     "workspaceBoundary": "File operations are restricted to the selected workspace folder.",
     "vmIsolation": ["WSL2 on Windows", "Lima on macOS"],
-    "dataPolicy": "Open Cowork runs locally; the external network path is the AI model API configured by the user. The project website states that Open Cowork does not send data to Open Cowork servers."
+    "dataPolicy": "Lygodactylus runs locally; the external network path is the AI model API configured by the user. The project website states that Lygodactylus does not send data to Lygodactylus servers."
   },
   "machineReadableResources": {
-    "llmsTxt": "https://opencoworkai.github.io/open-cowork/llms.txt",
-    "llmsFullTxt": "https://opencoworkai.github.io/open-cowork/llms-full.txt",
-    "projectJson": "https://opencoworkai.github.io/open-cowork/project.json",
-    "sitemap": "https://opencoworkai.github.io/open-cowork/sitemap.xml",
-    "robots": "https://opencoworkai.github.io/open-cowork/robots.txt"
+    "llmsTxt": "https://opencoworkai.github.io/lygodactylus/llms.txt",
+    "llmsFullTxt": "https://opencoworkai.github.io/lygodactylus/llms-full.txt",
+    "projectJson": "https://opencoworkai.github.io/lygodactylus/project.json",
+    "sitemap": "https://opencoworkai.github.io/lygodactylus/sitemap.xml",
+    "robots": "https://opencoworkai.github.io/lygodactylus/robots.txt"
   },
   "sourcePages": [
     "https://github.com/OpenCoworkAI/open-cowork/blob/main/README.md",

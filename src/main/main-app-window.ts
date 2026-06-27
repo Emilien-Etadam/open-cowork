@@ -172,7 +172,7 @@ export function setupTray() {
   }
 
   mainAppState.tray = new Tray(resolvedIconPath);
-  mainAppState.tray.setToolTip('Open Cowork');
+  mainAppState.tray.setToolTip('Lygodactylus');
 
   const contextMenu = Menu.buildFromTemplate([
     {
