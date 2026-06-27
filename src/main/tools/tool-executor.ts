@@ -7,6 +7,8 @@ import { PathResolver } from '../sandbox/path-resolver';
 import type { ToolResult, ExecutionContext, MountedPath } from '../../renderer/types';
 import { isUncPath } from '../../shared/local-file-path';
 import { isPathWithinRoot } from './path-containment';
+import { validateCommandSandbox } from './command-sandbox-validation';
+import { formatFileSize } from './format-file-size';
 import { runWebSearch } from '../../shared/web-search';
 import { configStore } from '../config/config-store';
 
@@ -144,7 +146,7 @@ export class ToolExecutor {
       for (const entry of entries) {
         const prefix = entry.isDirectory() ? '[DIR]' : '[FILE]';
         const size = entry.isFile()
-          ? ` (${this.formatSize(fs.statSync(path.join(pathToList, entry.name)).size)})`
+          ? ` (${formatFileSize(fs.statSync(path.join(pathToList, entry.name)).size)})`
           : '';
         result.push(`${prefix} ${entry.name}${size}`);
       }
@@ -216,110 +218,14 @@ export class ToolExecutor {
   }
 
   /**
-   * Validate that a command does not escape the sandbox.
-   * - Blocks absolute paths outside mounts
-   * - Blocks path traversal (..)
-   * - Validates cwd is inside mount
-   */
-  private validateCommandSandbox(sessionId: string, command: string, cwd: string): void {
-    const mounts = this.pathResolver.getMounts(sessionId);
-    if (!mounts.length) {
-      throw new Error('No mounted workspace for this session');
-    }
-
-    // Validate cwd is inside a mount
-    const normalizedCwd = path.normalize(cwd);
-    const cwdAllowed = mounts.some((m) => {
-      const mountRoot = path.normalize(m.real);
-      return isPathWithinRoot(normalizedCwd, mountRoot);
-    });
-    if (!cwdAllowed) {
-      throw new Error('Working directory is outside the mounted workspace');
-    }
-
-    // Block path traversal attempts
-    if (
-      // eslint-disable-next-line no-useless-escape
-      /(?:^|[\s;|&])\.\.(?:[\s;|&\/\\]|$)/.test(command) ||
-      command.includes('../') ||
-      command.includes('..\\')
-    ) {
-      throw new Error('Command blocked: path traversal (..) is not allowed');
-    }
-
-    // Extract potential paths from command (quoted strings and unquoted tokens)
-    const pathPatterns = [
-      // Windows absolute paths: C:\... or C:/...
-      // eslint-disable-next-line no-useless-escape
-      /[A-Za-z]:[\\\/][^\s;|&"'<>]*/g,
-      // UNC absolute paths: \\server\share\...
-      /\\\\[^\s;|&"'<>]+/g,
-      // Unix absolute paths: /...
-      /(?:^|[\s;|&"'])\/[^\s;|&"'<>]+/g,
-      // Quoted paths
-      /"([^"]+)"/g,
-      /'([^']+)'/g,
-    ];
-
-    const extractedPaths: string[] = [];
-    for (const pattern of pathPatterns) {
-      let match;
-      const testStr = command;
-      pattern.lastIndex = 0;
-      while ((match = pattern.exec(testStr)) !== null) {
-        const p = match[1] || match[0];
-        const trimmed = p.trim().replace(/^["'\s]+|["'\s]+$/g, '');
-        if (trimmed) extractedPaths.push(trimmed);
-      }
-    }
-
-    // Validate each extracted path
-    for (const p of extractedPaths) {
-      const isAbsolute = path.isAbsolute(p) || /^[A-Za-z]:/.test(p) || isUncPath(p);
-      if (!isAbsolute) continue; // Relative paths are fine (confined by cwd)
-
-      const normalizedPath = path.normalize(p);
-      const allowed = mounts.some((m) => {
-        const mountRoot = path.normalize(m.real);
-        return isPathWithinRoot(normalizedPath, mountRoot);
-      });
-
-      if (!allowed) {
-        throw new Error(`Command blocked: path "${p}" is outside the mounted workspace`);
-      }
-    }
-
-    // Block dangerous patterns
-    const dangerousPatterns = [
-      // eslint-disable-next-line no-useless-escape
-      /rm\s+-rf?\s+[\/~]/i,
-      /dd\s+if=/i,
-      /mkfs/i,
-      />\s*\/dev\//i,
-      /curl.*\|\s*(?:ba)?sh/i,
-      /wget.*\|\s*(?:ba)?sh/i,
-      /format\s+[A-Za-z]:/i,
-      /del\s+\/[sfq]/i,
-      /rmdir\s+\/[sq]/i,
-      /reg\s+(add|delete)/i,
-      /net\s+(user|localgroup)/i,
-      /powershell\s+.*-enc/i,
-      /Set-ExecutionPolicy/i,
-    ];
-
-    for (const pattern of dangerousPatterns) {
-      if (pattern.test(command)) {
-        throw new Error('Command blocked: potentially dangerous operation');
-      }
-    }
-  }
-
-  /**
    * Execute shell command - Public method for agent-runner
    */
   async executeCommand(sessionId: string, command: string, cwd: string): Promise<string> {
-    // Sandbox validation
-    this.validateCommandSandbox(sessionId, command, cwd);
+    validateCommandSandbox({
+      mounts: this.pathResolver.getMounts(sessionId),
+      command,
+      cwd,
+    });
 
     return new Promise((resolve, reject) => {
       // On Windows prefer PowerShell with UTF-8 codepage to reduce quoting/encoding issues
@@ -596,15 +502,6 @@ export class ToolExecutor {
   }
 
   /**
-   * Format file size
-   */
-  private formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-
-  /**
    * Execute a tool with the given input (legacy method)
    */
   async execute(
@@ -831,7 +728,11 @@ export class ToolExecutor {
 
     // Use the same sandbox validation as executeCommand
     try {
-      this.validateCommandSandbox(context.sessionId, command, cwd);
+      validateCommandSandbox({
+        mounts: this.pathResolver.getMounts(context.sessionId),
+        command,
+        cwd,
+      });
     } catch (error) {
       return {
         success: false,
