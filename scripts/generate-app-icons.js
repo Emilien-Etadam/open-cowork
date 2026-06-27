@@ -5,7 +5,8 @@
  * Outputs:
  *   resources/icon.png, icon.ico, icon.icns, icon.iconset/*
  *   resources/tray-icon.png, tray-icon.ico, tray-iconTemplate.png
- *   public/favicon.png
+ *   public/favicon.png, public/logo.png
+ *   src/renderer/assets/logo.png, website/public/logo.png
  */
 
 'use strict';
@@ -18,6 +19,11 @@ const pngToIco = require('png-to-ico');
 
 const PROJECT_ROOT = path.join(__dirname, '..');
 const LOGO_PATH = path.join(PROJECT_ROOT, 'resources', 'logo.png');
+const LOGO_COPIES = [
+  path.join(PROJECT_ROOT, 'public', 'logo.png'),
+  path.join(PROJECT_ROOT, 'src', 'renderer', 'assets', 'logo.png'),
+  path.join(PROJECT_ROOT, 'website', 'public', 'logo.png'),
+];
 const RESOURCES_DIR = path.join(PROJECT_ROOT, 'resources');
 const ICONSET_DIR = path.join(RESOURCES_DIR, 'icon.iconset');
 const PUBLIC_FAVICON = path.join(PROJECT_ROOT, 'public', 'favicon.png');
@@ -90,6 +96,13 @@ async function generateIco(logoPath, outputPath, sizes) {
   fs.writeFileSync(outputPath, ico);
 }
 
+function propagateLogoCopies(logoPath) {
+  for (const destination of LOGO_COPIES) {
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(logoPath, destination);
+  }
+}
+
 async function main() {
   if (!fs.existsSync(LOGO_PATH)) {
     console.error(`[generate:icons] Missing source logo: ${LOGO_PATH}`);
@@ -108,6 +121,7 @@ async function main() {
   await generateIco(LOGO_PATH, path.join(RESOURCES_DIR, 'tray-icon.ico'), TRAY_SIZES);
 
   await resizePng(LOGO_PATH, PUBLIC_FAVICON, 32);
+  propagateLogoCopies(LOGO_PATH);
 
   console.log('[generate:icons] Done.');
 }
