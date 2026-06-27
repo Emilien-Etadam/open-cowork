@@ -139,6 +139,27 @@ function listUnreadableRecoveryBackups(storePath: string): string[] {
   }
 }
 
+function tryReadPlainTextStoreSnapshot<T extends Record<string, unknown>>(
+  storePath: string,
+  defaults: T
+): T | null {
+  try {
+    const dir = path.dirname(storePath);
+    const name = path.basename(storePath, '.json');
+    const plainStore = new Store<T>({
+      name,
+      cwd: dir,
+      defaults,
+    });
+    if (plainStore.path !== storePath) {
+      return null;
+    }
+    return plainStore.store as T;
+  } catch {
+    return null;
+  }
+}
+
 function readEncryptedStoreSnapshot<T extends Record<string, unknown>>(
   storePath: string,
   encryptionKey: string,
@@ -274,6 +295,27 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
       `stable key: ${error instanceof Error ? error.message : String(error)}`,
     ];
 
+    const storePath = resolveStorePath(options.storeOptions);
+    if (storePath && fs.existsSync(storePath)) {
+      const plainSnapshot = tryReadPlainTextStoreSnapshot(
+        storePath,
+        options.storeOptions.defaults as T
+      );
+      if (plainSnapshot) {
+        options.log?.(`${options.logPrefix} Migrating plain-text store to machine encryption`, {
+          storePath,
+        });
+        return migrateLegacyEncryptedStore(
+          plainSnapshot,
+          storePath,
+          stableKey,
+          options.storeOptions,
+          options.logPrefix,
+          options.log
+        );
+      }
+    }
+
     for (const legacyKey of legacyKeys) {
       try {
         const legacyStore = new Store<T>({
@@ -281,13 +323,13 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
           encryptionKey: legacyKey,
         });
         const snapshot = legacyStore.store as T;
-        const storePath = legacyStore.path;
+        const legacyStorePath = legacyStore.path;
 
         // electron-store reads the existing file on construction. The legacy blob
         // must be moved aside before opening the stable-key store.
         return migrateLegacyEncryptedStore(
           snapshot,
-          storePath,
+          legacyStorePath,
           stableKey,
           options.storeOptions,
           options.logPrefix,
@@ -303,7 +345,6 @@ export function createEncryptedStoreWithKeyRotation<T extends Record<string, unk
       }
     }
 
-    const storePath = resolveStorePath(options.storeOptions);
     if (storePath && fs.existsSync(storePath)) {
       const backupPath = moveUnreadableStoreToBackup(storePath);
       options.warn?.(

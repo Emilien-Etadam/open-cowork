@@ -1,6 +1,6 @@
 # 🗺️ Lygodactylus Roadmap
 
-> Development direction for the [Emilien-Etadam/lygodactylus](https://github.com/Emilien-Etadam/lygodactylus) fork (alpha series `3.3.1-EE*`).
+> Development direction for the [Emilien-Etadam/lygodactylus](https://github.com/Emilien-Etadam/lygodactylus) fork (alpha series **v5.x**; legacy `3.3.1-EE*` archived).
 > For feature requests and discussion, see [GitHub Issues](https://github.com/Emilien-Etadam/lygodactylus/issues).
 
 ## ✅ Completed
@@ -64,11 +64,11 @@
 - **God-file cleanup (phase 6)**: `gui-runtime` (facade ~19), `mcp-server` software-dev (~82), `api-config-persist-actions` (~65) — done (2026-06-24)
 - **Test coverage**: 1043+ unit/integration tests in CI
 
-## 📦 EE releases
+## 📦 Releases
 
 | Tag             | Date       | Highlights                                                                     |
 | --------------- | ---------- | ------------------------------------------------------------------------------ |
-| `v5` | 2026-06-27 | **Latest** — logo gecko, rebranding Lygodactylus, série v5 |
+| `v5.0.0` | 2026-06-27 | **Latest** — logo gecko Lygodactylus, série v5, rebranding complet |
 | `v3.3.1-EE4.98` | 2026-06-26 | rebranding Lygodactylus |
 | `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar |
 | `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input                    |
@@ -91,9 +91,16 @@
 
 Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5) · [CHANGELOG](CHANGELOG.md)
 
+### v5.x hardening (in progress)
+
+- **Encrypted stores**: MCP credentials + Chat LAN token aligned with machine-bound encryption (`app-store` helper)
+- **Dead code removal**: legacy per-skill MCP process stubs removed (MCP via marketplace / `mcp-config-store` only)
+- **Docs**: SECURITY.md, README, ROADMAP updated for v5 support policy
+- **Next (Phase 1)**: macOS sandbox default, Chat LAN WireGuard guidance, IPC allowlist in main process
+
 ## 🚧 In Progress
 
-### Validation EE4.92
+### Validation v5.0.0
 
 - Smoke test chat LAN : serveur local, permissions, UI web
 - Migration config API → deux fournisseurs
@@ -101,7 +108,7 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ## 📋 Planned
 
-### Near-term (EE5 / v3.4.0)
+### Near-term (v5.1+)
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
 - **App Slimming**: Reduce installer from ~156 MB to ~80 MB — on-demand Python/Node.js download, lazy-load SDKs, strip unused files (Feishu SDK retiré #40)
@@ -127,5 +134,5 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-25 (release EE4.95, fix auto-update Windows latest.yml)_  
+_Last updated: 2026-06-27 (v5.0.0, Phase 0 prep — encrypted stores, docs)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

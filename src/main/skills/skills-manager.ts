@@ -1,7 +1,7 @@
 /**
  * @module main/skills/skills-manager
  *
- * Skill discovery and lifecycle (999 lines).
+ * Skill discovery, installation, and hot-reload.
  *
  * Responsibilities:
  * - Discovers built-in skills from .claude/skills/ directories
@@ -88,17 +88,18 @@ export interface SetGlobalSkillsPathResult {
 }
 
 /**
- * SkillsManager - Manages skill loading and MCP server lifecycle
+ * SkillsManager - Manages skill discovery, installation, and hot-reload
  *
  * Skills loading priority:
  * 1. Project-level: <project>/.skills/ or <project>/skills/
  * 2. Global: <userData>/claude/skills/ (includes ~/.claude/skills read-only)
  * 3. Built-in skills
+ *
+ * MCP connectors are managed via mcp-config-store / marketplace — not per-skill processes here.
  */
 export class SkillsManager {
   private db: DatabaseInstance;
   private loadedSkills: Map<string, Skill> = new Map();
-  private runningServers: Map<string, { process: unknown; skill: Skill }> = new Map();
   private getConfiguredGlobalSkillsPathFn?: () => string | undefined;
   private setConfiguredGlobalSkillsPathFn?: (nextPath: string) => void;
   private watchStorageEnabled: boolean;
@@ -680,57 +681,6 @@ export class SkillsManager {
     return skills;
   }
 
-  /**
-   * Start an MCP server for a skill
-   */
-  async startMcpServer(skill: Skill): Promise<void> {
-    if (skill.type !== 'mcp' || !skill.config?.mcp) {
-      throw new Error('Skill is not an MCP skill');
-    }
-
-    if (this.runningServers.has(skill.id)) {
-      log(`MCP server for ${skill.name} is already running`);
-      return;
-    }
-
-    // TODO: Implement actual MCP server startup
-    // const { spawn } = await import('child_process');
-    // const mcpConfig = skill.config.mcp as McpServerConfig;
-    //
-    // const proc = spawn(mcpConfig.command, mcpConfig.args || [], {
-    //   env: { ...process.env, ...mcpConfig.env },
-    // });
-    //
-    // this.runningServers.set(skill.id, { process: proc, skill });
-
-    log(`MCP server started for skill: ${skill.name}`);
-  }
-
-  /**
-   * Stop an MCP server
-   */
-  async stopMcpServer(skillId: string): Promise<void> {
-    const server = this.runningServers.get(skillId);
-    if (!server) {
-      return;
-    }
-
-    // TODO: Implement graceful shutdown
-    // server.process.kill();
-
-    this.runningServers.delete(skillId);
-    log(`MCP server stopped for skill: ${server.skill.name}`);
-  }
-
-  /**
-   * Stop all running MCP servers
-   */
-  async stopAllServers(): Promise<void> {
-    for (const skillId of this.runningServers.keys()) {
-      await this.stopMcpServer(skillId);
-    }
-  }
-
   stopStorageMonitoring(): void {
     this.stopStorageWatcher();
   }
@@ -742,11 +692,6 @@ export class SkillsManager {
     const skill = this.loadedSkills.get(skillId);
     if (skill) {
       skill.enabled = enabled;
-
-      // Stop server if disabling an MCP skill
-      if (!enabled && skill.type === 'mcp') {
-        this.stopMcpServer(skillId);
-      }
     }
   }
 
@@ -787,7 +732,6 @@ export class SkillsManager {
       throw new Error('Cannot delete built-in skills');
     }
 
-    this.stopMcpServer(skillId);
     this.loadedSkills.delete(skillId);
 
     const stmt = this.db.prepare('DELETE FROM skills WHERE id = ?');
@@ -1176,9 +1120,6 @@ export class SkillsManager {
     if (skill.type === 'builtin') {
       throw new Error('Cannot delete built-in skills');
     }
-
-    // Stop MCP server if running
-    await this.stopMcpServer(skillId);
 
     // Remove from filesystem (only for custom skills in global directory)
     if (skill.type === 'custom') {

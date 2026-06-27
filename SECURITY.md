@@ -2,13 +2,13 @@
 
 ## Supported Versions
 
-| Version                              | Supported                   |
-| ------------------------------------ | --------------------------- |
-| `3.3.1-EE4.x` (latest EE release)    | Yes                         |
-| Older `EE*` builds                   | Best effort                 |
-| Upstream `3.3.x` without `EE` suffix | Not maintained in this fork |
+| Version                              | Supported          |
+| ------------------------------------ | ------------------ |
+| `5.x` (current series)               | Yes                |
+| `3.3.1-EE4.x` and older `EE*` builds | Best effort only   |
+| Upstream `3.3.x` without `EE` suffix | Not maintained     |
 
-Security fixes are published as new `EE*` releases on [GitHub Releases](https://github.com/Emilien-Etadam/lygodactylus/releases).
+Security fixes for the current series are published as new releases on [GitHub Releases](https://github.com/Emilien-Etadam/lygodactylus/releases).
 
 ## Reporting a Vulnerability
 
@@ -20,7 +20,7 @@ Include:
 
 - A clear description of the vulnerability
 - Steps to reproduce or a proof-of-concept
-- Affected version(s) (e.g. `3.3.1-EE4.97`)
+- Affected version(s) (e.g. `5.0.0`)
 - Potential impact assessment
 
 ### What to expect
@@ -54,9 +54,17 @@ Out of scope:
 
 ## Security Best Practices for Users
 
-- Install builds from [official EE releases](https://github.com/Emilien-Etadam/lygodactylus/releases) only.
+- Install builds from [official releases](https://github.com/Emilien-Etadam/lygodactylus/releases) only.
 - Keep the app updated (`Réglages → Général → Vérifier les mises à jour` on Windows/macOS).
 - Store API keys only in the built-in settings — never in plain text files in your workspace.
 - Review marketplace extensions before installing; MCP stdio servers run local code.
-- Disable **Chat LAN** when not needed; regenerate the token if it may have leaked.
+- Use **Chat LAN** only over a trusted network path (e.g. WireGuard VPN). Disable it when not needed; regenerate the token if it may have leaked.
 - Enable sandbox isolation when running untrusted agent operations.
+
+## Sensitive data at rest
+
+The following are stored encrypted with a machine-bound key (OS keychain / credential manager when available):
+
+- API keys and provider profiles (`config.json`)
+- MCP server credentials and env secrets (`mcp-config.json`)
+- Chat LAN access token (`chat-lan-config.json`)
