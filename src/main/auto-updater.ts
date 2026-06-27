@@ -14,7 +14,7 @@ import { sendToRenderer } from './main-renderer-bridge';
 import { log, logError } from './utils/logger';
 
 const EE_GITHUB_OWNER = 'Emilien-Etadam';
-const EE_GITHUB_REPO = 'open-cowork';
+const EE_GITHUB_REPO = 'lygodactylus';
 const LATEST_RELEASE_URL = `https://api.github.com/repos/${EE_GITHUB_OWNER}/${EE_GITHUB_REPO}/releases/latest`;
 
 export type { UpdateCheckResult, UpdateCheckStatus } from '../shared/update-check';

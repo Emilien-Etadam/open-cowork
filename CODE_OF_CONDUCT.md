@@ -36,7 +36,7 @@ This Code of Conduct applies within all community spaces of this repository (iss
 
 ## Enforcement
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the maintainer via [GitHub Issues](https://github.com/Emilien-Etadam/open-cowork/issues) (mark as conduct-related) or through a [private security advisory](https://github.com/Emilien-Etadam/open-cowork/security/advisories/new) if sensitive.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the maintainer via [GitHub Issues](https://github.com/Emilien-Etadam/lygodactylus/issues) (mark as conduct-related) or through a [private security advisory](https://github.com/Emilien-Etadam/lygodactylus/security/advisories/new) if sensitive.
 
 All reports will be reviewed and investigated promptly and fairly. The privacy of reporters will be respected.
 

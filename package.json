@@ -1,7 +1,7 @@
 {
-  "name": "open-cowork",
-  "version": "3.3.1-EE4.97",
-  "description": "Open-source AI agent desktop app for Windows & macOS — one-click install Claude Code, MCP tools, and Skills with sandbox isolation and multi-model support",
+  "name": "lygodactylus",
+  "version": "3.3.1-EE4.98",
+  "description": "Lygodactylus — open-source AI agent desktop app for Windows & macOS with Claude Code, MCP tools, Skills, sandbox isolation and multi-model support",
   "keywords": [
     "ai-agent",
     "claude",
@@ -22,13 +22,13 @@
     "docx",
     "multi-model"
   ],
-  "homepage": "https://github.com/emilien-etadam/open-cowork",
+  "homepage": "https://github.com/emilien-etadam/lygodactylus",
   "repository": {
     "type": "git",
-    "url": "https://github.com/emilien-etadam/open-cowork.git"
+    "url": "https://github.com/emilien-etadam/lygodactylus.git"
   },
   "bugs": {
-    "url": "https://github.com/emilien-etadam/open-cowork/issues"
+    "url": "https://github.com/emilien-etadam/lygodactylus/issues"
   },
   "engines": {
     "node": ">=22"
@@ -132,7 +132,7 @@
     "fast-xml-parser": "^5.5.6",
     "tar": "^7.5.11"
   },
-  "author": "Open Cowork Team",
+  "author": "Lygodactylus",
   "license": "MIT",
   "lint-staged": {
     "*.{ts,tsx}": [

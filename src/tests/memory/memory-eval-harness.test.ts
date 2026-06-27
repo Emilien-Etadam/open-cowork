@@ -54,7 +54,7 @@ vi.mock('electron', () => ({
     isPackaged: false,
     getPath: () => '/tmp',
     getVersion: () => '0.0.0-test',
-    getAppPath: () => '/tmp/open-cowork-test-app',
+    getAppPath: () => '/tmp/lygodactylus-test-app',
   },
 }));
 
@@ -273,7 +273,7 @@ describe('MemoryEvalHarness and MemoryPromptOptimizer', () => {
   const llm = new EvalMockLLM();
 
   beforeEach(() => {
-    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'open-cowork-memory-eval-'));
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'lygodactylus-memory-eval-'));
     rawDb = new Database(':memory:');
     createSchema(rawDb);
     service = new MemoryService(createDatabaseInstance(rawDb), { llmClient: llm });

@@ -1,6 +1,6 @@
-appId: com.opencowork.app
-productName: Open Cowork
-copyright: Copyright © 2026 Open Cowork Team
+appId: com.lygodactylus.app
+productName: Lygodactylus
+copyright: Copyright © 2026 Lygodactylus
 
 directories:
   output: release
@@ -64,7 +64,7 @@ win:
     - target: nsis
       arch:
         - x64
-  artifactName: Open.Cowork-${version}-win-${arch}.${ext}
+  artifactName: Lygodactylus-${version}-win-${arch}.${ext}
   extraResources:
     - from: resources/icon.ico
       to: icon.ico
@@ -93,7 +93,7 @@ mac:
     - target: dir
       arch:
         - arm64
-  artifactName: Open.Cowork-${version}-mac-${arch}.${ext}
+  artifactName: Lygodactylus-${version}-mac-${arch}.${ext}
   identity: auto
   hardenedRuntime: true
   gatekeeperAssess: true
@@ -101,8 +101,8 @@ mac:
   entitlementsInherit: resources/entitlements.mac.plist
   extendInfo:
     LSApplicationCategoryType: public.app-category.developer-tools
-    NSScreenCaptureUsageDescription: 'Open Cowork needs screen recording access for GUI automation.'
-    NSAccessibilityUsageDescription: 'Open Cowork needs accessibility access for GUI automation.'
+    NSScreenCaptureUsageDescription: 'Lygodactylus needs screen recording access for GUI automation.'
+    NSAccessibilityUsageDescription: 'Lygodactylus needs accessibility access for GUI automation.'
   extraResources:
     - from: resources/icon.icns
       to: icon.icns
@@ -135,7 +135,7 @@ linux:
     - target: AppImage
       arch:
         - x64
-  artifactName: Open.Cowork-${version}-linux-${arch}.${ext}
+  artifactName: Lygodactylus-${version}-linux-${arch}.${ext}
   extraResources:
     - from: resources/icon.png
       to: icon.png
@@ -160,7 +160,7 @@ nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
-  shortcutName: Open Cowork
+  shortcutName: Lygodactylus
   include: installer.nsh
   warningsAsErrors: false
   # Preserve user config/history by default; offer explicit cleanup tooling instead of destructive uninstall.
@@ -177,7 +177,7 @@ dmg:
   contents:
     - x: 150
       y: 220
-      name: 'Open Cowork.app'
+      name: 'Lygodactylus.app'
     - x: 450
       y: 220
       type: link
@@ -192,4 +192,4 @@ extraMetadata:
 publish:
   provider: github
   owner: Emilien-Etadam
-  repo: open-cowork
+  repo: lygodactylus

@@ -180,7 +180,7 @@ export class ToolExecutor {
     let response: Response;
     try {
       response = await fetch(parsed.toString(), {
-        headers: { 'User-Agent': 'open-cowork' },
+        headers: { 'User-Agent': 'lygodactylus' },
         signal: AbortSignal.timeout(15000),
       });
     } catch (error) {

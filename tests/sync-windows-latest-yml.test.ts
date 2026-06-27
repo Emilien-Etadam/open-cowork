@@ -12,16 +12,16 @@ describe('sync-windows-latest-yml.mjs', () => {
       ymlPath,
       `version: 3.3.1-EE4.94
 files:
-  - url: Open-Cowork-3.3.1-EE4.94-win-x64.exe
-path: Open-Cowork-3.3.1-EE4.94-win-x64.exe
+  - url: Lygodactylus-3.3.1-EE4.94-win-x64.exe
+path: Lygodactylus-3.3.1-EE4.94-win-x64.exe
 `
     );
-    fs.writeFileSync(path.join(dir, 'Open.Cowork-3.3.1-EE4.94-win-x64.exe'), '');
+    fs.writeFileSync(path.join(dir, 'Lygodactylus-3.3.1-EE4.94-win-x64.exe'), '');
 
     execFileSync('node', ['scripts/sync-windows-latest-yml.mjs', dir], { cwd: process.cwd() });
 
     const updated = fs.readFileSync(ymlPath, 'utf8');
-    expect(updated).toContain('path: Open.Cowork-3.3.1-EE4.94-win-x64.exe');
-    expect(updated).toContain('- url: Open.Cowork-3.3.1-EE4.94-win-x64.exe');
+    expect(updated).toContain('path: Lygodactylus-3.3.1-EE4.94-win-x64.exe');
+    expect(updated).toContain('- url: Lygodactylus-3.3.1-EE4.94-win-x64.exe');
   });
 });

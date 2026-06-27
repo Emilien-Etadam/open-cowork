@@ -273,8 +273,8 @@ export async function callVisionAPIWithTimeout(
     };
 
     if (isOpenRouter) {
-      headers['HTTP-Referer'] = 'https://github.com/OpenCoworkAI/open-cowork';
-      headers['X-Title'] = 'Open Cowork';
+      headers['HTTP-Referer'] = 'https://github.com/Emilien-Etadam/lygodactylus';
+      headers['X-Title'] = 'Lygodactylus';
     }
 
     return new Promise<string>((resolve, reject) => {

@@ -9,8 +9,8 @@ import { mainAppState } from './main-app-state';
 
 export const isDev = !!process.env.VITE_DEV_SERVER_URL;
 const ELECTRON_DEVTOOLS_DEBUG_PORT = '9223';
-const APP_DISPLAY_NAME = 'Open Cowork';
-const APP_ID = 'com.opencowork.app';
+const APP_DISPLAY_NAME = 'Lygodactylus';
+const APP_ID = 'com.lygodactylus.app';
 
 export function registerAppBootstrap(createWindow: () => void): void {
   if (!app.isPackaged) {

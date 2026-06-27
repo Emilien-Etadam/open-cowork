@@ -9,7 +9,7 @@ class MarketplaceInstalledStore {
       projectName?: string;
     } = {
       name: 'marketplace-installed',
-      projectName: 'open-cowork',
+      projectName: 'lygodactylus',
       defaults: {
         records: [],
       },

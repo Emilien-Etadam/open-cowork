@@ -19,7 +19,7 @@ describe('listRecentWorkspaceFiles', () => {
   let rootDir: string;
 
   beforeEach(async () => {
-    rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'open-cowork-recent-files-'));
+    rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'lygodactylus-recent-files-'));
   });
 
   afterEach(async () => {

@@ -84,10 +84,10 @@ app
     const enableDevLogs = configStore.get('enableDevLogs');
     setDevLogsEnabled(enableDevLogs);
 
-    log('=== Open Cowork Starting ===');
+    log('=== Lygodactylus Starting ===');
     log('Config file:', configStore.getPath());
     log('Is configured:', configStore.isConfigured());
-    log('[Runtime] Using Open Cowork agent SDK for all providers');
+    log('[Runtime] Using Lygodactylus agent SDK for all providers');
     log('Developer logs:', enableDevLogs ? 'Enabled' : 'Disabled');
     log('Environment Variables:');
     log('  ANTHROPIC_AUTH_TOKEN:', process.env.ANTHROPIC_AUTH_TOKEN ? '✓ Set' : '✗ Not set');

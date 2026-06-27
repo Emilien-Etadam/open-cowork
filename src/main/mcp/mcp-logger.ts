@@ -28,14 +28,14 @@ function getLogsDirectory(): string {
   let appDataDir: string;
   
   if (platform === 'darwin') {
-    // macOS: ~/Library/Application Support/open-cowork
-    appDataDir = path.join(os.homedir(), 'Library', 'Application Support', 'open-cowork');
+    // macOS: ~/Library/Application Support/lygodactylus
+    appDataDir = path.join(os.homedir(), 'Library', 'Application Support', 'lygodactylus');
   } else if (platform === 'win32') {
-    // Windows: %APPDATA%/open-cowork
-    appDataDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'open-cowork');
+    // Windows: %APPDATA%/lygodactylus
+    appDataDir = path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'lygodactylus');
   } else {
-    // Linux: ~/.config/open-cowork
-    appDataDir = path.join(os.homedir(), '.config', 'open-cowork');
+    // Linux: ~/.config/lygodactylus
+    appDataDir = path.join(os.homedir(), '.config', 'lygodactylus');
   }
   
   logsDir = path.join(appDataDir, 'logs');

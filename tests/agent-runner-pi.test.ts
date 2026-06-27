@@ -65,7 +65,7 @@ const agentRunnerStreamCombinedContent = [
 const agentRunnerHistoryContent = readFileSync(agentRunnerHistoryPath, 'utf8');
 const agentRunnerMcpBridgeContent = readFileSync(agentRunnerMcpBridgePath, 'utf8');
 
-describe('ClaudeAgentRunner Open Cowork SDK integration', () => {
+describe('ClaudeAgentRunner Lygodactylus SDK integration', () => {
   it('avoids dynamic re-import shadowing for config store singletons', () => {
     expect(agentRunnerPiSetupContent).toContain(
       "import { configStore } from '../config/config-store'"

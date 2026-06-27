@@ -5,8 +5,8 @@ export const PLATFORM = os.platform(); // 'darwin' for macOS, 'win32' for Window
 
 export const OPEN_COWORK_DATA_DIR =
   PLATFORM === 'win32'
-    ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'open-cowork')
-    : path.join(os.homedir(), 'Library', 'Application Support', 'open-cowork');
+    ? path.join(process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming'), 'lygodactylus')
+    : path.join(os.homedir(), 'Library', 'Application Support', 'lygodactylus');
 
 export const GUI_OPERATE_DIR = path.join(OPEN_COWORK_DATA_DIR, 'gui_operate');
 export const SCREENSHOTS_DIR = path.join(GUI_OPERATE_DIR, 'screenshots');

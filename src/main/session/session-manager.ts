@@ -120,7 +120,7 @@ export class SessionManager {
       undefined,
       this.extensionManager
     );
-    log('[SessionManager] Using Open Cowork agent runner');
+    log('[SessionManager] Using Lygodactylus agent runner');
   }
 
   reloadConfig(): void {

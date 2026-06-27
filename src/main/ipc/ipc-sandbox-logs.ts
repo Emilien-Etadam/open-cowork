@@ -348,7 +348,7 @@ export function registerSandboxLogsIpc(): void {
         });
         archive.append(
           [
-            'Open Cowork diagnostic bundle',
+            'Lygodactylus diagnostic bundle',
             `Exported at: ${diagnosticsSummary.exportedAt}`,
             '',
             'Included files:',

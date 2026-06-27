@@ -6,7 +6,7 @@ import { app } from 'electron';
 import { log, logWarn } from './logger';
 
 const KEY_FILE_NAME = 'machine-encryption.key';
-const FALLBACK_SALT = 'open-cowork-machine-key-v2';
+const FALLBACK_SALT = 'lygodactylus-machine-key-v2';
 
 let cachedKey: string | null = null;
 
@@ -93,4 +93,6 @@ export function getMachineEncryptionKey(): string {
 export const LEGACY_STATIC_ENCRYPTION_KEYS = [
   'open-cowork-config-stable-v1',
   'open-cowork-remote-stable-v1',
+  'lygodactylus-config-stable-v1',
+  'lygodactylus-remote-stable-v1',
 ] as const;
