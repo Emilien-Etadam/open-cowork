@@ -41,7 +41,7 @@
 - **Proactive compaction** — auto-compact when context is nearly full
 - **Updates** — Windows auto-update + “Check for updates” button (Settings → General)
 - **Simplified API config** — two profiles: OpenAI-compatible and Anthropic-compatible
-- **VS Code theme**, **copy/paste** on Windows, **sandbox toggle**, **pi-coding-agent 0.73.1**
+- **VS Code theme**, **copy/paste** on Windows, **sandbox toggle**, **pi-coding-agent 0.80.2** (`@earendil-works`)
 
 ---
 

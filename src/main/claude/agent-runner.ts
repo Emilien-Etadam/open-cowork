@@ -47,7 +47,7 @@ interface AgentRunnerOptions {
 }
 
 /**
- * ClaudeAgentRunner - Uses @mariozechner/pi-coding-agent SDK
+ * ClaudeAgentRunner - Uses @earendil-works/pi-coding-agent SDK
  *
  * Environment variables should be set before running:
  *   ANTHROPIC_BASE_URL=https://openrouter.ai/api

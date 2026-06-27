@@ -41,7 +41,7 @@
 - **Compaction proactive** — compact automatique quand le contexte est presque plein
 - **Mises à jour** — auto-update Windows + bouton « Vérifier les mises à jour » (Réglages → Général)
 - **Config API simplifiée** — deux profils : OpenAI-compatible et Anthropic-compatible
-- **Thème VS Code**, **copier/coller** Windows, **toggle sandbox**, **pi-coding-agent 0.73.1**
+- **Thème VS Code**, **copier/coller** Windows, **toggle sandbox**, **pi-coding-agent 0.80.2** (`@earendil-works`)
 
 ---
 

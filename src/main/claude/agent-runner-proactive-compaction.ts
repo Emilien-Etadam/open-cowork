@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import type { AgentSession as PiAgentSession } from '@mariozechner/pi-coding-agent';
+import type { AgentSession as PiAgentSession } from '@earendil-works/pi-coding-agent';
 import type { Message } from '../../renderer/types';
 import { mt } from '../i18n';
 import { log, logWarn } from '../utils/logger';

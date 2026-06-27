@@ -4,7 +4,7 @@ import type {
   TextContent,
   ThinkingContent,
   ToolCall,
-} from '@mariozechner/pi-ai';
+} from '@earendil-works/pi-ai';
 import { splitThinkTagBlocks } from './think-tag-parser';
 import { isContextOverflowError } from './context-budget';
 import { mt } from '../i18n';

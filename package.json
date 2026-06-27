@@ -67,8 +67,8 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
     "@google/genai": "^1.44.0",
-    "@mariozechner/pi-ai": "^0.73.1",
-    "@mariozechner/pi-coding-agent": "^0.73.1",
+    "@earendil-works/pi-ai": "^0.80.2",
+    "@earendil-works/pi-coding-agent": "^0.80.2",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@opentelemetry/api": "1.9.1",
     "archiver": "^7.0.1",

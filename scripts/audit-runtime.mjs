@@ -9,13 +9,7 @@
 import { execSync } from 'node:child_process';
 
 /** GHSA IDs with no fixed release at audit time (document why). */
-const ALLOWED_UNFIXED = new Set(
-  [
-    'GHSA-7v5m-pr3q-6453',
-    'GHSA-jfgx-wxx8-mp94',
-    'GHSA-r95r-rj6r-c39x',
-  ].map((id) => id.toUpperCase())
-);
+const ALLOWED_UNFIXED = new Set();
 
 function loadAudit() {
   try {

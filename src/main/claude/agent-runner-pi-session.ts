@@ -11,7 +11,7 @@ import {
   SettingsManager as PiSettingsManager,
   type AgentSession as PiAgentSession,
   type ToolDefinition,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import { decidePermission, rememberAlwaysAllow } from '../config/permission-rules-store';
 import type { MCPManager } from '../mcp/mcp-manager';
 import { logCtx } from '../utils/logger';
