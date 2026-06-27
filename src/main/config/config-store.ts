@@ -51,6 +51,7 @@ import {
   MAX_CONFIG_SET_COUNT,
   normalizeCustomProtocol,
   normalizeMemoryRuntimeConfig,
+  normalizeWebSearchConfig,
   nowISO,
   PROFILE_KEYS,
   profileKeyFromProvider,
@@ -411,6 +412,10 @@ export class ConfigStore {
         updates.memoryRuntime !== undefined
           ? normalizeMemoryRuntimeConfig(updates.memoryRuntime)
           : current.memoryRuntime,
+      webSearch:
+        updates.webSearch !== undefined
+          ? normalizeWebSearchConfig(updates.webSearch)
+          : current.webSearch,
       isConfigured:
         updates.isConfigured !== undefined ? updates.isConfigured : current.isConfigured,
     });

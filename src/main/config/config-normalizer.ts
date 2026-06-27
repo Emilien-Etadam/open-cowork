@@ -24,6 +24,7 @@ import {
   isAppTheme,
   isThemePreset,
   normalizeMemoryRuntimeConfig,
+  normalizeWebSearchConfig,
   nowISO,
   profileKeyFromProvider,
   toBoolean,
@@ -450,6 +451,7 @@ export function normalizeConfig(rawConfig: Partial<AppConfig> | undefined): AppC
     sandboxEnabled: toBoolean(raw.sandboxEnabled, defaultConfig.sandboxEnabled),
     memoryEnabled: toBoolean(raw.memoryEnabled, defaultConfig.memoryEnabled),
     memoryRuntime: normalizeMemoryRuntimeConfig(raw.memoryRuntime),
+    webSearch: normalizeWebSearchConfig(raw.webSearch),
     enableThinking: projected.enableThinking,
     isConfigured: toBoolean(raw.isConfigured, defaultConfig.isConfigured),
   };

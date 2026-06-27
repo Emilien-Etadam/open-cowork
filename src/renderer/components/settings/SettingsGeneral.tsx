@@ -5,6 +5,7 @@ import { useAppStore } from '../../store';
 import { formatEeDisplayVersion } from '../../../shared/app-version';
 import type { UpdateCheckResult } from '../../../shared/update-check';
 import { SettingsChatLan } from './SettingsChatLan';
+import { SettingsWebSearch } from './SettingsWebSearch';
 
 export function SettingsGeneral() {
   const { i18n, t } = useTranslation();
@@ -160,6 +161,7 @@ export function SettingsGeneral() {
   return (
     <div className="space-y-6">
       <SettingsChatLan />
+      <SettingsWebSearch />
       <div className="space-y-3">
         <h4 className="text-sm font-medium text-text-primary">{t('general.appearance')}</h4>
         <div className="flex gap-2">
