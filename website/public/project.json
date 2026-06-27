@@ -14,7 +14,7 @@
     "name": "MIT",
     "url": "https://github.com/OpenCoworkAI/open-cowork/blob/main/LICENSE"
   },
-  "version": "3.3.0",
+  "version": "5.0.0",
   "lastReviewed": "2026-05-01",
   "description": "Open-source AI agent desktop app for Windows and macOS with one-click installation, sandbox isolation, multi-model support, built-in Skills, MCP integration, GUI automation, and remote control.",
   "applicationCategory": "DeveloperApplication",
