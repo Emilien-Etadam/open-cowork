@@ -24,10 +24,10 @@
 
 ## What is it?
 
-**Lygodactylus** is a desktop AI agent app (Electron) for Windows and macOS. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a local web UI on your network).
+**Lygodactylus** is a desktop AI agent app (Electron) for Windows and macOS. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a web UI on your network — recommended over a WireGuard VPN tunnel).
 
 > [!NOTE]
-> This repository is a **personal fork**. `EE*` releases are experimental **alpha** builds. For the official stable version, see [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
+> This repository is a **personal fork**. The **v5.x** series is an experimental **alpha**. Older `EE*` releases remain available but are no longer the active branch. For the official stable upstream version, see [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
 
 ---
 
@@ -35,11 +35,11 @@
 
 - **12 languages** — fr, en, zh, es, de, it, uk, pl, sv, no, nl, ro — with backend localization (errors, dialogs)
 - **Unified marketplace** — Settings → Extensions: skills, MCP connectors, and plugins (curated catalog, 21+ entries)
-- **LAN chat** — local web server to talk to the agent from a browser (Settings → Chat LAN)
+- **LAN chat** — local web server to talk to the agent from a browser (Settings → Chat LAN; recommended over WireGuard VPN)
 - **Slash commands** — `/` autocomplete in chat, including commands from installed plugins
 - **Message fork / edit** — start a new session from a message or edit a user prompt
 - **Proactive compaction** — auto-compact when context is nearly full
-- **EE updates** — Windows auto-update + “Check for updates” button (Settings → General)
+- **Updates** — Windows auto-update + “Check for updates” button (Settings → General)
 - **Simplified API config** — two profiles: OpenAI-compatible and Anthropic-compatible
 - **VS Code theme**, **copy/paste** on Windows, **sandbox toggle**, **pi-coding-agent 0.73.1**
 
@@ -56,7 +56,7 @@ Download the latest build from [Releases](https://github.com/emilien-etadam/lygo
 | Windows               | `.exe` |
 | macOS (Apple Silicon) | `.dmg` |
 
-On **Windows**, the app checks for EE updates on startup. Otherwise use **Settings → General → Check for updates**.
+On **Windows**, the app checks for updates on startup. Otherwise use **Settings → General → Check for updates**.
 
 ### From source
 
@@ -77,7 +77,7 @@ To build a local installer: `npm run build`
 2. Set up an **OpenAI-compatible** or **Anthropic-compatible** provider (API key + base URL).
 3. Install extensions in **Settings → Extensions** (MCP, skills, plugins).
 4. Choose a **workspace folder** — the agent will only work inside that directory.
-5. Send a prompt, type `/` for slash commands, or enable **LAN chat** to use the browser UI.
+5. Send a prompt, type `/` for slash commands, or enable **LAN chat** for the browser UI (preferably over a WireGuard tunnel).
 
 For release details, see [`CHANGELOG.md`](CHANGELOG.md).
 

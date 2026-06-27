@@ -3,6 +3,7 @@
  */
 import * as crypto from 'crypto';
 import Store from 'electron-store';
+import { createAppEncryptedStore } from '../utils/app-store';
 
 export interface ChatLanConfig {
   enabled: boolean;
@@ -20,14 +21,16 @@ class ChatLanConfigStore {
   private store: Store<ChatLanConfig>;
 
   constructor() {
-    this.store = new Store<ChatLanConfig>({
+    this.store = createAppEncryptedStore<ChatLanConfig & Record<string, unknown>>({
       name: 'chat-lan-config',
       defaults: {
         enabled: false,
         port: DEFAULT_PORT,
         token: generateToken(),
       },
-    });
+      logPrefix: '[ChatLanConfigStore]',
+    }) as unknown as Store<ChatLanConfig>;
+
     if (!this.store.get('token')) {
       this.store.set('token', generateToken());
     }

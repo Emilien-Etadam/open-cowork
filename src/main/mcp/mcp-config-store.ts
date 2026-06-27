@@ -1,10 +1,11 @@
-import Store, { type Options as StoreOptions } from 'electron-store';
+import Store from 'electron-store';
 import { app } from 'electron';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
 import path from 'path';
 import type { MCPServerConfig } from './mcp-manager';
 import { log, logError } from '../utils/logger';
+import { createAppEncryptedStore } from '../utils/app-store';
 import { mapRegistryServerDetail } from '../catalog/mcp-registry-resolver';
 
 /**
@@ -72,15 +73,13 @@ class MCPConfigStore {
   private store: Store<{ servers: MCPServerConfig[] }>;
 
   constructor() {
-    const storeOptions: StoreOptions<{ servers: MCPServerConfig[] }> & { projectName?: string } = {
+    this.store = createAppEncryptedStore<{ servers: MCPServerConfig[] }>({
       name: 'mcp-config',
-      projectName: 'lygodactylus',
       defaults: {
         servers: [],
       },
-    };
-
-    this.store = new Store<{ servers: MCPServerConfig[] }>(storeOptions);
+      logPrefix: '[MCPConfigStore]',
+    }) as Store<{ servers: MCPServerConfig[] }>;
   }
 
   /**
