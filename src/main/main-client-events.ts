@@ -96,6 +96,9 @@ export async function handleClientEvent(event: ClientEvent): Promise<unknown> {
     case 'session.batchDelete':
       return sm.batchDeleteSessions(event.payload.sessionIds);
 
+    case 'session.setMemoryEnabled':
+      return sm.setSessionMemoryEnabled(event.payload.sessionId, event.payload.memoryEnabled);
+
     case 'session.list': {
       const sessions = sm.listSessions();
       sendToRenderer({ type: 'session.list', payload: { sessions } });

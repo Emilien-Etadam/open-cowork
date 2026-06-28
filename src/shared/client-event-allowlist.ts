@@ -9,6 +9,7 @@ export const ALLOWED_CLIENT_EVENT_TYPES = [
   'session.stop',
   'session.delete',
   'session.batchDelete',
+  'session.setMemoryEnabled',
   'session.list',
   'session.getMessages',
   'session.getTraceSteps',

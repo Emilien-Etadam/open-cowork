@@ -287,6 +287,10 @@ export class SessionManager {
     this.facadeSupport.updateSessionCwd(sessionId, cwd);
   }
 
+  setSessionMemoryEnabled(sessionId: string, memoryEnabled: boolean): Session {
+    return this.facadeSupport.updateSessionMemoryEnabled(sessionId, memoryEnabled);
+  }
+
   clearAllCachedAgentSessions(): void {
     this.agentRunner.clearAllSdkSessions?.();
   }

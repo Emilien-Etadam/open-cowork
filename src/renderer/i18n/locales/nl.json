@@ -196,7 +196,15 @@
     "noFiles": "Nog geen geheugenbestanden",
     "fileContent": "Bestandsinhoud",
     "emptyFile": "Bestand is leeg",
-    "selectFileHint": "Selecteer links een bestand om de ruwe JSON te bekijken."
+    "selectFileHint": "Selecteer links een bestand om de ruwe JSON te bekijken.",
+    "chunkTopK": "Chunk top-K",
+    "sessionTopK": "Session top-K",
+    "injectionPolicy": "Injection policy",
+    "injectionPolicyEscape": "Escape delimiters",
+    "injectionPolicyStrip": "Strip suspicious patterns",
+    "injectionPolicyBlock": "Block suspicious content",
+    "showInjectedMemoryInChat": "Show injected memory in chat",
+    "relevanceScore": "Relevance {{score}}"
   },
   "language": {
     "english": "Engels",
@@ -717,7 +725,13 @@
       "errRewindSessionNotFound": "Session not found.",
       "errRewindMessageNotFound": "User message not found.",
       "errRewindFailed": "Could not edit this message."
-    }
+    },
+    "memoryUsedCount_one": "{{count}} memory item used",
+    "memoryUsedCount_other": "{{count}} memory items used",
+    "memoryNoRecall": "No relevant memory recalled for this turn",
+    "memoryDisabledSession": "Memory disabled for this session",
+    "memorySessionToggle": "Memory for session",
+    "memoryOpenSourceSession": "Open source session"
   },
   "context": {
     "progress": "Voortgang",

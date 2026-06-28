@@ -25,6 +25,7 @@ import {
 } from '../../shared/slash-commands';
 import { SlashCommandMenu } from './SlashCommandMenu';
 import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
+import { MemoryContextBar } from './MemoryContextBar';
 
 type AttachedFile = {
   name: string;
@@ -54,8 +55,14 @@ export function ChatView() {
     forkSessionFromMessage,
     rewindSessionForEdit,
     stopSession,
+    setSessionMemoryEnabled,
     isElectron,
   } = useIPC();
+  const setActiveSession = useAppStore((s) => s.setActiveSession);
+  const memoryContextItems = useAppStore((state) =>
+    activeSessionId ? (state.sessionStates[activeSessionId]?.memoryContextItems ?? []) : []
+  );
+  const globalMemoryEnabled = appConfig?.memoryEnabled !== false;
   const [prompt, setPrompt] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeConnectors, setActiveConnectors] = useState<
@@ -825,6 +832,17 @@ export function ChatView() {
           </>
         )}
       </div>
+
+      {globalMemoryEnabled && activeSession && (
+        <MemoryContextBar
+          items={memoryContextItems}
+          memoryEnabled={activeSession.memoryEnabled}
+          onToggleMemory={(enabled) => {
+            void setSessionMemoryEnabled(activeSession.id, enabled);
+          }}
+          onOpenSourceSession={(sessionId) => setActiveSession(sessionId)}
+        />
+      )}
 
       {/* Messages */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
