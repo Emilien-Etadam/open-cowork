@@ -236,6 +236,10 @@ export function useIPC() {
             });
             break;
 
+          case 'session.memoryContext':
+            store.setSessionMemoryContext(event.payload.sessionId, event.payload.items);
+            break;
+
           case 'plugins.commandsChanged':
           case 'plugins.runtimeApplied':
             store.bumpPluginCommandsRevision();
@@ -996,6 +1000,20 @@ export function useIPC() {
     return window.electronAPI.mcp.getServerStatus();
   }, []);
 
+  const setSessionMemoryEnabled = useCallback(
+    async (sessionId: string, memoryEnabled: boolean) => {
+      updateSession(sessionId, { memoryEnabled });
+      if (!isElectron) {
+        return;
+      }
+      await invoke({
+        type: 'session.setMemoryEnabled',
+        payload: { sessionId, memoryEnabled },
+      });
+    },
+    [invoke, isElectron, updateSession]
+  );
+
   return {
     send,
     invoke,
@@ -1006,6 +1024,7 @@ export function useIPC() {
     forkSessionFromMessage,
     rewindSessionForEdit,
     stopSession,
+    setSessionMemoryEnabled,
     deleteSession,
     batchDeleteSessions,
     listSessions,

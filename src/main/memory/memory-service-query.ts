@@ -45,10 +45,10 @@ export function getTools(host: MemoryQueryHost): MemoryToolDefinition[] {
   return host.tools;
 }
 
-export function searchMemory(
+export async function searchMemory(
   host: MemoryQueryHost,
   params: MemorySearchParams
-): MemorySearchResult[] {
+): Promise<MemorySearchResult[]> {
   return host.retriever.search(params);
 }
 

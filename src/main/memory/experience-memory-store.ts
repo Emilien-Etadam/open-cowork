@@ -8,13 +8,8 @@ import type {
   SessionContextItem,
   SessionMemoryItem,
 } from './memory-types';
-import {
-  cosineSimilarity,
-  lexicalScore,
-  loadJsonFile,
-  normalizeWorkspaceKey,
-  saveJsonFile,
-} from './memory-utils';
+import { computeMemoryRankScore } from './memory-ranker';
+import { loadJsonFile, normalizeWorkspaceKey, saveJsonFile } from './memory-utils';
 
 interface ExperienceMemoryFile {
   sessions: Array<Record<string, unknown>>;
@@ -22,7 +17,9 @@ interface ExperienceMemoryFile {
 }
 
 function toStringArray(value: unknown): string[] {
-  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
 }
 
 function toNumberArray(value: unknown): number[] {
@@ -167,37 +164,6 @@ function sessionToFileRecord(item: SessionMemoryItem): Record<string, unknown> {
   };
 }
 
-function workspaceBoost(currentWorkspace: string | null, sourceWorkspace?: string | null): number {
-  if (!currentWorkspace) {
-    return sourceWorkspace ? 0 : -0.03;
-  }
-  if (sourceWorkspace === currentWorkspace) {
-    return 0.3;
-  }
-  if (!sourceWorkspace) {
-    return -0.04;
-  }
-  return 0;
-}
-
-function recencyBoost(ingestedAt: string, now = Date.now()): number {
-  const timestamp = Date.parse(ingestedAt);
-  if (!Number.isFinite(timestamp)) {
-    return 0;
-  }
-  const ageDays = Math.max(0, (now - timestamp) / 86_400_000);
-  if (ageDays <= 3) {
-    return 0.08;
-  }
-  if (ageDays <= 14) {
-    return 0.04;
-  }
-  if (ageDays <= 45) {
-    return 0.02;
-  }
-  return 0;
-}
-
 export class ExperienceMemoryStore {
   readonly sessions: SessionMemoryItem[];
   readonly chunks: ChunkMemoryItem[];
@@ -246,8 +212,15 @@ export class ExperienceMemoryStore {
       .filter((item): item is ChunkMemoryItem => Boolean(item));
   }
 
-  getStatsBySourceWorkspace(): Array<{ workspaceKey: string; sessionCount: number; chunkCount: number }> {
-    const stats = new Map<string, { workspaceKey: string; sessionCount: number; chunkCount: number }>();
+  getStatsBySourceWorkspace(): Array<{
+    workspaceKey: string;
+    sessionCount: number;
+    chunkCount: number;
+  }> {
+    const stats = new Map<
+      string,
+      { workspaceKey: string; sessionCount: number; chunkCount: number }
+    >();
     for (const session of this.sessions) {
       const key = session.sourceWorkspace || '(none)';
       const current = stats.get(key) || { workspaceKey: key, sessionCount: 0, chunkCount: 0 };
@@ -260,7 +233,9 @@ export class ExperienceMemoryStore {
       current.chunkCount += 1;
       stats.set(key, current);
     }
-    return [...stats.values()].sort((a, b) => b.sessionCount + b.chunkCount - (a.sessionCount + a.chunkCount));
+    return [...stats.values()].sort(
+      (a, b) => b.sessionCount + b.chunkCount - (a.sessionCount + a.chunkCount)
+    );
   }
 
   replaceSession(
@@ -348,26 +323,42 @@ export class ExperienceMemoryStore {
     const currentWorkspace = normalizeWorkspaceKey(options?.currentWorkspace || null);
     const queryEmbedding = options?.queryEmbedding;
 
-    const rankedChunks = this.rankItems(query, this.chunks, chunkTopK, queryEmbedding, currentWorkspace, (item) => [
-      item.summary,
-      item.details,
-      item.rawText,
-      ...item.keywords,
-      item.sourceWorkspace || '',
-      item.sourceSessionTitle || '',
-    ].join(' '));
+    const rankedChunks = this.rankItems(
+      query,
+      this.chunks,
+      chunkTopK,
+      queryEmbedding,
+      currentWorkspace,
+      (item) =>
+        [
+          item.summary,
+          item.details,
+          item.rawText,
+          ...item.keywords,
+          item.sourceWorkspace || '',
+          item.sourceSessionTitle || '',
+        ].join(' ')
+    );
     const rankedSessions = this.rankItems(
       query,
       this.sessions,
       sessionTopK,
       queryEmbedding,
       currentWorkspace,
-      (item) => [item.summary, ...item.keywords, item.sourceWorkspace || '', item.sourceSessionTitle || ''].join(' ')
+      (item) =>
+        [
+          item.summary,
+          ...item.keywords,
+          item.sourceWorkspace || '',
+          item.sourceSessionTitle || '',
+        ].join(' ')
     );
 
     const broadSummaries = [
       ...rankedChunks.map(
-        (item): { score: number; payload: ProgressiveRetrievalResult['broadSummaries'][number] } => ({
+        (
+          item
+        ): { score: number; payload: ProgressiveRetrievalResult['broadSummaries'][number] } => ({
           score: item.score,
           payload: {
             type: 'chunk',
@@ -376,11 +367,14 @@ export class ExperienceMemoryStore {
             sourceWorkspace: item.record.sourceWorkspace,
             sourceSessionTitle: item.record.sourceSessionTitle,
             summary: item.record.summary,
+            score: item.score,
           },
         })
       ),
       ...rankedSessions.map(
-        (item): { score: number; payload: ProgressiveRetrievalResult['broadSummaries'][number] } => ({
+        (
+          item
+        ): { score: number; payload: ProgressiveRetrievalResult['broadSummaries'][number] } => ({
           score: item.score,
           payload: {
             type: 'session',
@@ -389,6 +383,7 @@ export class ExperienceMemoryStore {
             sourceWorkspace: item.record.sourceWorkspace,
             sourceSessionTitle: item.record.sourceSessionTitle,
             summary: item.record.summary,
+            score: item.score,
           },
         })
       ),
@@ -435,7 +430,9 @@ export class ExperienceMemoryStore {
     };
   }
 
-  private rankItems<T extends { embedding: number[]; ingestedAt: string; sourceWorkspace?: string | null }>(
+  private rankItems<
+    T extends { embedding: number[]; ingestedAt: string; sourceWorkspace?: string | null },
+  >(
     query: string,
     items: T[],
     topK: number,
@@ -445,16 +442,15 @@ export class ExperienceMemoryStore {
   ): Array<{ record: T; score: number }> {
     return items
       .map((record) => {
-        const lexical = lexicalScore(query, textSelector(record));
-        const embedding =
-          queryEmbedding && queryEmbedding.length && record.embedding.length
-            ? cosineSimilarity(queryEmbedding, record.embedding)
-            : 0;
-        const evidenceScore = lexical + embedding;
-        const score =
-          evidenceScore +
-          workspaceBoost(currentWorkspace, record.sourceWorkspace) +
-          recencyBoost(record.ingestedAt);
+        const { score, evidenceScore } = computeMemoryRankScore({
+          query,
+          text: textSelector(record),
+          queryEmbedding,
+          recordEmbedding: record.embedding,
+          currentWorkspace,
+          sourceWorkspace: record.sourceWorkspace,
+          ingestedAt: record.ingestedAt,
+        });
         return { record, score, evidenceScore };
       })
       .filter((item) => item.evidenceScore > 0)

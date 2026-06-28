@@ -6,6 +6,7 @@ import type {
   SessionMemoryItem,
 } from './memory-types';
 import { ExperienceMemoryStore } from './experience-memory-store';
+import { computeMemoryRankScore } from './memory-ranker';
 import { lexicalScore, normalizeWorkspaceKey, summarizeText } from './memory-utils';
 
 function buildSearchId(kind: string, recordId: string): string {
@@ -23,6 +24,22 @@ function parseSearchId(id: string): { kind: string; recordId: string } | null {
   };
 }
 
+function buildSourceExcerpt(
+  rawSession: SessionMemoryItem['rawSession'] | undefined,
+  sourceTurns: number[] | undefined
+): string | undefined {
+  if (!rawSession?.length || !sourceTurns?.length) {
+    return undefined;
+  }
+  const turns = sourceTurns
+    .map((index) => rawSession[index])
+    .filter((turn): turn is NonNullable<typeof turn> => Boolean(turn));
+  if (!turns.length) {
+    return undefined;
+  }
+  return summarizeText(turns.map((turn) => `${turn.role}: ${turn.content}`).join('\n'), 320);
+}
+
 export class MemoryRetriever {
   constructor(
     private readonly deps: {
@@ -31,10 +48,12 @@ export class MemoryRetriever {
       getExperienceStore: () => ExperienceMemoryStore;
       getExperienceFilePath: () => string;
       getSessionTitle: (sessionId: string) => string | undefined;
+      embedQuery?: (query: string) => Promise<number[]>;
+      useEmbedding?: () => boolean;
     }
   ) {}
 
-  search(params: MemorySearchParams): MemorySearchResult[] {
+  async search(params: MemorySearchParams): Promise<MemorySearchResult[]> {
     const query = params.query.trim();
     if (!query) {
       return [];
@@ -47,13 +66,24 @@ export class MemoryRetriever {
     const experienceWorkspace =
       explicitSourceWorkspace ?? (scope === 'workspace' ? defaultWorkspace : null);
     const limit = Math.min(Math.max(params.limit || 8, 1), 50);
+    const queryEmbedding =
+      this.deps.useEmbedding?.() && this.deps.embedQuery
+        ? await this.deps.embedQuery(query)
+        : undefined;
     const results: MemorySearchResult[] = [];
 
     if (scope !== 'workspace') {
       results.push(...this.searchCore(query));
     }
     if (scope !== 'global') {
-      results.push(...this.searchExperience(query, experienceWorkspace));
+      results.push(
+        ...(await this.searchExperience(
+          query,
+          experienceWorkspace,
+          defaultWorkspace,
+          queryEmbedding
+        ))
+      );
     }
 
     return results
@@ -78,6 +108,7 @@ export class MemoryRetriever {
       if (!chunk) {
         return null;
       }
+      const session = store.getSession(chunk.sessionId);
       return {
         id,
         recordId: parsed.recordId,
@@ -100,6 +131,7 @@ export class MemoryRetriever {
         createdAt: Date.parse(chunk.createdAt) || Date.now(),
         updatedAt: Date.parse(chunk.ingestedAt) || undefined,
         keywords: chunk.keywords,
+        sourceExcerpt: buildSourceExcerpt(session?.rawSession, chunk.sourceTurns),
       };
     }
 
@@ -138,6 +170,7 @@ export class MemoryRetriever {
       updatedAt: Date.parse(session.ingestedAt) || undefined,
       keywords: session.keywords,
       chunkIds: chunks.map((chunk) => chunk.id),
+      sourceExcerpt: summarizeText(rawText, 320),
     };
   }
 
@@ -166,7 +199,12 @@ export class MemoryRetriever {
       .filter((item): item is MemorySearchResult => Boolean(item));
   }
 
-  private searchExperience(query: string, sourceWorkspace: string | null): MemorySearchResult[] {
+  private async searchExperience(
+    query: string,
+    sourceWorkspace: string | null,
+    currentWorkspace: string | null,
+    queryEmbedding?: number[]
+  ): Promise<MemorySearchResult[]> {
     const store = this.deps.getExperienceStore();
     const results: MemorySearchResult[] = [];
 
@@ -174,8 +212,22 @@ export class MemoryRetriever {
       if (sourceWorkspace && item.sourceWorkspace !== sourceWorkspace) {
         continue;
       }
-      const score = lexicalScore(query, [item.summary, ...item.keywords].join(' '));
-      if (score <= 0) {
+      const text = [
+        item.summary,
+        ...item.keywords,
+        item.sourceWorkspace || '',
+        item.sourceSessionTitle || '',
+      ].join(' ');
+      const { score, evidenceScore } = computeMemoryRankScore({
+        query,
+        text,
+        queryEmbedding,
+        recordEmbedding: item.embedding,
+        currentWorkspace,
+        sourceWorkspace: item.sourceWorkspace,
+        ingestedAt: item.ingestedAt,
+      });
+      if (evidenceScore <= 0) {
         continue;
       }
       results.push(this.mapSessionResult(item, score));
@@ -185,11 +237,17 @@ export class MemoryRetriever {
       if (sourceWorkspace && item.sourceWorkspace !== sourceWorkspace) {
         continue;
       }
-      const score = lexicalScore(
+      const text = [item.summary, item.details, item.rawText, ...item.keywords].join(' ');
+      const { score, evidenceScore } = computeMemoryRankScore({
         query,
-        [item.summary, item.details, item.rawText, ...item.keywords].join(' ')
-      );
-      if (score <= 0) {
+        text,
+        queryEmbedding,
+        recordEmbedding: item.embedding,
+        currentWorkspace,
+        sourceWorkspace: item.sourceWorkspace,
+        ingestedAt: item.ingestedAt,
+      });
+      if (evidenceScore <= 0) {
         continue;
       }
       results.push({

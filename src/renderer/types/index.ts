@@ -485,6 +485,7 @@ export type ClientEvent =
     }
   | { type: 'session.delete'; payload: { sessionId: string } }
   | { type: 'session.batchDelete'; payload: { sessionIds: string[] } }
+  | { type: 'session.setMemoryEnabled'; payload: { sessionId: string; memoryEnabled: boolean } }
   | { type: 'session.list'; payload: Record<string, never> }
   | { type: 'session.getMessages'; payload: { sessionId: string } }
   | { type: 'session.getTraceSteps'; payload: { sessionId: string } }
@@ -569,6 +570,10 @@ export type ServerEvent =
   | { type: 'plugins.commandsChanged'; payload: Record<string, never> }
   | { type: 'update.checkResult'; payload: import('../../shared/update-check').UpdateCheckResult }
   | { type: 'workdir.changed'; payload: { path: string } }
+  | {
+      type: 'session.memoryContext';
+      payload: { sessionId: string; items: MemoryInjectedItem[] };
+    }
   | {
       type: 'session.contextInfo';
       payload: { sessionId: string; contextWindow: number; maxTokens: number };
@@ -683,12 +688,27 @@ export interface MemoryRuntimeConfig {
   useEmbedding: boolean;
   maxNavSteps: number;
   ingestionConcurrency: number;
+  chunkTopK: number;
+  sessionTopK: number;
+  injectionPolicy: 'escape' | 'strip-suspicious' | 'block';
+  showInjectedMemoryInChat: boolean;
   storageRoot?: string;
   evalEnabled?: boolean;
   evalWorkspaces?: string[];
   evalMaxRounds?: number;
   evalArtifactsRoot?: string;
   promptIterationRounds?: number;
+}
+
+export interface MemoryInjectedItem {
+  kind: 'core' | 'chunk' | 'session';
+  id: string;
+  title: string;
+  summary: string;
+  score?: number;
+  sourceWorkspace?: string | null;
+  sourceSessionId?: string;
+  sourceSessionTitle?: string;
 }
 
 export interface AppConfig {
