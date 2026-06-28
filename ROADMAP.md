@@ -101,18 +101,11 @@ Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emili
 - **Phase 2**: extracted `command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`; expanded tool-executor tests; CI coverage floor 40%
 - **Phase 3**: migration `@earendil-works/pi-ai` / `@earendil-works/pi-coding-agent` ^0.80.2 (0 CVE runtime), compat entrypoint for legacy API, DeepSeek V4 thinking patch ported
 - **v5.1 prep**: Node `>=22.19.0`, installer slimming (@img removed, MCP minify, locales win/linux), legacy rename `src/main/claude/` → `src/main/agent/`, `pi-ai-one-shot`, `AgentRunner`
-
-## 🚧 In Progress
-
-### Validation v5.0.0
-
-- Smoke test chat LAN : serveur local, permissions, UI web
-- Migration config API → deux fournisseurs
-- Régression : chat principal, slash commands, vérification mises à jour (EE4.91)
+- **Validation v5.1.0** (2026-06-27) : smoke tests Chat LAN, migration config deux fournisseurs, régression chat/slash/auto-update — validés
 
 ## 📋 Planned
 
-### Near-term (v5.1+)
+### Near-term (v5.2+)
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
 - **App Slimming**: Reduce installer from ~156 MB to ~80 MB — on-demand Python/Node.js download, lazy-load SDKs, strip unused files (Feishu SDK retiré #40)
@@ -138,5 +131,5 @@ Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (v5.1 prep — Node 22.19, slimming, agent module rename)_  
+_Last updated: 2026-06-27 (v5.1.0 validée — baseline stable)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._
