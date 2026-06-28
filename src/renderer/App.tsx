@@ -51,7 +51,7 @@ function MainPanelFallback() {
 function ContextPanelFallback() {
   return (
     <div
-      className="hidden xl:block w-[340px] shrink-0 border-l border-border-subtle bg-background/60"
+      className="hidden xl:block w-[16.2rem] shrink-0 border-l border-border-subtle bg-background/60"
       aria-hidden="true"
     />
   );
