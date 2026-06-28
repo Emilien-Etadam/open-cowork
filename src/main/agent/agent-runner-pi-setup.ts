@@ -8,6 +8,7 @@ import type { Message, Session } from '../../renderer/types';
 import { configStore } from '../config/config-store';
 import { isLoopbackOpenAIEndpoint, normalizeOpenAICompatibleBaseUrl } from '../config/auth-utils';
 import { fetchOllamaModelInfo } from '../config/ollama-api';
+import { detectCommonProviderSetup } from '../../shared/api-provider-guidance';
 import type { BeforeSessionRunResult } from '../extensions/agent-runtime-extension';
 import type { SandboxAdapter } from '../sandbox/sandbox-adapter';
 import { wslUnixPathToWindowsUnc } from '../sandbox/sandbox-workspace-path';
@@ -159,13 +160,17 @@ export async function preparePiSessionRun({
   logCtx('[AgentRunner] Resolved pi-ai model:', piModel.provider, piModel.id);
 
   const provider = runtimeConfig.provider || 'anthropic';
+  const effectiveModelBaseUrl = piModel.baseUrl || runtimeConfig.baseUrl || '';
+  const isOllamaLoopbackEndpoint =
+    detectCommonProviderSetup(effectiveModelBaseUrl)?.id === 'ollama';
   if (
     provider === 'openai' &&
     isLoopbackOpenAIEndpoint({ provider, baseUrl: runtimeConfig.baseUrl }) &&
+    isOllamaLoopbackEndpoint &&
     !runtimeConfig.contextWindow
   ) {
     const ollamaInfo = await fetchOllamaModelInfo({
-      baseUrl: piModel.baseUrl || runtimeConfig.baseUrl || 'http://localhost:11434/v1',
+      baseUrl: effectiveModelBaseUrl || 'http://localhost:11434/v1',
       model: piModel.id,
       apiKey: runtimeConfig.apiKey,
     });
