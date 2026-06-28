@@ -18,6 +18,7 @@ files:
   - scripts/lib/node-runtime.mjs
   - scripts/lib/python-runtime.mjs
   - scripts/lib/gui-tools-runtime.mjs
+  - scripts/lib/skills-bundle-runtime.mjs
   - node_modules/better-sqlite3/**/*
   - node_modules/@anthropic-ai/sdk/**/*
   - node_modules/openai/**/*
@@ -73,7 +74,7 @@ win:
       to: mcp
     - from: dist-wsl-agent
       to: wsl-agent
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog
@@ -105,7 +106,7 @@ mac:
       to: mcp
     - from: dist-lima-agent
       to: lima-agent
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog
@@ -126,7 +127,7 @@ linux:
       to: tray-icon.png
     - from: .bundle-resources/mcp
       to: mcp
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog

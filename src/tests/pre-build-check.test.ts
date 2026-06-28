@@ -47,7 +47,7 @@ function populateDarwinArtifacts(root: string, arch: string = 'arm64'): void {
   makeFile(path.join(root, '.bundle-resources/mcp/software-dev-server-example.js'));
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
-  makeDir(path.join(root, '.claude/skills'));
+  makeDir(path.join(root, 'resources/skills-core'));
   populateBrandingArtifacts(root);
 
   // macOS FATAL resources
@@ -63,7 +63,7 @@ function populateWin32Artifacts(root: string): void {
   makeFile(path.join(root, '.bundle-resources/mcp/software-dev-server-example.js'));
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
-  makeDir(path.join(root, '.claude/skills'));
+  makeDir(path.join(root, 'resources/skills-core'));
   populateBrandingArtifacts(root);
   makeFile(path.join(root, 'resources/node/win32-x64/node.exe'));
   makeFile(path.join(root, 'dist-wsl-agent/index.js'));
@@ -165,8 +165,8 @@ describe('pre-build-check: runChecks', () => {
 
     const result = runChecks(tmpDir, 'darwin', 'arm64');
 
-    const nodeCheck = result.results.find(
-      (r: { relPath: string }) => r.relPath.includes('resources/node')
+    const nodeCheck = result.results.find((r: { relPath: string }) =>
+      r.relPath.includes('resources/node')
     );
     expect(nodeCheck).toBeUndefined();
     expect(result.hasFatal).toBe(false);
@@ -178,8 +178,8 @@ describe('pre-build-check: runChecks', () => {
 
     const result = runChecks(tmpDir, 'win32', 'x64');
 
-    const nodeCheck = result.results.find(
-      (r: { relPath: string }) => r.relPath.includes('resources/node')
+    const nodeCheck = result.results.find((r: { relPath: string }) =>
+      r.relPath.includes('resources/node')
     );
     expect(nodeCheck).toBeUndefined();
     expect(result.hasFatal).toBe(false);

@@ -1,4 +1,3 @@
-import OpenAI from 'openai';
 import type { AppConfig, CustomProtocolType, ProviderType } from '../config/config-store';
 import { configStore } from '../config/config-store';
 import { normalizeOpenAICompatibleBaseUrl, resolveOpenAICredentials } from '../config/auth-utils';
@@ -157,7 +156,7 @@ export class MemoryLLMClient implements MemoryLLMClientLike {
       baseUrl: embedConfig.baseUrl,
     });
 
-    const client = new OpenAI({
+    const client = new (await import('openai')).default({
       apiKey: resolved?.apiKey || embedConfig.apiKey,
       baseURL: resolved?.baseUrl || normalizeOpenAICompatibleBaseUrl(embedConfig.baseUrl),
       timeout: embedConfig.timeoutMs,

@@ -64,6 +64,7 @@ dist*
 resources/node
 resources/tools
 resources/python
+resources/skills-core
 docs/
 /.mcp.json
 /eng.traineddata

@@ -3,12 +3,16 @@ import * as path from 'path';
 import { app } from 'electron';
 import type { ServerEvent } from '../../renderer/types';
 import { configStore } from '../config/config-store';
-import { log, logWarn } from '../utils/logger';
+import { logWarn } from '../utils/logger';
 import type { PluginRuntimeService } from '../skills/plugin-runtime-service';
 import type { SkillsAdapter } from '../skills/skills-adapter';
 import { getBundledNodePaths, resolveBundledPythonBinDir } from './agent-runner-path-env';
 import type { PluginSlashCommandInfo } from '../../shared/plugin-slash-commands';
 import { discoverPluginPromptTemplatePaths } from '../skills/plugin-command-catalog';
+import {
+  getBuiltinSkillsPath as resolveBuiltinSkillsPath,
+  listBuiltinSkillRoots,
+} from '../skills/builtin-skills-paths';
 
 export interface AgentRunnerSkillsPathsContext {
   skillsAdapter?: SkillsAdapter;
@@ -73,8 +77,11 @@ ${hints.join('\n')}
   /** Fallback skill path resolution when SkillsAdapter is not provided. */
   legacySkillPaths(): string[] {
     const paths: string[] = [];
-    const builtin = this.getBuiltinSkillsPath();
-    if (builtin && fs.existsSync(builtin)) paths.push(builtin);
+    for (const root of listBuiltinSkillRoots()) {
+      if (root && fs.existsSync(root)) {
+        paths.push(root);
+      }
+    }
     const global = this.getConfiguredGlobalSkillsDir();
     if (global && fs.existsSync(global)) paths.push(global);
     return paths;
@@ -170,52 +177,9 @@ ${hints.join('\n')}
     return pluginPaths.promptTemplatePaths;
   }
 
-  /**
-   * Get the built-in skills directory (shipped with the app)
-   */
+  /** Built-in skills directory (light bundle in production). */
   getBuiltinSkillsPath(): string {
-    // In development, skills are in the project's .claude/skills directory
-    // In production, they're extracted via extraResources to resources/skills
-    const appPath = app.getAppPath();
-    const unpackedPath = appPath.replace(/\.asar$/, '.asar.unpacked');
-
-    const possiblePaths = [
-      // Development: relative to this file
-      path.join(__dirname, '..', '..', '..', '.claude', 'skills'),
-      // Production: extraResources extracts .claude/skills → resources/skills
-      // This is the preferred production path (real directory, no asar issues)
-      path.join(process.resourcesPath || '', 'skills'),
-      // Legacy: in app.asar.unpacked (for older builds with asarUnpack)
-      ...(this.physicalDirExists(path.join(unpackedPath, '.claude', 'skills'))
-        ? [path.join(unpackedPath, '.claude', 'skills')]
-        : []),
-      // Last resort: read from inside the asar archive (Electron intercepts this)
-      path.join(appPath, '.claude', 'skills'),
-    ];
-
-    for (const candidatePath of possiblePaths) {
-      if (fs.existsSync(candidatePath)) {
-        log('[AgentRunner] Found built-in skills at:', candidatePath);
-        return candidatePath;
-      }
-    }
-
-    logWarn('[AgentRunner] No built-in skills directory found');
-    return '';
-  }
-
-  /**
-   * Check if a directory physically exists on disk, bypassing Electron's
-   * asar interception.
-   */
-  physicalDirExists(dirPath: string): boolean {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const originalFs = require('original-fs') as typeof import('fs');
-      return originalFs.existsSync(dirPath) && originalFs.statSync(dirPath).isDirectory();
-    } catch {
-      return false;
-    }
+    return resolveBuiltinSkillsPath();
   }
 
   getAppClaudeDir(): string {

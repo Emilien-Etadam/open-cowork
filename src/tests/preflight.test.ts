@@ -16,6 +16,7 @@ vi.mock('electron', () => ({
   app: {
     isPackaged: true,
     getAppPath: () => '/tmp/lygodactylus-app',
+    getVersion: () => '5.4.0',
     getPath: (name: string) => `/tmp/lygodactylus-${name}`,
   },
 }));
@@ -167,8 +168,8 @@ describe('runPreflight', () => {
     const { runPreflight } = await import('../main/preflight');
     const issues = runPreflight();
     const warnings = issues.filter((i) => i.severity === 'warning');
-    expect(warnings.some((w) => w.resource === 'Built-in Skills')).toBe(true);
-    const skillsWarning = warnings.find((w) => w.resource === 'Built-in Skills');
+    expect(warnings.some((w) => w.resource === 'Built-in Skills (core)')).toBe(true);
+    const skillsWarning = warnings.find((w) => w.resource === 'Built-in Skills (core)');
     expect(skillsWarning?.message).toContain('skills');
 
     if (originalPlatform) {

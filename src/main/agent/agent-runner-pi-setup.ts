@@ -229,7 +229,7 @@ export async function preparePiSessionRun({
         ? sandboxPath
         : workingDir || process.cwd();
 
-  ensureSkillsSetup(ctx);
+  await ensureSkillsSetup(ctx);
   log('[AgentRunner] App claude dir:', ctx.skillsPaths.getAppClaudeDir());
   log('[AgentRunner] User working directory:', workingDir);
 
