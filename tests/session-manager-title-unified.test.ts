@@ -44,8 +44,8 @@ vi.mock('electron-store', () => {
   };
 });
 
-vi.mock('../src/main/claude/agent-runner', () => ({
-  ClaudeAgentRunner: class {
+vi.mock('../src/main/agent/agent-runner', () => ({
+  AgentRunner: class {
     run = vi.fn();
     cancel = vi.fn();
     handleQuestionResponse = vi.fn();
@@ -58,15 +58,15 @@ vi.mock('../src/main/mcp/mcp-config-store', () => ({
   },
 }));
 
-vi.mock('../src/main/claude/claude-sdk-one-shot', () => ({
-  generateTitleWithClaudeSdk: vi.fn(async () => 'Unified Title'),
+vi.mock('../src/main/agent/pi-ai-one-shot', () => ({
+  generateTitleWithPiAi: vi.fn(async () => 'Unified Title'),
 }));
 
 import { configStore } from '../src/main/config/config-store';
 import { SessionManager } from '../src/main/session/session-manager';
-import { generateTitleWithClaudeSdk } from '../src/main/claude/claude-sdk-one-shot';
+import { generateTitleWithPiAi } from '../src/main/agent/pi-ai-one-shot';
 
-const mockedGenerateTitleWithClaudeSdk = vi.mocked(generateTitleWithClaudeSdk);
+const mockedGenerateTitleWithPiAi = vi.mocked(generateTitleWithPiAi);
 
 describe('SessionManager unified title generation', () => {
   const previous = {
@@ -84,7 +84,7 @@ describe('SessionManager unified title generation', () => {
     configStore.set('customProtocol', 'openai');
     configStore.set('apiKey', 'sk-test');
     configStore.set('model', 'gpt-4.1');
-    mockedGenerateTitleWithClaudeSdk.mockClear();
+    mockedGenerateTitleWithPiAi.mockClear();
   });
 
   afterEach(() => {
@@ -109,8 +109,8 @@ describe('SessionManager unified title generation', () => {
     const title = await proto.generateTitleWithConfig.call({}, 'Please generate title');
 
     expect(title).toBe('Unified Title');
-    expect(mockedGenerateTitleWithClaudeSdk).toHaveBeenCalledTimes(1);
-    expect(mockedGenerateTitleWithClaudeSdk).toHaveBeenCalledWith(
+    expect(mockedGenerateTitleWithPiAi).toHaveBeenCalledTimes(1);
+    expect(mockedGenerateTitleWithPiAi).toHaveBeenCalledWith(
       'Please generate title',
       expect.objectContaining({
         provider: 'openai',
@@ -134,8 +134,8 @@ describe('SessionManager unified title generation', () => {
     const title = await proto.generateTitleWithConfig.call({}, 'Please generate title');
 
     expect(title).toBe('Unified Title');
-    expect(mockedGenerateTitleWithClaudeSdk).toHaveBeenCalledTimes(1);
-    expect(mockedGenerateTitleWithClaudeSdk).toHaveBeenCalledWith(
+    expect(mockedGenerateTitleWithPiAi).toHaveBeenCalledTimes(1);
+    expect(mockedGenerateTitleWithPiAi).toHaveBeenCalledWith(
       'Please generate title',
       expect.objectContaining({
         provider: 'openai',

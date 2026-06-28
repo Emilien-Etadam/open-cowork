@@ -7,6 +7,8 @@ import { app } from 'electron';
 import path from 'path';
 import { connectWithOAuthRetry, type OpenCoworkMcpOAuthProvider } from './mcp-oauth';
 import { log, logError, logWarn } from '../utils/logger';
+import { getBundledPythonPaths } from '../runtime/python-runtime.js';
+import { getBundledCliclickPath } from '../runtime/gui-tools-runtime.js';
 import type { MCPServerConfig, MCPTransport } from './mcp-types';
 
 export interface ConnectServerInternalDeps {
@@ -148,6 +150,17 @@ export async function connectServerInternal(
       log(`[MCPManager] Set NODE_PATH for MCP server: ${env.NODE_PATH}`);
 
       env.OPEN_COWORK_RESOURCES_PATH = process.resourcesPath || '';
+
+      const pythonPaths = getBundledPythonPaths();
+      if (pythonPaths) {
+        env.OPEN_COWORK_PYTHON_PATH = pythonPaths.python;
+        env.OPEN_COWORK_PYTHON_HOME = pythonPaths.pythonRoot;
+      }
+
+      const cliclickPath = getBundledCliclickPath();
+      if (cliclickPath) {
+        env.OPEN_COWORK_CLICLICK_PATH = cliclickPath;
+      }
     }
 
     log(`[MCPManager] Creating STDIO transport: ${command} ${args.join(' ')}`);

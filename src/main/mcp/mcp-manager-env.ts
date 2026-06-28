@@ -17,14 +17,17 @@ export interface MCPManagerEnvContext {
   setNpxPath(npxPath: string | null): void;
 }
 
+import { ensureNodeRuntime } from '../runtime/node-runtime.js';
+
 export async function checkNpxInPath(ctx: MCPManagerEnvContext): Promise<void> {
+  await ensureNodeRuntime();
   const bundledNode = ctx.getBundledNodePath();
   if (!bundledNode) {
     const errorMessage =
-      'Bundled Node.js not found. Please reinstall the application.\n' +
-      '未找到内置的 Node.js。请重新安装应用。\n\n' +
-      'The application requires bundled Node.js to run MCP servers.\n' +
-      '应用需要内置的 Node.js 来运行 MCP 服务器。';
+      'Node.js runtime is not available yet. The app will download it on first MCP use.\n' +
+      'Node.js 运行时暂不可用，首次使用 MCP 时将自动下载。\n\n' +
+      'Connect to the internet and retry opening MCP servers.\n' +
+      '请连接网络后重试启动 MCP 服务器。';
 
     logError('[MCPManager] Bundled Node.js not found');
     throw new Error(errorMessage);

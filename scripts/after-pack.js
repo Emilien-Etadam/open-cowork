@@ -171,22 +171,47 @@ module.exports = async function afterPack(context) {
   }
 
   // --- 5. Electron locales: keep only en, zh_CN, zh_TW ---
+  const KEEP_LOCALES = new Set(['en.lproj', 'zh_CN.lproj', 'zh_TW.lproj', 'Base.lproj']);
+  const KEEP_PAK_LOCALES = new Set(['en-US.pak', 'zh-CN.pak', 'zh-TW.pak']);
+
+  function trimLocaleDirs(baseDir) {
+    if (!fs.existsSync(baseDir)) return 0;
+    let removedLocales = 0;
+    for (const entry of fs.readdirSync(baseDir)) {
+      if (!entry.endsWith('.lproj')) continue;
+      if (KEEP_LOCALES.has(entry)) continue;
+      fs.rmSync(path.join(baseDir, entry), { recursive: true, force: true });
+      removedLocales++;
+    }
+    return removedLocales;
+  }
+
+  function trimPakLocales(baseDir) {
+    if (!fs.existsSync(baseDir)) return 0;
+    let removedLocales = 0;
+    for (const entry of fs.readdirSync(baseDir)) {
+      if (!entry.endsWith('.pak')) continue;
+      if (KEEP_PAK_LOCALES.has(entry)) continue;
+      fs.rmSync(path.join(baseDir, entry), { force: true });
+      removedLocales++;
+    }
+    return removedLocales;
+  }
+
   if (platform === 'darwin') {
     const appName = `${context.packager.appInfo.productFilename}.app`;
     const frameworkDir = path.join(
       appOutDir, appName, 'Contents', 'Frameworks',
       'Electron Framework.framework', 'Versions', 'A', 'Resources'
     );
-    if (fs.existsSync(frameworkDir)) {
-      const KEEP_LOCALES = new Set(['en.lproj', 'zh_CN.lproj', 'zh_TW.lproj', 'Base.lproj']);
-      let removedLocales = 0;
-      for (const entry of fs.readdirSync(frameworkDir)) {
-        if (!entry.endsWith('.lproj')) continue;
-        if (KEEP_LOCALES.has(entry)) continue;
-        fs.rmSync(path.join(frameworkDir, entry), { recursive: true, force: true });
-        removedLocales++;
-      }
-      if (removedLocales > 0) console.log(`  ✓ Electron locales: removed ${removedLocales} .lproj dirs (kept en, zh_CN, zh_TW)`);
+    const removedLocales = trimLocaleDirs(frameworkDir);
+    if (removedLocales > 0) {
+      console.log(`  ✓ Electron locales: removed ${removedLocales} .lproj dirs (kept en, zh_CN, zh_TW)`);
+    }
+  } else {
+    const removedPakLocales = trimPakLocales(path.join(appOutDir, 'locales'));
+    if (removedPakLocales > 0) {
+      console.log(`  ✓ Electron locales: removed ${removedPakLocales} .pak files (kept en-US, zh-CN, zh-TW)`);
     }
   }
 

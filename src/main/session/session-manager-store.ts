@@ -15,7 +15,7 @@ function mapSessionRow(row: SessionRow): Session {
   return {
     id: row.id,
     title: row.title,
-    claudeSessionId: row.claude_session_id || undefined,
+    claudeSessionId: row.agent_session_id || row.claude_session_id || undefined,
     openaiThreadId: row.openai_thread_id || undefined,
     status: row.status as Session['status'],
     cwd: row.cwd || undefined,
@@ -63,6 +63,7 @@ export class SessionManagerStore {
       id: session.id,
       title: session.title,
       claude_session_id: session.claudeSessionId || null,
+      agent_session_id: session.claudeSessionId || null,
       openai_thread_id: session.openaiThreadId || null,
       status: session.status,
       cwd: session.cwd || null,

@@ -22,10 +22,16 @@ import { isPathWithinRoot } from '../tools/path-containment';
 import {
   SYNC_MANIFEST_FILE,
   buildWorkspaceFingerprint,
+  listSyncManifestFilenames,
   parseSandboxSyncManifest,
   serializeSandboxSyncManifest,
   type SandboxSyncManifest,
 } from './sandbox-sync-manifest';
+import {
+  LEGACY_SANDBOX_SKILLS_DIR,
+  SANDBOX_SKILLS_DIR,
+  listSandboxPathCandidates,
+} from '../paths/sandbox-paths';
 
 const execFileAsync = promisify(execFile);
 
@@ -46,7 +52,7 @@ function validateDistroName(distro: string): void {
 export interface SyncSession {
   sessionId: string;
   windowsPath: string; // Original Windows path (e.g., D:\project)
-  sandboxPath: string; // WSL sandbox path (e.g., ~/.claude/sandbox/{sessionId})
+  sandboxPath: string; // WSL sandbox path (e.g., ~/.lygodactylus/sandbox/{sessionId})
   distro: string; // WSL distro name
   initialized: boolean;
   fileCount?: number;
@@ -148,7 +154,7 @@ export class SandboxSync {
     // Get the actual home directory path from WSL (use cd ~ && pwd since $HOME won't expand in single quotes)
     const homeResult = await this.wslExec(distro, 'cd ~ && pwd');
     const homeDir = homeResult.stdout.trim() || '/root';
-    const sandboxPath = `${homeDir}/.claude/sandbox/${sessionId}`;
+    const sandboxPath = await this.resolveSandboxPath(distro, homeDir, sessionId);
     log(`[SandboxSync]   Sandbox path: ${sandboxPath}`);
 
     try {
@@ -642,17 +648,40 @@ export class SandboxSync {
     };
   }
 
+  private static async resolveSandboxPath(
+    distro: string,
+    homeDir: string,
+    sessionId: string
+  ): Promise<string> {
+    const candidates = listSandboxPathCandidates(homeDir, sessionId);
+    for (const candidate of candidates) {
+      try {
+        await this.wslExec(distro, `test -d '${this.shellEscapePath(candidate)}'`);
+        return candidate;
+      } catch {
+        // Try next candidate
+      }
+    }
+    return candidates[0];
+  }
+
   private static async readManifest(
     distro: string,
     sandboxPath: string
   ): Promise<SandboxSyncManifest | null> {
-    try {
-      const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
-      const result = await this.wslExec(distro, `cat '${this.shellEscapePath(manifestPath)}'`);
-      return parseSandboxSyncManifest(result.stdout.trim());
-    } catch {
-      return null;
+    for (const manifestFile of listSyncManifestFilenames()) {
+      try {
+        const manifestPath = `${sandboxPath}/${manifestFile}`;
+        const result = await this.wslExec(distro, `cat '${this.shellEscapePath(manifestPath)}'`);
+        const parsed = parseSandboxSyncManifest(result.stdout.trim());
+        if (parsed) {
+          return parsed;
+        }
+      } catch {
+        // Try legacy manifest filename
+      }
     }
+    return null;
   }
 
   private static async writeManifest(
@@ -693,7 +722,12 @@ export class SandboxSync {
 
   private static async syncFromHost(session: SyncSession): Promise<void> {
     const wslSourcePath = pathConverter.toWSL(session.windowsPath);
-    const excludeArgs = this.buildExcludeArgs([SYNC_MANIFEST_FILE, '.claude/skills']);
+    const excludeArgs = this.buildExcludeArgs([
+      SYNC_MANIFEST_FILE,
+      ...listSyncManifestFilenames().slice(1),
+      SANDBOX_SKILLS_DIR,
+      LEGACY_SANDBOX_SKILLS_DIR,
+    ]);
     const rsyncCmd = `rsync -a --update ${excludeArgs} '${this.shellEscapePath(wslSourcePath)}/' '${this.shellEscapePath(session.sandboxPath)}/'`;
     log(`[SandboxSync] Pulling host changes into sandbox: ${rsyncCmd}`);
     await this.wslExec(session.distro, rsyncCmd, 300000);

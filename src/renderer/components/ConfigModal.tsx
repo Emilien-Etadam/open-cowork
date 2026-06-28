@@ -58,6 +58,7 @@ export function ConfigModal({
     testResult,
     friendlyTestDetails,
     isLocalOpenAiMode,
+    supportsModelDiscovery,
     requiresApiKey,
     baseUrlGuidanceText,
     commonProviderSetups,
@@ -270,7 +271,7 @@ export function ConfigModal({
                 {t('api.model')}
               </label>
               <div className="flex items-center gap-2">
-                {isLocalOpenAiMode && (
+                {supportsModelDiscovery && (
                   <button
                     type="button"
                     onClick={() => {
@@ -294,7 +295,7 @@ export function ConfigModal({
                     }`}
                   >
                     <Edit3 className="w-3 h-3" />
-                    {isLocalOpenAiMode
+                    {supportsModelDiscovery
                       ? useCustomModel
                         ? t('api.useDetectedModels')
                         : t('api.manualModel')

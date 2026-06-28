@@ -77,6 +77,7 @@ export interface DiagnosticsSummary {
     thinkingEnabled: boolean;
     apiKeyConfigured: boolean;
     claudeCodePathConfigured: boolean;
+    agentCliPathConfigured: boolean;
     defaultWorkdir: string | null;
     globalSkillsPathConfigured: boolean;
   };

@@ -3,10 +3,12 @@ import * as path from 'path';
 import { app } from 'electron';
 import type Store from 'electron-store';
 import type { AppConfig } from './config-schema';
+import { log } from '../utils/logger';
 
 interface ConfigMigrationState {
   win32SandboxDefault?: boolean;
   darwinSandboxDefault?: boolean;
+  agentCliPath?: boolean;
 }
 
 function getMigrationFilePath(): string {
@@ -34,12 +36,11 @@ function writeMigrationState(state: ConfigMigrationState): void {
 /**
  * One-time migrations for persisted app config.
  */
-export function runConfigMigrations(_store: Store<AppConfig>): void {
+export function runConfigMigrations(store: Store<AppConfig>): void {
   const state = readMigrationState();
   let nextState = { ...state };
 
   if (process.platform === 'win32' && !state.win32SandboxDefault) {
-    // Record migration without overriding an explicit user choice (sandboxEnabled=false).
     nextState = { ...nextState, win32SandboxDefault: true };
   }
 
@@ -47,9 +48,19 @@ export function runConfigMigrations(_store: Store<AppConfig>): void {
     nextState = { ...nextState, darwinSandboxDefault: true };
   }
 
+  if (!state.agentCliPath) {
+    const current = store.store;
+    if (!current.agentCliPath?.trim() && current.claudeCodePath?.trim()) {
+      store.set('agentCliPath', current.claudeCodePath);
+      log('[ConfigMigration] Copied claudeCodePath → agentCliPath');
+    }
+    nextState = { ...nextState, agentCliPath: true };
+  }
+
   if (
     nextState.win32SandboxDefault !== state.win32SandboxDefault ||
-    nextState.darwinSandboxDefault !== state.darwinSandboxDefault
+    nextState.darwinSandboxDefault !== state.darwinSandboxDefault ||
+    nextState.agentCliPath !== state.agentCliPath
   ) {
     writeMigrationState(nextState);
   }

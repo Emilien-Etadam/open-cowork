@@ -17,7 +17,7 @@ import { MemoryNavigator } from './memory-navigator';
 import { DEFAULT_MEMORY_PROMPTS, type MemoryPromptSet } from './memory-prompts';
 import { MemoryRetriever } from './memory-retriever';
 import { MemoryServiceStorage, assertSafeMemoryPaths } from './memory-service-storage';
-import { buildPromptPrefix, embedText } from './memory-service-context';
+import { buildPromptContext, buildPromptPrefix, embedText } from './memory-service-context';
 import {
   clearCoreMemory,
   clearWorkspace,
@@ -83,6 +83,8 @@ export class MemoryService {
       getExperienceStore: () => this.storage.getExperienceStore(),
       getExperienceFilePath: () => this.storage.getPaths().experienceFilePath,
       getSessionTitle: (sessionId) => this.db.sessions.get(sessionId)?.title || undefined,
+      embedQuery: (text: string) => embedText(this.contextHost, text),
+      useEmbedding: () => this.getAppConfig().memoryRuntime.useEmbedding,
     });
     this.tools = createMemoryTools(this);
     this.queryHost = {
@@ -139,7 +141,7 @@ export class MemoryService {
     return getTools(this.queryHost);
   }
 
-  search(params: MemorySearchParams): MemorySearchResult[] {
+  search(params: MemorySearchParams): Promise<MemorySearchResult[]> {
     return searchMemory(this.queryHost, params);
   }
 
@@ -163,12 +165,24 @@ export class MemoryService {
     return inspectSession(this.queryHost, sessionId, sourceWorkspace);
   }
 
+  async buildPromptContext(
+    session: { cwd?: string; id?: string },
+    prompt: string,
+    options?: { maxPrefixTokens?: number }
+  ) {
+    return buildPromptContext(this.contextHost, session, prompt, options);
+  }
+
   async buildPromptPrefix(
     session: { cwd?: string },
     prompt: string,
     options?: { maxPrefixTokens?: number }
   ): Promise<string> {
     return buildPromptPrefix(this.contextHost, session, prompt, options);
+  }
+
+  shouldShowInjectedMemoryInChat(): boolean {
+    return this.getAppConfig().memoryRuntime.showInjectedMemoryInChat !== false;
   }
 
   enqueueIngestion(input: MemoryIngestionInput): Promise<void> {

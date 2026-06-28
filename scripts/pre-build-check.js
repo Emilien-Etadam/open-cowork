@@ -60,8 +60,8 @@ function buildCheckList(platform, arch) {
       severity: 'fatal',
     },
     {
-      label: 'Built-in skills directory (.claude/skills/)',
-      relPath: '.claude/skills',
+      label: 'Lightweight built-in skills (resources/skills-core/)',
+      relPath: 'resources/skills-core',
       type: 'dir',
       severity: 'fatal',
     },
@@ -112,25 +112,19 @@ function buildCheckList(platform, arch) {
   if (platform === 'darwin') {
     checks.push(
       {
-        label: `Node.js binary for macOS ${arch}`,
-        relPath: `resources/node/darwin-${arch}/bin/node`,
-        type: 'file',
-        severity: 'fatal',
-      },
-      {
         label: 'Lima sandbox agent bundle (dist-lima-agent/index.js)',
         relPath: 'dist-lima-agent/index.js',
         type: 'file',
         severity: 'fatal',
       },
       {
-        label: `Python runtime for macOS ${arch} (GUI automation)`,
+        label: `Python runtime for macOS ${arch} (GUI automation, on-demand in packaged apps)`,
         relPath: `resources/python/darwin-${arch}`,
         type: 'dir',
         severity: 'warn',
       },
       {
-        label: `CLI tools for macOS ${arch} (cliclick)`,
+        label: `CLI tools for macOS ${arch} (cliclick, on-demand in packaged apps)`,
         relPath: `resources/tools/darwin-${arch}`,
         type: 'dir',
         severity: 'warn',
@@ -138,12 +132,6 @@ function buildCheckList(platform, arch) {
     );
   } else if (platform === 'win32') {
     checks.push(
-      {
-        label: 'Node.js binary for Windows x64',
-        relPath: 'resources/node/win32-x64/node.exe',
-        type: 'file',
-        severity: 'fatal',
-      },
       {
         label: 'WSL sandbox agent bundle (dist-wsl-agent/index.js)',
         relPath: 'dist-wsl-agent/index.js',
@@ -153,10 +141,10 @@ function buildCheckList(platform, arch) {
     );
   } else if (platform === 'linux') {
     checks.push({
-      label: 'Node.js directory for Linux x64',
-      relPath: 'resources/node/linux-x64',
+      label: `Python runtime for Linux ${arch} (on-demand in packaged apps)`,
+      relPath: `resources/python/linux-${arch}`,
       type: 'dir',
-      severity: 'fatal',
+      severity: 'warn',
     });
   }
 

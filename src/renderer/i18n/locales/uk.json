@@ -196,7 +196,15 @@
     "noFiles": "Файлів пам'яті ще немає",
     "fileContent": "Вміст файлу",
     "emptyFile": "Файл порожній",
-    "selectFileHint": "Виберіть файл ліворуч, щоб переглянути його необроблений JSON."
+    "selectFileHint": "Виберіть файл ліворуч, щоб переглянути його необроблений JSON.",
+    "chunkTopK": "Chunk top-K",
+    "sessionTopK": "Session top-K",
+    "injectionPolicy": "Injection policy",
+    "injectionPolicyEscape": "Escape delimiters",
+    "injectionPolicyStrip": "Strip suspicious patterns",
+    "injectionPolicyBlock": "Block suspicious content",
+    "showInjectedMemoryInChat": "Show injected memory in chat",
+    "relevanceScore": "Relevance {{score}}"
   },
   "language": {
     "english": "Англійська",
@@ -442,6 +450,10 @@
     "limaDesc": "Виконуйте команди у Lima VM для кращої ізоляції та безпеки в macOS.",
     "nativeDesc": "Команди виконуються безпосередньо у вашій системі (нативний режим Linux).",
     "enableSandbox": "Увімкнути режим пісочниці",
+    "enableLanNetwork": "Sandbox LAN network access",
+    "lanNetworkDesc": "Lets curl/wget in WSL reach local services (192.168.x.x) through an authenticated host proxy. Public internet stays direct. Off by default.",
+    "lanNetworkEnabled": "Sandbox LAN network access enabled",
+    "lanNetworkDisabled": "Sandbox LAN network access disabled",
     "comingSoon": "Незабаром — у розробці",
     "readyStatus": "Пісочниця готова та працює",
     "notReadyStatus": "Пісочницю увімкнено, але не повністю налаштовано",
@@ -717,7 +729,13 @@
       "errRewindSessionNotFound": "Session not found.",
       "errRewindMessageNotFound": "User message not found.",
       "errRewindFailed": "Could not edit this message."
-    }
+    },
+    "memoryUsedCount_one": "{{count}} memory item used",
+    "memoryUsedCount_other": "{{count}} memory items used",
+    "memoryNoRecall": "No relevant memory recalled for this turn",
+    "memoryDisabledSession": "Memory disabled for this session",
+    "memorySessionToggle": "Memory for session",
+    "memoryOpenSourceSession": "Open source session"
   },
   "context": {
     "progress": "Прогрес",
@@ -771,7 +789,11 @@
     "compactionMeta": "Підсумовано {{tokensBefore}} токенів",
     "compactionInstructions": "Фокус: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "На питання відповіли",
+    "pleaseAnswerToContinue": "Відповідайте, щоб продовжити",
+    "questionClosed": "Питання закрито",
+    "submitAnswers": "Надіслати відповіді"
   },
   "schedule": {
     "createTitle": "Створити розклад",

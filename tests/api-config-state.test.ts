@@ -7,6 +7,7 @@ import { isLoopbackBaseUrl } from '../src/shared/network/loopback';
 import {
   FALLBACK_PROVIDER_PRESETS,
   buildApiConfigSnapshot,
+  canDiscoverProviderModels,
   getModelInputGuidance,
   isLocalOpenAiMode,
   profileKeyFromProvider,
@@ -172,12 +173,28 @@ describe('api config state helpers', () => {
     expect(isLoopbackBaseUrl('https://proxy.example.com')).toBe(false);
   });
 
-  it('wires local discovery through the shared config hook', () => {
+  it('allows remote model discovery when credentials and base url are present', () => {
+    expect(
+      canDiscoverProviderModels(
+        'openai',
+        'https://api.openai.com/v1',
+        'sk-test',
+        true,
+        FALLBACK_PROVIDER_PRESETS.openai.baseUrl
+      )
+    ).toBe(true);
+    expect(canDiscoverProviderModels('openai', 'https://api.openai.com/v1', '', true, '')).toBe(
+      false
+    );
+    expect(canDiscoverProviderModels('anthropic', '', 'sk-ant-test', true, '')).toBe(true);
+  });
+
+  it('wires model discovery through the shared config hook', () => {
     const hookSource = fs.readFileSync(hookPath, 'utf8');
     const ollamaSource = fs.readFileSync(ollamaActionsPath, 'utf8');
     expect(hookSource).toContain('useApiConfigActions');
     expect(ollamaSource).toContain('window.electronAPI.config.discoverLocal({');
-    expect(ollamaSource).toContain('isLocalOpenAiMode');
+    expect(ollamaSource).toContain('canDiscoverProviderModels');
     expect(ollamaSource).toContain("showErrorKey('api.localOllamaNotFound')");
     expect(ollamaSource).toContain("showSuccessKey('api.localOllamaDiscovered'");
     expect(ollamaSource).toContain('autoSelectModelId: models[0]?.id');

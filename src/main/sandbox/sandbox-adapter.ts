@@ -17,6 +17,7 @@ import { WSLBridge, pathConverter } from './wsl-bridge';
 import { LimaBridge, limaPathConverter } from './lima-bridge';
 import { NativeExecutor } from './native-executor';
 import { getSandboxBootstrap } from './sandbox-bootstrap';
+import { LIMA_INSTANCE_NAME } from '../paths/sandbox-paths';
 import { configStore } from '../config/config-store';
 import type {
   SandboxConfig,
@@ -296,7 +297,7 @@ export class SandboxAdapter implements SandboxExecutor {
     }
 
     log('[SandboxAdapter] [OK] Lima detected');
-    log('[SandboxAdapter]   Instance:', limaStatus.instanceName || 'claude-sandbox');
+    log('[SandboxAdapter]   Instance:', limaStatus.instanceName || LIMA_INSTANCE_NAME);
     log('[SandboxAdapter]   Exists:', limaStatus.instanceExists ? '[OK]' : '[X] not created');
     log('[SandboxAdapter]   Running:', limaStatus.instanceRunning ? '[OK]' : '[X] not running');
     log(

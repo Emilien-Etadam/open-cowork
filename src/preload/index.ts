@@ -133,6 +133,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
       provider: AppConfig['provider'];
       apiKey: string;
       baseUrl?: string;
+      customProtocol?: AppConfig['customProtocol'];
     }): Promise<ProviderModelInfo[]> => ipcRenderer.invoke('config.listModels', payload),
     diagnose: (input: DiagnosticInput): Promise<DiagnosticResult> =>
       ipcRenderer.invoke('config.diagnose', input),
@@ -413,6 +414,7 @@ declare global {
           provider: AppConfig['provider'];
           apiKey: string;
           baseUrl?: string;
+          customProtocol?: AppConfig['customProtocol'];
         }) => Promise<ProviderModelInfo[]>;
         diagnose: (input: DiagnosticInput) => Promise<DiagnosticResult>;
         discoverLocal: (payload?: { baseUrl?: string }) => Promise<LocalOllamaDiscoveryResult>;

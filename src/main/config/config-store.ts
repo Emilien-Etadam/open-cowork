@@ -140,6 +140,7 @@ export class ConfigStore {
         if (
           (key === 'enableDevLogs' ||
             key === 'sandboxEnabled' ||
+            key === 'sandboxLanNetworkEnabled' ||
             key === 'memoryEnabled' ||
             key === 'enableThinking' ||
             key === 'isConfigured') &&
@@ -389,6 +390,12 @@ export class ConfigStore {
       ...projectedConfig,
       claudeCodePath:
         updates.claudeCodePath !== undefined ? updates.claudeCodePath : current.claudeCodePath,
+      agentCliPath:
+        updates.agentCliPath !== undefined
+          ? updates.agentCliPath
+          : updates.claudeCodePath !== undefined
+            ? updates.claudeCodePath
+            : current.agentCliPath || current.claudeCodePath,
       defaultWorkdir:
         updates.defaultWorkdir !== undefined ? updates.defaultWorkdir : current.defaultWorkdir,
       globalSkillsPath:
@@ -401,6 +408,10 @@ export class ConfigStore {
       uiLanguage: updates.uiLanguage !== undefined ? updates.uiLanguage : current.uiLanguage,
       sandboxEnabled:
         updates.sandboxEnabled !== undefined ? updates.sandboxEnabled : current.sandboxEnabled,
+      sandboxLanNetworkEnabled:
+        updates.sandboxLanNetworkEnabled !== undefined
+          ? updates.sandboxLanNetworkEnabled
+          : current.sandboxLanNetworkEnabled,
       memoryEnabled:
         updates.memoryEnabled !== undefined ? updates.memoryEnabled : current.memoryEnabled,
       memoryRuntime:

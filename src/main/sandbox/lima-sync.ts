@@ -19,12 +19,17 @@ import { isPathWithinRoot } from '../tools/path-containment';
 import {
   SYNC_MANIFEST_FILE,
   buildWorkspaceFingerprint,
+  listSyncManifestFilenames,
   parseSandboxSyncManifest,
   serializeSandboxSyncManifest,
   type SandboxSyncManifest,
 } from './sandbox-sync-manifest';
-
-const LIMA_INSTANCE_NAME = 'claude-sandbox';
+import {
+  LEGACY_SANDBOX_SKILLS_DIR,
+  SANDBOX_SKILLS_DIR,
+  listSandboxPathCandidates,
+  resolveActiveLimaInstanceName,
+} from '../paths/sandbox-paths';
 
 /** Validate sessionId to prevent command injection via path traversal */
 function validateSessionId(sessionId: string): void {
@@ -36,7 +41,7 @@ function validateSessionId(sessionId: string): void {
 export interface LimaSyncSession {
   sessionId: string;
   macPath: string; // Original macOS path (e.g., /Users/username/project)
-  sandboxPath: string; // Lima sandbox path (e.g., ~/.claude/sandbox/{sessionId})
+  sandboxPath: string; // Lima sandbox path (e.g., ~/.lygodactylus/sandbox/{sessionId})
   initialized: boolean;
   fileCount?: number;
   totalSize?: number;
@@ -128,7 +133,7 @@ export class LimaSync {
     // Get the actual home directory path from Lima
     const homeResult = await this.limaExec('cd ~ && pwd');
     const homeDir = homeResult.stdout.trim() || '/home/user';
-    const sandboxPath = `${homeDir}/.claude/sandbox/${sessionId}`;
+    const sandboxPath = await this.resolveSandboxPath(homeDir, sessionId);
     log(`[LimaSync]   Sandbox path: ${sandboxPath}`);
 
     try {
@@ -515,6 +520,19 @@ export class LimaSync {
   /**
    * Execute command in Lima VM
    */
+  private static async resolveSandboxPath(homeDir: string, sessionId: string): Promise<string> {
+    const candidates = listSandboxPathCandidates(homeDir, sessionId);
+    for (const candidate of candidates) {
+      try {
+        await this.limaExec(`test -d '${this.shellEscapePath(candidate)}'`);
+        return candidate;
+      } catch {
+        // Try next candidate
+      }
+    }
+    return candidates[0];
+  }
+
   private static async limaExec(
     command: string,
     timeout: number = 60000
@@ -522,11 +540,12 @@ export class LimaSync {
     const { execFile } = await import('child_process');
     const { promisify } = await import('util');
     const execFileAsync = promisify(execFile);
+    const instanceName = await resolveActiveLimaInstanceName();
 
     try {
       const result = await execFileAsync(
         'limactl',
-        ['shell', LIMA_INSTANCE_NAME, '--', 'bash', '-c', command],
+        ['shell', instanceName, '--', 'bash', '-c', command],
         {
           encoding: 'utf-8',
           timeout,
@@ -612,13 +631,19 @@ export class LimaSync {
   }
 
   private static async readManifest(sandboxPath: string): Promise<SandboxSyncManifest | null> {
-    try {
-      const manifestPath = `${sandboxPath}/${SYNC_MANIFEST_FILE}`;
-      const result = await this.limaExec(`cat '${this.shellEscapePath(manifestPath)}'`);
-      return parseSandboxSyncManifest(result.stdout.trim());
-    } catch {
-      return null;
+    for (const manifestFile of listSyncManifestFilenames()) {
+      try {
+        const manifestPath = `${sandboxPath}/${manifestFile}`;
+        const result = await this.limaExec(`cat '${this.shellEscapePath(manifestPath)}'`);
+        const parsed = parseSandboxSyncManifest(result.stdout.trim());
+        if (parsed) {
+          return parsed;
+        }
+      } catch {
+        // Try legacy manifest filename
+      }
     }
+    return null;
   }
 
   private static async writeManifest(
@@ -652,7 +677,12 @@ export class LimaSync {
   }
 
   private static async syncFromHost(session: LimaSyncSession): Promise<void> {
-    const excludeArgs = this.buildExcludeArgs([SYNC_MANIFEST_FILE, '.claude/skills']);
+    const excludeArgs = this.buildExcludeArgs([
+      SYNC_MANIFEST_FILE,
+      ...listSyncManifestFilenames().slice(1),
+      SANDBOX_SKILLS_DIR,
+      LEGACY_SANDBOX_SKILLS_DIR,
+    ]);
     const rsyncCmd = `rsync -a --update ${excludeArgs} '${this.shellEscapePath(session.macPath)}/' '${this.shellEscapePath(session.sandboxPath)}/'`;
     log(`[LimaSync] Pulling host changes into sandbox: ${rsyncCmd}`);
     await this.limaExec(rsyncCmd, 300000);

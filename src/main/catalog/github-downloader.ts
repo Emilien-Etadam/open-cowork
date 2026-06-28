@@ -3,6 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { TEMP_PLUGIN_PREFIX } from '../paths/sandbox-paths';
 import { log } from '../utils/logger';
 
 const execFileAsync = promisify(execFile);
@@ -17,7 +18,7 @@ export async function downloadGithubSubdir(
     throw new Error(`Invalid GitHub repo: ${repo}`);
   }
 
-  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'opencowork-plugin-'));
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), TEMP_PLUGIN_PREFIX));
   const archivePath = path.join(tempRoot, 'archive.tar.gz');
   const extractDir = path.join(tempRoot, 'extracted');
   fs.mkdirSync(extractDir, { recursive: true });
@@ -46,7 +47,7 @@ export async function downloadGithubSubdir(
     throw new Error(`Plugin subdirectory not found: ${subdir}`);
   }
 
-  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'opencowork-plugin-copy-'));
+  const targetDir = fs.mkdtempSync(path.join(os.tmpdir(), `${TEMP_PLUGIN_PREFIX}copy-`));
   await copyDirectory(pluginPath, targetDir);
   log('[GithubDownloader] Prepared plugin directory:', targetDir);
   return targetDir;

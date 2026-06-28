@@ -59,6 +59,7 @@ export interface SessionRow {
   id: string;
   title: string;
   claude_session_id: string | null;
+  agent_session_id?: string | null;
   openai_thread_id: string | null;
   status: string;
   cwd: string | null;
@@ -242,6 +243,8 @@ function initializeSchema(database: Database.Database): void {
 
     ensureColumn(database, 'sessions', 'openai_thread_id', 'openai_thread_id TEXT');
     ensureColumn(database, 'sessions', 'model', 'model TEXT');
+    ensureColumn(database, 'sessions', 'agent_session_id', 'agent_session_id TEXT');
+    migrateLegacySessionIds(database);
 
     // Create messages table
     database.exec(`
@@ -408,6 +411,14 @@ function ensureColumn(
   database.exec(`ALTER TABLE ${table} ADD COLUMN ${safeDefinition}`);
 }
 
+function migrateLegacySessionIds(database: Database.Database): void {
+  database.exec(`
+    UPDATE sessions
+    SET agent_session_id = claude_session_id
+    WHERE agent_session_id IS NULL AND claude_session_id IS NOT NULL
+  `);
+}
+
 /**
  * Initialize the database
  */
@@ -434,8 +445,8 @@ export function initDatabase(): DatabaseInstance {
   // Prepare statements for better performance
   const insertSession = rawDb.prepare(`
     INSERT OR REPLACE INTO sessions
-    (id, title, claude_session_id, openai_thread_id, status, cwd, mounted_paths, allowed_tools, memory_enabled, model, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    (id, title, claude_session_id, agent_session_id, openai_thread_id, status, cwd, mounted_paths, allowed_tools, memory_enabled, model, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Note: Dynamic update queries are built in sessions.update() for flexibility
@@ -523,10 +534,12 @@ export function initDatabase(): DatabaseInstance {
 
     sessions: {
       create: (session: SessionRow) => {
+        const agentSessionId = session.agent_session_id ?? session.claude_session_id;
         insertSession.run(
           session.id,
           session.title,
-          session.claude_session_id,
+          agentSessionId,
+          agentSessionId,
           session.openai_thread_id,
           session.status,
           session.cwd,

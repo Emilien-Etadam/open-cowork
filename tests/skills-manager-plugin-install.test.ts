@@ -111,7 +111,7 @@ describe('SkillsManager installPluginFromDirectory', () => {
     const result = await manager.installPluginFromDirectory(pluginRoot);
     expect(result.installedSkills).toEqual(['alpha']);
 
-    const installedSkillPath = path.join(testRoot, 'userData', 'claude', 'skills', 'alpha', 'SKILL.md');
+    const installedSkillPath = path.join(testRoot, 'userData', 'skills', 'alpha', 'SKILL.md');
     expect(fs.readFileSync(installedSkillPath, 'utf8')).toContain('New description');
   });
 

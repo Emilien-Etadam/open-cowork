@@ -15,7 +15,10 @@ files:
   - dist-electron/**/*
   - resources/chat-lan/**/*
   - package.json
-  - node_modules/@img/**/*
+  - scripts/lib/node-runtime.mjs
+  - scripts/lib/python-runtime.mjs
+  - scripts/lib/gui-tools-runtime.mjs
+  - scripts/lib/skills-bundle-runtime.mjs
   - node_modules/better-sqlite3/**/*
   - node_modules/@anthropic-ai/sdk/**/*
   - node_modules/openai/**/*
@@ -47,13 +50,8 @@ files:
 # extraResources section below (win/mac/linux).
 
 # Skills are extracted via extraResources (per-platform) to avoid asar symlink issues.
-# Sharp native modules must also be unpacked for image processing.
 # Note: MCP servers are bundled with esbuild (all deps inlined), so no need to unpack MCP SDK
 asarUnpack:
-  - node_modules/@img/**/*.node
-  - node_modules/@img/**/*.dll
-  - node_modules/@img/**/*.dylib
-  - node_modules/@img/**/*.so
   - node_modules/better-sqlite3/**/*.node
   - node_modules/bufferutil/**/*.node
   - node_modules/utf-8-validate/**/*.node
@@ -74,13 +72,9 @@ win:
       to: tray-icon.ico
     - from: .bundle-resources/mcp
       to: mcp
-    - from: resources/node/win32-x64
-      to: node
-    - from: resources/node/win32-x64/node_modules/npm
-      to: node/node_modules/npm
     - from: dist-wsl-agent
       to: wsl-agent
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog
@@ -110,19 +104,9 @@ mac:
       to: tray-iconTemplate.png
     - from: .bundle-resources/mcp
       to: mcp
-    - from: resources/node/darwin-${arch}
-      to: node
-    - from: resources/node/darwin-${arch}/lib/node_modules/npm
-      to: node/lib/node_modules/npm
-    # Bundled Python runtime + site-packages for GUI automation helpers (Pillow, pyobjc/Quartz)
-    - from: resources/python/darwin-${arch}
-      to: python
-    # Bundled GUI helper tools (e.g. cliclick) to avoid relying on user-installed Homebrew tools
-    - from: resources/tools/darwin-${arch}
-      to: tools
     - from: dist-lima-agent
       to: lima-agent
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog
@@ -131,6 +115,7 @@ mac:
 
 linux:
   icon: resources/icon.png
+  category: Development
   target:
     - target: AppImage
       arch:
@@ -143,13 +128,7 @@ linux:
       to: tray-icon.png
     - from: .bundle-resources/mcp
       to: mcp
-    - from: resources/node/linux-x64
-      to: node
-    - from: resources/node/linux-x64/lib/node_modules/npm
-      to: node/lib/node_modules/npm
-    - from: resources/python/linux-${arch}
-      to: python
-    - from: .claude/skills
+    - from: resources/skills-core
       to: skills
     - from: catalog
       to: catalog

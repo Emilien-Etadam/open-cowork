@@ -1,6 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { app } from 'electron';
+import { getPluginsRootPath as resolvePluginsRootPath } from '../paths/app-data-paths';
 import type {
   InstalledPlugin,
   PluginComponentCounts,
@@ -660,7 +660,7 @@ export class PluginRuntimeService {
   }
 
   private getPluginsRootPath(): string {
-    return path.join(app.getPath('userData'), 'claude', 'plugins');
+    return resolvePluginsRootPath();
   }
 
   private getSourcePath(pluginId: string): string {

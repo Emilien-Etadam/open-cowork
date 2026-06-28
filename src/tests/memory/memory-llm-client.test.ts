@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const runPiAiOneShotMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../main/claude/claude-sdk-one-shot', () => ({
+vi.mock('../../main/agent/pi-ai-one-shot', () => ({
   runPiAiOneShot: runPiAiOneShotMock,
 }));
 
@@ -27,6 +27,7 @@ function makeConfig(timeoutMs: number): AppConfig {
     enableDevLogs: false,
     theme: 'light',
     sandboxEnabled: false,
+    sandboxLanNetworkEnabled: false,
     memoryEnabled: true,
     memoryRuntime: {
       llm: {
@@ -46,6 +47,10 @@ function makeConfig(timeoutMs: number): AppConfig {
       useEmbedding: false,
       maxNavSteps: 2,
       ingestionConcurrency: 4,
+      chunkTopK: 10,
+      sessionTopK: 5,
+      injectionPolicy: 'escape',
+      showInjectedMemoryInChat: true,
       storageRoot: '',
       evalEnabled: false,
       evalWorkspaces: [],
