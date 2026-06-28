@@ -65,6 +65,7 @@ export interface AppConfig {
   theme: AppTheme;
   uiLanguage?: string;
   sandboxEnabled: boolean;
+  sandboxLanNetworkEnabled: boolean;
   memoryEnabled: boolean;
   memoryRuntime: MemoryRuntimeConfig;
   webSearch: WebSearchConfig;
@@ -123,6 +124,7 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'enableDevLogs',
   'theme',
   'sandboxEnabled',
+  'sandboxLanNetworkEnabled',
   'memoryEnabled',
   'webSearch',
   'enableThinking',
@@ -197,6 +199,7 @@ export const defaultConfig: AppConfig = {
   theme: 'light',
   uiLanguage: DEFAULT_BACKEND_LANGUAGE,
   sandboxEnabled: getDefaultSandboxEnabled(),
+  sandboxLanNetworkEnabled: false,
   memoryEnabled: true,
   memoryRuntime: {
     llm: {

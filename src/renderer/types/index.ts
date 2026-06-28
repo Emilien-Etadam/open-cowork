@@ -744,6 +744,7 @@ export interface AppConfig {
   theme?: AppTheme;
   uiLanguage?: string;
   sandboxEnabled?: boolean;
+  sandboxLanNetworkEnabled?: boolean;
   memoryEnabled?: boolean;
   memoryRuntime?: MemoryRuntimeConfig;
   webSearch?: WebSearchConfig;

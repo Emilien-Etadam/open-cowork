@@ -330,7 +330,8 @@ export async function preparePiSessionRun({
     ctx,
     workingDir,
     sandboxPath,
-    useSandboxIsolation
+    useSandboxIsolation,
+    configStore.get('sandboxLanNetworkEnabled') === true
   );
   const mcpCustomTools = ctx.mcpManager ? buildMcpCustomTools(ctx.mcpManager) : [];
   const webSearchCustomTools = buildWebSearchCustomTools();
@@ -405,7 +406,7 @@ export async function preparePiSessionRun({
   logCtx(`[AgentRunner] Model=${piModel.id}, thinkingLevel=${thinkingLevel}`);
   log('[AgentRunner] Built-in tools: read, bash, edit, write');
   log(
-    '[AgentRunner] Native tools: glob, grep, web_fetch, todo_write, ask_user_question (+ aliases)'
+    '[AgentRunner] Native tools: glob, grep, web_fetch, http_request, todo_write, ask_user_question (+ aliases)'
   );
   log(
     `[AgentRunner] Custom tools (${allCustomTools.length}): ${allCustomTools.map((tool) => tool.name).join(', ')}`
