@@ -4,7 +4,11 @@ import type {
 } from '../extensions/agent-runtime-extension';
 import { computeMemoryPrefixBudget } from '../agent/context-budget';
 import { sendToRenderer } from '../main-renderer-bridge';
+import { logWarn } from '../utils/logger';
+import { withAsyncTimeoutOrNull } from '../utils/async-timeout';
 import type { MemoryService } from './memory-service';
+
+const MEMORY_SESSION_SETUP_TIMEOUT_MS = 30_000;
 
 export class MemoryExtension implements AgentRuntimeExtension {
   readonly name = 'memory';
@@ -34,9 +38,25 @@ export class MemoryExtension implements AgentRuntimeExtension {
         )
       : undefined;
 
-    const context = await this.memoryService.buildPromptContext(session, prompt, {
-      maxPrefixTokens,
-    });
+    const context = await withAsyncTimeoutOrNull(
+      'memory.buildPromptContext',
+      MEMORY_SESSION_SETUP_TIMEOUT_MS,
+      () =>
+        this.memoryService.buildPromptContext(session, prompt, {
+          maxPrefixTokens,
+        })
+    );
+
+    if (!context) {
+      logWarn(
+        '[MemoryExtension] Memory context build timed out during session setup; continuing without memory injection'
+      );
+      sendToRenderer({
+        type: 'session.memoryContext',
+        payload: { sessionId: session.id, items: [] },
+      });
+      return;
+    }
 
     if (this.memoryService.shouldShowInjectedMemoryInChat()) {
       sendToRenderer({

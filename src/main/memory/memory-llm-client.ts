@@ -1,6 +1,7 @@
 import type { AppConfig, CustomProtocolType, ProviderType } from '../config/config-store';
 import { configStore } from '../config/config-store';
-import { normalizeOpenAICompatibleBaseUrl, resolveOpenAICredentials } from '../config/auth-utils';
+import { normalizeOpenAICompatibleBaseUrl, resolveOpenAICredentials, isOfficialOpenAIBaseUrl } from '../config/auth-utils';
+import { detectCommonProviderSetup } from '../../shared/api-provider-guidance';
 import { runPiAiOneShot } from '../agent/pi-ai-one-shot';
 import { logWarn } from '../utils/logger';
 
@@ -136,6 +137,28 @@ export class MemoryLLMClient implements MemoryLLMClientLike {
       appConfig.memoryRuntime.embedding,
       'text-embedding-3-small'
     );
+
+    const effectiveBaseUrl = embedConfig.baseUrl || appConfig.baseUrl;
+    const inheritsActiveEmbeddingEndpoint =
+      appConfig.memoryRuntime?.embedding?.inheritFromActive !== false &&
+      !appConfig.memoryRuntime?.embedding?.baseUrl?.trim();
+    if (
+      inheritsActiveEmbeddingEndpoint &&
+      effectiveBaseUrl &&
+      !isOfficialOpenAIBaseUrl(effectiveBaseUrl)
+    ) {
+      logWarn(
+        '[MemoryLLMClient] Skipping embedding against inherited inference endpoint; using lexical retrieval instead:',
+        effectiveBaseUrl
+      );
+      return [];
+    }
+    if (detectCommonProviderSetup(effectiveBaseUrl)?.id === 'vllm') {
+      logWarn(
+        '[MemoryLLMClient] Skipping embedding against vLLM endpoint (embeddings API not supported); using lexical retrieval'
+      );
+      return [];
+    }
 
     const provider = embedConfig.provider;
     const protocol = embedConfig.customProtocol;
