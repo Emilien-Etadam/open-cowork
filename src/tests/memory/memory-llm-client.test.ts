@@ -101,4 +101,17 @@ describe('MemoryLLMClient', () => {
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).message).toBe('Memory LLM request timed out after 5000ms');
   });
+
+  it('skips embedding when inheriting a non-OpenAI inference endpoint', async () => {
+    const client = new MemoryLLMClient(() => ({
+      ...makeConfig(5000),
+      baseUrl: 'http://192.168.1.50:8000/v1',
+      memoryRuntime: {
+        ...makeConfig(5000).memoryRuntime,
+        useEmbedding: true,
+      },
+    }));
+
+    await expect(client.embed('hello world')).resolves.toEqual([]);
+  });
 });
