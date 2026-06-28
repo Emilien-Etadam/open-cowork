@@ -10,6 +10,7 @@ import type {
   SandboxSetupProgress,
   SandboxSyncStatus,
   SkillsStorageChangeEvent,
+  MemoryInjectedItem,
 } from '../types';
 import { applySessionUpdate } from '../utils/session-update';
 
@@ -42,6 +43,7 @@ export interface SessionState {
   traceSteps: TraceStep[];
   contextWindow: number;
   maxTokens: number;
+  memoryContextItems: MemoryInjectedItem[];
 }
 
 const DEFAULT_SESSION_STATE: SessionState = {
@@ -54,6 +56,7 @@ const DEFAULT_SESSION_STATE: SessionState = {
   traceSteps: [],
   contextWindow: 0,
   maxTokens: 0,
+  memoryContextItems: [],
 };
 
 // Helper to immutably update a single session's state within the record
@@ -191,6 +194,7 @@ interface AppState {
     sessionId: string,
     contextInfo: { contextWindow: number; maxTokens: number }
   ) => void;
+  setSessionMemoryContext: (sessionId: string, items: MemoryInjectedItem[]) => void;
   bumpPluginCommandsRevision: () => void;
 
   // System theme actions
@@ -617,6 +621,13 @@ export const useAppStore = create<AppState>((set) => ({
       sessionStates: patchSession(state.sessionStates, sessionId, {
         contextWindow: contextInfo.contextWindow,
         maxTokens: contextInfo.maxTokens,
+      }),
+    })),
+
+  setSessionMemoryContext: (sessionId, items) =>
+    set((state) => ({
+      sessionStates: patchSession(state.sessionStates, sessionId, {
+        memoryContextItems: items,
       }),
     })),
 

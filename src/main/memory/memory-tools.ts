@@ -71,7 +71,7 @@ export function createMemoryTools(memoryService: MemoryService): MemoryToolDefin
       limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 20 })),
     }),
     async execute(_toolCallId, params) {
-      const result = memoryService.search({
+      const result = await memoryService.search({
         query: String((params as { query: string }).query || ''),
         cwd:
           typeof (params as { workspace?: string }).workspace === 'string'

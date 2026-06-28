@@ -9,6 +9,7 @@ import type { ExperienceMemoryStore } from './experience-memory-store';
 import type { MemoryIngestionQueue } from './memory-ingestion-queue';
 import type { MemorySessionStateStore } from './memory-state-store';
 import type { ChunkMemoryItem, MemoryIngestionInput, MemoryTranscriptTurn } from './memory-types';
+import { getMemoryInjectionPolicy, sanitizeMemoryContent } from './memory-sanitizer';
 import {
   extractKeywords,
   isoNow,
@@ -300,7 +301,15 @@ export async function updateCoreMemory(
     existingCorePromptBlock: coreStore.toPromptBlock(),
   });
   if (actions.length) {
-    coreStore.applyActions(actions);
+    const injectionPolicy = getMemoryInjectionPolicy(host.getAppConfig().memoryRuntime);
+    const sanitizedActions = actions.map((action) => ({
+      ...action,
+      value:
+        typeof action.value === 'string'
+          ? sanitizeMemoryContent(action.value, injectionPolicy)
+          : action.value,
+    }));
+    coreStore.applyActions(sanitizedActions);
   }
 }
 
@@ -320,11 +329,15 @@ export async function storeExperienceSession(
   const existing = store.getSession(input.sessionId);
   const ingestedAt = isoNow();
   const sourceWorkspaceLabel = host.resolveWorkspaceLabel(input.sourceWorkspace);
+  const injectionPolicy = getMemoryInjectionPolicy(host.getAppConfig().memoryRuntime);
+  const sanitize = (text: string) => sanitizeMemoryContent(text, injectionPolicy);
 
   const chunkInputs: Array<Omit<ChunkMemoryItem, 'id'>> = [];
   for (const chunk of input.extracted.chunks) {
-    const rawText = host.extractRawText(input.fullTurns, chunk.sourceTurns);
-    const searchableText = [chunk.summary, chunk.details, ...chunk.keywords].join(' ').trim();
+    const rawText = sanitize(host.extractRawText(input.fullTurns, chunk.sourceTurns));
+    const summary = sanitize(chunk.summary);
+    const details = sanitize(chunk.details);
+    const searchableText = [summary, details, ...chunk.keywords].join(' ').trim();
     chunkInputs.push({
       sessionId: input.sessionId,
       sourceWorkspace: input.sourceWorkspace,
@@ -332,8 +345,8 @@ export async function storeExperienceSession(
       sourceSessionId: input.sessionId,
       sourceSessionTitle: input.sessionTitle,
       sourceSessionDate: input.sessionDate,
-      summary: chunk.summary,
-      details: chunk.details,
+      summary,
+      details,
       keywords: chunk.keywords.length ? chunk.keywords : extractKeywords(searchableText),
       sourceTurns: chunk.sourceTurns,
       rawText,
@@ -347,6 +360,7 @@ export async function storeExperienceSession(
   const sessionSearchable = [input.extracted.sessionSummary, ...input.extracted.sessionKeywords]
     .join(' ')
     .trim();
+  const sessionSummary = sanitize(input.extracted.sessionSummary);
   store.replaceSession(
     input.sessionId,
     {
@@ -356,12 +370,15 @@ export async function storeExperienceSession(
       sourceSessionId: input.sessionId,
       sourceSessionTitle: input.sessionTitle,
       sourceSessionDate: input.sessionDate,
-      summary: input.extracted.sessionSummary,
+      summary: sessionSummary,
       keywords: input.extracted.sessionKeywords.length
         ? input.extracted.sessionKeywords
         : extractKeywords(sessionSearchable),
       chunkIds: [],
-      rawSession: input.fullTurns,
+      rawSession: input.fullTurns.map((turn) => ({
+        ...turn,
+        content: sanitize(turn.content),
+      })),
       sessionDate: input.sessionDate,
       createdAt: existing?.createdAt || new Date(input.sessionCreatedAt).toISOString(),
       ingestedAt,

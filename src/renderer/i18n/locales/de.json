@@ -196,7 +196,15 @@
     "noFiles": "Noch keine Speicherdateien",
     "fileContent": "Dateiinhalt",
     "emptyFile": "Datei ist leer",
-    "selectFileHint": "Wählen Sie links eine Datei aus, um ihr Roh-JSON anzuzeigen."
+    "selectFileHint": "Wählen Sie links eine Datei aus, um ihr Roh-JSON anzuzeigen.",
+    "chunkTopK": "Chunk top-K",
+    "sessionTopK": "Session top-K",
+    "injectionPolicy": "Injection policy",
+    "injectionPolicyEscape": "Escape delimiters",
+    "injectionPolicyStrip": "Strip suspicious patterns",
+    "injectionPolicyBlock": "Block suspicious content",
+    "showInjectedMemoryInChat": "Show injected memory in chat",
+    "relevanceScore": "Relevance {{score}}"
   },
   "language": {
     "english": "Englisch",
@@ -717,7 +725,13 @@
       "errRewindSessionNotFound": "Session not found.",
       "errRewindMessageNotFound": "User message not found.",
       "errRewindFailed": "Could not edit this message."
-    }
+    },
+    "memoryUsedCount_one": "{{count}} memory item used",
+    "memoryUsedCount_other": "{{count}} memory items used",
+    "memoryNoRecall": "No relevant memory recalled for this turn",
+    "memoryDisabledSession": "Memory disabled for this session",
+    "memorySessionToggle": "Memory for session",
+    "memoryOpenSourceSession": "Open source session"
   },
   "context": {
     "progress": "Fortschritt",

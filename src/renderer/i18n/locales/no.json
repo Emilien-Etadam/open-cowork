@@ -196,7 +196,15 @@
     "noFiles": "Ingen minnefiler ennå",
     "fileContent": "Filinnhold",
     "emptyFile": "Filen er tom",
-    "selectFileHint": "Velg en fil til venstre for å vise dens rå JSON."
+    "selectFileHint": "Velg en fil til venstre for å vise dens rå JSON.",
+    "chunkTopK": "Chunk top-K",
+    "sessionTopK": "Session top-K",
+    "injectionPolicy": "Injection policy",
+    "injectionPolicyEscape": "Escape delimiters",
+    "injectionPolicyStrip": "Strip suspicious patterns",
+    "injectionPolicyBlock": "Block suspicious content",
+    "showInjectedMemoryInChat": "Show injected memory in chat",
+    "relevanceScore": "Relevance {{score}}"
   },
   "language": {
     "english": "Engelsk",
@@ -717,7 +725,13 @@
       "errRewindSessionNotFound": "Session not found.",
       "errRewindMessageNotFound": "User message not found.",
       "errRewindFailed": "Could not edit this message."
-    }
+    },
+    "memoryUsedCount_one": "{{count}} memory item used",
+    "memoryUsedCount_other": "{{count}} memory items used",
+    "memoryNoRecall": "No relevant memory recalled for this turn",
+    "memoryDisabledSession": "Memory disabled for this session",
+    "memorySessionToggle": "Memory for session",
+    "memoryOpenSourceSession": "Open source session"
   },
   "context": {
     "progress": "Fremdrift",
