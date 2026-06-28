@@ -151,6 +151,9 @@ export class SessionManager {
   private async initializeMCP(): Promise<void> {
     try {
       await this.mcpManager.ensureNodeRuntimeReady();
+      if (process.platform === 'darwin' || process.platform === 'linux') {
+        await this.mcpManager.ensureGuiRuntimeReady();
+      }
       const servers = mcpConfigStore.getEnabledServers();
       await this.mcpManager.initializeServers(servers);
       log(`[SessionManager] Initialized ${servers.length} MCP servers`);
@@ -468,8 +471,6 @@ export class SessionManager {
   }
 
   private async generateTitleWithConfig(titlePrompt: string): Promise<string | null> {
-    return normalizeGeneratedTitle(
-      await generateTitleWithPiAi(titlePrompt, configStore.getAll())
-    );
+    return normalizeGeneratedTitle(await generateTitleWithPiAi(titlePrompt, configStore.getAll()));
   }
 }
