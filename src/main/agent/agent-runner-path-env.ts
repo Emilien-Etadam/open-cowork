@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { execFileSync } from 'child_process';
@@ -6,34 +5,19 @@ import { app } from 'electron';
 import { getDefaultShell } from '../utils/shell-resolver';
 import { log, logWarn } from '../utils/logger';
 import { getBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime';
+import { ensurePythonRuntime, getBundledPythonPaths } from '../runtime/python-runtime';
+import { ensureCliclickRuntime, getBundledCliclickPath } from '../runtime/gui-tools-runtime';
 
 export { getBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime';
+export { ensurePythonRuntime, getBundledPythonPaths } from '../runtime/python-runtime';
+export { ensureCliclickRuntime, getBundledCliclickPath } from '../runtime/gui-tools-runtime';
 
 /**
  * Resolve bundled Python bin directory path (if available).
- * Checks packaged and dev layouts, returns the bin dir containing python3.
  */
 export function resolveBundledPythonBinDir(): string | null {
-  const platform = process.platform;
-  const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
-
-  const candidates: string[] = [];
-  if (!app.isPackaged) {
-    const projectRoot = path.join(__dirname, '..', '..');
-    if (platform === 'darwin') {
-      candidates.push(path.join(projectRoot, 'resources', 'python', `darwin-${arch}`, 'bin'));
-    }
-    candidates.push(path.join(projectRoot, 'resources', 'python', 'bin'));
-  } else {
-    // Packaged layout: Resources/python/bin/python3
-    candidates.push(path.join(process.resourcesPath, 'python', 'bin'));
-  }
-
-  const pythonExe = platform === 'win32' ? 'python.exe' : 'python3';
-  for (const binDir of candidates) {
-    if (fs.existsSync(path.join(binDir, pythonExe))) return binDir;
-  }
-  return null;
+  const paths = getBundledPythonPaths();
+  return paths ? path.dirname(paths.python) : null;
 }
 
 /**
@@ -41,22 +25,8 @@ export function resolveBundledPythonBinDir(): string | null {
  */
 export function resolveBundledToolsBinDir(): string | null {
   if (process.platform !== 'darwin') return null;
-  const arch = process.arch === 'arm64' ? 'arm64' : 'x64';
-
-  const candidates: string[] = [];
-  if (!app.isPackaged) {
-    const projectRoot = path.join(__dirname, '..', '..');
-    candidates.push(path.join(projectRoot, 'resources', 'tools', `darwin-${arch}`, 'bin'));
-    candidates.push(path.join(projectRoot, 'resources', 'tools', 'bin'));
-  } else {
-    candidates.push(path.join(process.resourcesPath, 'tools', `darwin-${arch}`, 'bin'));
-    candidates.push(path.join(process.resourcesPath, 'tools', 'bin'));
-  }
-
-  for (const binDir of candidates) {
-    if (fs.existsSync(binDir)) return binDir;
-  }
-  return null;
+  const cliclickPath = getBundledCliclickPath();
+  return cliclickPath ? path.dirname(cliclickPath) : null;
 }
 
 /**
@@ -85,8 +55,21 @@ export async function enrichProcessPathForBuild(): Promise<void> {
     return;
   }
 
-  await ensureNodeRuntime();
   const platform = process.platform;
+
+  await ensureNodeRuntime();
+  if (platform === 'darwin' || platform === 'linux') {
+    try {
+      await ensurePythonRuntime();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logWarn(`[AgentRunner] Python runtime not ready yet: ${message}`);
+    }
+  }
+  if (platform === 'darwin') {
+    await ensureCliclickRuntime();
+  }
+
   const delimiter = platform === 'win32' ? ';' : ':';
   const currentPaths = (process.env.PATH || '').split(delimiter).filter((p: string) => p.trim());
 

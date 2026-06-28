@@ -7,6 +7,8 @@ import * as path from 'path';
 import { app } from 'electron';
 import { log, logWarn } from './utils/logger';
 import { isNodeRuntimeReady } from './runtime/node-runtime';
+import { isPythonRuntimeReady } from './runtime/python-runtime';
+import { isCliclickRuntimeReady } from './runtime/gui-tools-runtime';
 
 export interface PreflightIssue {
   resource: string;
@@ -35,6 +37,25 @@ export function runPreflight(): PreflightIssue[] {
       resource: 'Node.js runtime',
       severity: 'warning',
       message: 'Node.js will be downloaded on first MCP use',
+    });
+  }
+
+  if (platform === 'darwin' || platform === 'linux') {
+    if (!isPythonRuntimeReady()) {
+      issues.push({
+        resource: 'Python runtime',
+        severity: 'warning',
+        message: 'Python will be downloaded on first GUI automation use',
+      });
+    }
+  }
+
+  if (platform === 'darwin' && !isCliclickRuntimeReady()) {
+    issues.push({
+      resource: 'cliclick',
+      severity: 'warning',
+      message:
+        'cliclick will be downloaded on first GUI automation use (Quartz fallback available)',
     });
   }
 

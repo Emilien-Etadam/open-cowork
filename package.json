@@ -37,7 +37,7 @@
   "scripts": {
     "dev": "npm run download:node && npm run build:wsl-agent && npm run build:lima-agent && npm run build:mcp && vite",
     "dev:with-python": "npm run download:node && npm run prepare:python && npm run build:wsl-agent && npm run build:lima-agent && npm run build:mcp && vite",
-    "build": "npm run prepare:gui-tools && npm run prepare:python:all && npm run build:wsl-agent && npm run build:lima-agent && npm run build:mcp && tsc && vite build && npm run generate:icons && node scripts/pre-build-check.js && electron-builder",
+    "build": "npm run build:wsl-agent && npm run build:lima-agent && npm run build:mcp && tsc && vite build && npm run generate:icons && node scripts/pre-build-check.js && electron-builder",
     "build:win": "node scripts/build-windows.js",
     "build:wsl-agent": "tsc -p src/main/sandbox/wsl-agent/tsconfig.json",
     "build:lima-agent": "tsc -p src/main/sandbox/lima-agent/tsconfig.json",
