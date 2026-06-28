@@ -7,10 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.3.0] - 2026-06-28
+
+### Added
+
+- **Python on-demand** : runtime Python 3.10.19 (python-build-standalone) téléchargé dans `userData` au premier usage GUI — Pillow + pyobjc sur macOS (~30–45 MB économisés sur l'installateur)
+- **cliclick on-demand** (macOS) : téléchargement/copie à la demande avec repli Quartz si absent
+- **Détection automatique des modèles** pour les endpoints API distants (#63)
+
 ### Changed
 
 - **Node.js on-demand** : le runtime Node n'est plus embarqué dans l'installateur ; téléchargement automatique dans `userData` au premier usage MCP (~25–35 MB économisés sur Windows)
-- Migration automatique depuis l'ancien bundle `extraResources/node` si présent
+- Migration automatique depuis les anciens bundles `extraResources` (node, python, tools) si présents
+- **1086 tests** passent en CI
 
 ## [5.1.0] - 2026-06-27
 
@@ -371,10 +380,7 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 - Initial release of Lygodactylus — open-source AI agent desktop app with one-click install for Windows and macOS
 
-[Unreleased]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.3.0-beta.8...HEAD
-[3.3.0-beta.8]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.2.0...v3.3.0-beta.8
-[3.2.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.1.0...v3.2.0
-[3.1.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.0.0...v3.1.0
-[3.0.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v2.0.0...v3.0.0
-[2.0.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v1.0...v2.0.0
-[1.0.0]: https://github.com/OpenCoworkAI/open-cowork/releases/tag/v1.0
+[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...HEAD
+[5.3.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.1.0...v5.3.0
+[5.1.0]: https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5.1.0
+[5.0.0]: https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5.0.0
