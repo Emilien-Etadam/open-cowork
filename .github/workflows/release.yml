@@ -390,7 +390,8 @@ jobs:
             echo "::error::Linux executable not found"
             exit 1
           fi
-          timeout 30 "$EXECUTABLE" --smoke-test
+          # GitHub Actions runners lack a configured setuid chrome-sandbox.
+          timeout 30 "$EXECUTABLE" --no-sandbox --smoke-test
 
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
