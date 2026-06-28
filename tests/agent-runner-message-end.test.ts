@@ -8,7 +8,7 @@ import {
   resolveMessageEndPayload,
   shouldPreserveExistingTrace,
   toUserFacingErrorText,
-} from '../src/main/claude/agent-runner-message-end';
+} from '../src/main/agent/agent-runner-message-end';
 
 describe('resolveMessageEndPayload', () => {
   it('falls back to accumulated streamed text when message_end content is empty', () => {

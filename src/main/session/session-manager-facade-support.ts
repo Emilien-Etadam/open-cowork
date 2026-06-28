@@ -1,6 +1,6 @@
 import type { ContentBlock, Message, ServerEvent, Session } from '../../renderer/types';
 import { buildScheduledTaskTitle } from '../../shared/schedule/task-title';
-import { generateTitleWithClaudeSdk } from '../claude/claude-sdk-one-shot';
+import { generateTitleWithPiAi } from '../agent/pi-ai-one-shot';
 import { configStore } from '../config/config-store';
 import type { DatabaseInstance } from '../db/database';
 import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
@@ -17,6 +17,7 @@ import {
   reloadSandbox,
   stopSession,
   updateSessionCwd,
+  updateSessionMemoryEnabled,
 } from './session-manager-session-lifecycle';
 import { SessionManagerStore } from './session-manager-store';
 import { maybeGenerateSessionTitle } from './session-title-flow';
@@ -118,6 +119,10 @@ export class SessionManagerFacadeSupport {
   }
   updateSessionCwd(sessionId: string, cwd: string): void {
     updateSessionCwd(this.deps, (id) => this.stopSession(id), sessionId, cwd);
+  }
+
+  updateSessionMemoryEnabled(sessionId: string, memoryEnabled: boolean): Session {
+    return updateSessionMemoryEnabled(this.deps, sessionId, memoryEnabled);
   }
 
   updateSessionStatus(sessionId: string, status: Session['status']): void {
@@ -246,8 +251,6 @@ export class SessionManagerFacadeSupport {
   }
 
   private async generateTitleWithConfig(titlePrompt: string): Promise<string | null> {
-    return normalizeGeneratedTitle(
-      await generateTitleWithClaudeSdk(titlePrompt, configStore.getAll())
-    );
+    return normalizeGeneratedTitle(await generateTitleWithPiAi(titlePrompt, configStore.getAll()));
   }
 }

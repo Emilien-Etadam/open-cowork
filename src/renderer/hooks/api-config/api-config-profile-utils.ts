@@ -1,3 +1,4 @@
+import { isParsableBaseUrl } from '../../../shared/api-provider-guidance';
 import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 import { normalizeOllamaBaseUrl } from '../../../shared/ollama-base-url';
 import type {
@@ -41,6 +42,32 @@ export function profileKeyToProvider(profileKey: ProviderProfileKey): {
 
 export function isLocalOpenAiMode(provider: ProviderType, baseUrl: string): boolean {
   return provider === 'openai' && (!baseUrl.trim() || isLoopbackBaseUrl(baseUrl));
+}
+
+export function canDiscoverProviderModels(
+  provider: ProviderType,
+  baseUrl: string,
+  apiKey: string,
+  requiresApiKey: boolean,
+  presetBaseUrl?: string
+): boolean {
+  const trimmedBaseUrl = baseUrl.trim();
+  const fallbackBaseUrl = presetBaseUrl?.trim() || '';
+  const effectiveBaseUrl = trimmedBaseUrl || fallbackBaseUrl;
+
+  if (provider === 'openai') {
+    if (isLocalOpenAiMode(provider, baseUrl)) {
+      return !trimmedBaseUrl || isParsableBaseUrl(trimmedBaseUrl);
+    }
+    return isParsableBaseUrl(effectiveBaseUrl) && (!requiresApiKey || Boolean(apiKey.trim()));
+  }
+
+  if (provider === 'anthropic') {
+    const anthropicBaseUrl = effectiveBaseUrl || 'https://api.anthropic.com';
+    return isParsableBaseUrl(anthropicBaseUrl) && (!requiresApiKey || Boolean(apiKey.trim()));
+  }
+
+  return false;
 }
 
 export function modelPresetForProfile(profileKey: ProviderProfileKey, presets: ProviderPresets) {

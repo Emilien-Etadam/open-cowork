@@ -1,8 +1,7 @@
-import OpenAI from 'openai';
 import type { AppConfig, CustomProtocolType, ProviderType } from '../config/config-store';
 import { configStore } from '../config/config-store';
 import { normalizeOpenAICompatibleBaseUrl, resolveOpenAICredentials } from '../config/auth-utils';
-import { runPiAiOneShot } from '../claude/claude-sdk-one-shot';
+import { runPiAiOneShot } from '../agent/pi-ai-one-shot';
 import { logWarn } from '../utils/logger';
 
 export interface MemoryCompletionRequest {
@@ -157,7 +156,7 @@ export class MemoryLLMClient implements MemoryLLMClientLike {
       baseUrl: embedConfig.baseUrl,
     });
 
-    const client = new OpenAI({
+    const client = new (await import('openai')).default({
       apiKey: resolved?.apiKey || embedConfig.apiKey,
       baseURL: resolved?.baseUrl || normalizeOpenAICompatibleBaseUrl(embedConfig.baseUrl),
       timeout: embedConfig.timeoutMs,

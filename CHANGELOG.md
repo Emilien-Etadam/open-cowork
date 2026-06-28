@@ -7,6 +7,86 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.7.0] - 2026-06-28
+
+### Added
+
+- **Tool Completeness** : outils natifs `glob`/`find`, `grep`, `web_fetch`, `web_search`, `todo_write`, `ask_user_question` avec alias PascalCase pour compatibilité historique
+- Schémas TypeBox plats optimisés pour **LiteLLM → vLLM → Qwen 3.6 27B** (tool calling OpenAI-compatible)
+- **AskUserQuestion** interactif : IPC `question.request` / `question.response`, UI inline avec soumission des réponses
+
+### Changed
+
+- `buildNativeCustomTools` branché dans `agent-runner-pi-setup` aux côtés de la recherche web et des outils MCP
+
+## [5.6.0] - 2026-06-28
+
+### Added
+
+- **Memory UX** : panneau « Mémoire utilisée » dans le chat, toggle mémoire par session, scores de pertinence dans Paramètres
+- **Memory hardening** : sanitization à l'ingestion, politique d'injection configurable (`escape` / `strip-suspicious` / `block`), ranker unifié (lexical + embedding + workspace + recency)
+- **Linux releases** : build CI AppImage x64, script `npm run build:linux`, publication sur GitHub Releases
+
+### Changed
+
+- `MemoryRetriever` utilise le même ranker que la récupération runtime ; `sourceExcerpt` peuplé à la lecture
+- Config mémoire : `chunkTopK`, `sessionTopK`, `injectionPolicy`, `showInjectedMemoryInChat`
+
+## [5.5.0] - 2026-06-28
+
+### Changed
+
+- **Chemins agent** : `userData/claude/{skills,plugins}` → `userData/{skills,plugins}` avec migration automatique au démarrage
+- **Sandbox VM** : `~/.claude/sandbox` → `~/.lygodactylus/sandbox` (sessions legacy conservées)
+- **Lima** : instance `claude-sandbox` → `lygodactylus-sandbox` (détection des deux noms)
+- **Manifeste sync** : `.opencowork-sync.json` → `.lygodactylus-sync.json` (lecture legacy)
+- Préfixes temporaires `opencowork-*` → `lygodactylus-*` (plugins, export logs)
+- Skills sandbox : `{sandbox}/skills` au lieu de `{sandbox}/.claude/skills`
+- **Schéma** : colonne SQLite `agent_session_id` (migration depuis `claude_session_id`) ; config `agentCliPath` (migration depuis `claudeCodePath`)
+
+## [5.4.0] - 2026-06-28
+
+### Added
+
+- **Skills on-demand** : `docx` et `pptx` (~2.7 MB) retirés de l'installateur ; téléchargement depuis GitHub Releases au premier usage (`userData/runtimes/skills/{version}/`)
+- **Skill bundles CI** : job `skill-bundles` publie `lygodactylus-skill-{docx|pptx}-v{version}.tar.gz` sur chaque release
+- **Lazy-load SDKs** : `openai` et `@anthropic-ai/sdk` chargés à la demande (embed mémoire, diagnostics API)
+
+### Changed
+
+- **Skills core** : seuls `pdf`, `xlsx`, `skill-creator` embarqués via `resources/skills-core/`
+- Migration automatique depuis les anciens bundles `extraResources/skills` complets (docx/pptx inclus)
+- Preflight : avertissement si skills lourds pas encore téléchargés
+
+## [5.3.0] - 2026-06-28
+
+### Added
+
+- **Python on-demand** : runtime Python 3.10.19 (python-build-standalone) téléchargé dans `userData` au premier usage GUI — Pillow + pyobjc sur macOS (~30–45 MB économisés sur l'installateur)
+- **cliclick on-demand** (macOS) : téléchargement/copie à la demande avec repli Quartz si absent
+- **Détection automatique des modèles** pour les endpoints API distants (#63)
+
+### Changed
+
+- **Node.js on-demand** : le runtime Node n'est plus embarqué dans l'installateur ; téléchargement automatique dans `userData` au premier usage MCP (~25–35 MB économisés sur Windows)
+- Migration automatique depuis les anciens bundles `extraResources` (node, python, tools) si présents
+- **1086 tests** passent en CI
+
+## [5.1.0] - 2026-06-27
+
+### Added
+
+- **Hardening v5 (phases 0–3)** : stores MCP/Chat LAN chiffrés, sandbox macOS/Windows activé par défaut, allowlist IPC côté main, durcissement Chat LAN (Bearer SSE, en-têtes sécurité)
+- **Qualité** : extractions modules (`command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`), tests tool-executor, seuil couverture CI 40 %
+- **Sécurité dépendances** : migration `@earendil-works/pi-ai` / `pi-coding-agent` ^0.80.2 — **0 CVE runtime** (patch DeepSeek V4 porté)
+
+### Changed
+
+- **Node** : `engines` >= 22.19.0 (aligné earendil 0.80.2), CI/release sur Node 22.19
+- **Allègement installateur** : retrait `@img`/sharp des artifacts, minify bundles MCP, locales Electron réduites (win/linux)
+- **Renommage interne** : `src/main/claude/` → `src/main/agent/`, `AgentRunner`, `pi-ai-one-shot`, `probeWithPiAi` / `generateTitleWithPiAi`
+- **1075 tests** passent en CI
+
 ## [5.0.0] - 2026-06-27
 
 ### Changed
@@ -351,10 +431,10 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 - Initial release of Lygodactylus — open-source AI agent desktop app with one-click install for Windows and macOS
 
-[Unreleased]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.3.0-beta.8...HEAD
-[3.3.0-beta.8]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.2.0...v3.3.0-beta.8
-[3.2.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.1.0...v3.2.0
-[3.1.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v3.0.0...v3.1.0
-[3.0.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v2.0.0...v3.0.0
-[2.0.0]: https://github.com/OpenCoworkAI/open-cowork/compare/v1.0...v2.0.0
-[1.0.0]: https://github.com/OpenCoworkAI/open-cowork/releases/tag/v1.0
+[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.7.0...HEAD
+[5.7.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...v5.7.0
+[5.5.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.4.0...v5.5.0
+[5.4.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...v5.4.0
+[5.3.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.1.0...v5.3.0
+[5.1.0]: https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5.1.0
+[5.0.0]: https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5.0.0

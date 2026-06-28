@@ -9,6 +9,7 @@ export {
   buildApiConfigSnapshot,
 } from './api-config/api-config-builders';
 export {
+  canDiscoverProviderModels,
   isLocalOpenAiMode,
   profileKeyFromProvider,
   profileKeyToProvider,

@@ -6,6 +6,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { app } from 'electron';
 import { log, logWarn } from './utils/logger';
+import { isNodeRuntimeReady } from './runtime/node-runtime';
+import { isPythonRuntimeReady } from './runtime/python-runtime';
+import { isCliclickRuntimeReady } from './runtime/gui-tools-runtime';
+import { getHeavySkillsStatus } from './runtime/skills-bundle-runtime';
 
 export interface PreflightIssue {
   resource: string;
@@ -20,7 +24,6 @@ export function runPreflight(): PreflightIssue[] {
   const resources = process.resourcesPath;
   const platform = process.platform;
 
-  // Check function
   function check(relativePath: string, resource: string, severity: 'critical' | 'warning') {
     const fullPath = path.join(resources, relativePath);
     if (!fs.existsSync(fullPath)) {
@@ -28,24 +31,52 @@ export function runPreflight(): PreflightIssue[] {
     }
   }
 
-  // Critical checks (all platforms)
   check('mcp/gui-operate-server.js', 'MCP Server (GUI)', 'critical');
 
-  // Platform-specific
-  if (platform === 'darwin') {
-    check('node/bin/node', 'Bundled Node.js', 'critical');
-    check('lima-agent/index.js', 'Lima Sandbox Agent', 'warning');
-  } else if (platform === 'win32') {
-    check('node/node.exe', 'Bundled Node.js', 'critical');
-    check('wsl-agent/index.js', 'WSL Sandbox Agent', 'warning');
-  } else {
-    check('node/bin/node', 'Bundled Node.js', 'critical');
+  if (!isNodeRuntimeReady()) {
+    issues.push({
+      resource: 'Node.js runtime',
+      severity: 'warning',
+      message: 'Node.js will be downloaded on first MCP use',
+    });
   }
 
-  // Non-critical checks
-  check('skills', 'Built-in Skills', 'warning');
+  if (platform === 'darwin' || platform === 'linux') {
+    if (!isPythonRuntimeReady()) {
+      issues.push({
+        resource: 'Python runtime',
+        severity: 'warning',
+        message: 'Python will be downloaded on first GUI automation use',
+      });
+    }
+  }
 
-  // Log results
+  if (platform === 'darwin' && !isCliclickRuntimeReady()) {
+    issues.push({
+      resource: 'cliclick',
+      severity: 'warning',
+      message:
+        'cliclick will be downloaded on first GUI automation use (Quartz fallback available)',
+    });
+  }
+
+  if (platform === 'darwin') {
+    check('lima-agent/index.js', 'Lima Sandbox Agent', 'warning');
+  } else if (platform === 'win32') {
+    check('wsl-agent/index.js', 'WSL Sandbox Agent', 'warning');
+  }
+
+  check('skills', 'Built-in Skills (core)', 'warning');
+
+  const heavySkills = getHeavySkillsStatus();
+  if (!heavySkills.ready) {
+    issues.push({
+      resource: 'Heavy Skills (docx/pptx)',
+      severity: 'warning',
+      message: `Will be downloaded on first use: ${heavySkills.pending.join(', ')}`,
+    });
+  }
+
   for (const issue of issues) {
     if (issue.severity === 'critical') {
       log(`[Preflight] CRITICAL: ${issue.resource} — ${issue.message}`);

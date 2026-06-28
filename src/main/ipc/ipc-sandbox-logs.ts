@@ -4,6 +4,7 @@
 import { app, ipcMain, dialog, shell } from 'electron';
 import * as fs from 'fs';
 import { configStore } from '../config/config-store';
+import { resolveAgentCliPath } from '../config/agent-cli-path';
 import { getSandboxAdapter } from '../sandbox/sandbox-adapter';
 import { WSLBridge } from '../sandbox/wsl-bridge';
 import { LimaBridge } from '../sandbox/lima-bridge';
@@ -254,7 +255,8 @@ export function registerSandboxLogsIpc(): void {
           sandboxEnabled: !!configStore.get('sandboxEnabled'),
           thinkingEnabled: !!configStore.get('enableThinking'),
           apiKeyConfigured: !!configStore.get('apiKey'),
-          claudeCodePathConfigured: !!configStore.get('claudeCodePath'),
+          claudeCodePathConfigured: !!resolveAgentCliPath(configStore.getAll()),
+          agentCliPathConfigured: !!resolveAgentCliPath(configStore.getAll()),
           defaultWorkdir: configStore.get('defaultWorkdir') || null,
           globalSkillsPathConfigured: !!configStore.get('globalSkillsPath'),
         },
@@ -274,7 +276,7 @@ export function registerSandboxLogsIpc(): void {
 
       const result = await dialog.showSaveDialog(mainAppState.mainWindow!, {
         title: 'Export Logs',
-        defaultPath: `opencowork-logs-${new Date().toISOString().split('T')[0]}.zip`,
+        defaultPath: `lygodactylus-logs-${new Date().toISOString().split('T')[0]}.zip`,
         filters: [
           { name: 'ZIP Archive', extensions: ['zip'] },
           { name: 'All Files', extensions: ['*'] },

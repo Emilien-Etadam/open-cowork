@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildPiSessionRuntimeSignature } from '../src/main/claude/pi-session-runtime';
+import { buildPiSessionRuntimeSignature } from '../src/main/agent/pi-session-runtime';
 
 describe('pi session runtime signature', () => {
   const baseInput = {

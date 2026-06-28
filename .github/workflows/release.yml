@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 22
+          node-version: '22.19'
           cache: npm
 
       - name: Install dependencies
@@ -47,7 +47,7 @@ jobs:
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 22
+          node-version: '22.19'
           cache: npm
 
       - name: Cache Electron
@@ -59,18 +59,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Install cliclick for GUI tools
-        run: brew install cliclick
-
-      - name: Download Node binaries
-        run: node scripts/download-node.js
-
-      - name: Prepare Python runtime
-        run: node scripts/prepare-python.js
-
-      - name: Prepare GUI tools
-        run: node scripts/prepare-gui-tools.js
 
       - name: Build Lima agent
         run: npm run build:lima-agent
@@ -87,6 +75,9 @@ jobs:
       - name: Generate app icons
         run: npm run generate:icons
 
+      - name: Prepare lightweight skills bundle
+        run: npm run prepare:skills-core
+
       - name: Pre-build check
         run: node scripts/pre-build-check.js
 
@@ -94,6 +85,24 @@ jobs:
         run: npx electron-builder --mac dmg dir --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Ensure macOS release artifact
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          artifacts=(release/*.dmg release/*.zip)
+          if [ ${#artifacts[@]} -eq 0 ]; then
+            APP_DIR="release/mac-arm64"
+            APP_NAME=$(ls "$APP_DIR" | grep '\.app$' | head -1 || true)
+            if [ -z "$APP_NAME" ]; then
+              echo "::error::No macOS app bundle found"
+              exit 1
+            fi
+            VERSION=$(node -p "require('./package.json').version")
+            (cd "$APP_DIR" && ditto -c -k --sequesterRsrc --keepParent "$APP_NAME" "../Lygodactylus-${VERSION}-mac-arm64.zip")
+            echo "Created zip fallback from ${APP_NAME}"
+          fi
+          ls -la release/*.dmg release/*.zip 2>/dev/null || ls -la release/
 
       # Verify critical resources are present in the packaged app
       - name: Smoke test - verify packaged resources
@@ -112,7 +121,6 @@ jobs:
           for check in \
             "mcp/gui-operate-server.js" \
             "mcp/software-dev-server-example.js" \
-            "node/bin/node" \
             "lima-agent/index.js" \
             "skills" \
             "icon.icns" \
@@ -172,6 +180,7 @@ jobs:
             release/*.dmg
             release/*.zip
           draft: true
+          tag_name: ${{ github.ref_name }}
 
   build-windows:
     name: Release Windows
@@ -182,7 +191,7 @@ jobs:
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
-          node-version: 22
+          node-version: '22.19'
           cache: npm
 
       - name: Cache Electron
@@ -194,9 +203,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Download Node binaries
-        run: node scripts/download-node.js
 
       - name: Build WSL agent
         run: npm run build:wsl-agent
@@ -212,6 +218,9 @@ jobs:
 
       - name: Generate app icons
         run: npm run generate:icons
+
+      - name: Prepare lightweight skills bundle
+        run: npm run prepare:skills-core
 
       - name: Pre-build check
         run: node scripts/pre-build-check.js
@@ -237,7 +246,6 @@ jobs:
           $checks = @(
             "mcp\gui-operate-server.js",
             "mcp\software-dev-server-example.js",
-            "node\node.exe",
             "wsl-agent\index.js",
             "skills",
             "icon.ico",
@@ -318,3 +326,130 @@ jobs:
             release/latest.yml
             release/*.blockmap
           draft: true
+          tag_name: ${{ github.ref_name }}
+
+  build-linux:
+    name: Release Linux
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '22.19'
+          cache: npm
+
+      - name: Cache Electron
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/electron
+          key: electron-linux-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-linux-
+
+      - name: Install Linux packaging dependencies
+        run: sudo apt-get update && sudo apt-get install -y fuse libfuse2 xvfb
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build MCP servers
+        run: npm run build:mcp
+
+      - name: TypeScript compile
+        run: npx tsc
+
+      - name: Vite build
+        run: npx vite build
+
+      - name: Generate app icons
+        run: npm run generate:icons
+
+      - name: Prepare lightweight skills bundle
+        run: npm run prepare:skills-core
+
+      - name: Pre-build check
+        run: node scripts/pre-build-check.js
+
+      - name: Electron Builder (AppImage)
+        run: npx electron-builder --linux AppImage --publish never
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: '1'
+
+      - name: Smoke test - verify packaged resources
+        run: |
+          set -euo pipefail
+          UNPACKED="release/linux-unpacked"
+          if [ ! -d "$UNPACKED" ]; then
+            echo "::error::linux-unpacked directory not found"
+            exit 1
+          fi
+          RESOURCES="$UNPACKED/resources"
+          for check in \
+            "mcp/gui-operate-server.js" \
+            "mcp/software-dev-server-example.js" \
+            "skills" \
+            "icon.png" \
+            "tray-icon.png" \
+            "chat-lan"; do
+            if [ -e "$RESOURCES/$check" ]; then
+              echo "  OK: $check"
+            else
+              echo "::error::Missing resource: $check"
+              exit 1
+            fi
+          done
+
+      - name: Smoke test - launch app
+        run: |
+          set -euo pipefail
+          EXECUTABLE="release/linux-unpacked/lygodactylus"
+          if [ ! -x "$EXECUTABLE" ]; then
+            echo "::error::Linux executable not found"
+            exit 1
+          fi
+          # GitHub Actions runners lack a configured setuid chrome-sandbox and DISPLAY.
+          xvfb-run -a timeout 30 "$EXECUTABLE" --no-sandbox --smoke-test
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
+        with:
+          files: release/*.AppImage
+          draft: true
+          tag_name: ${{ github.ref_name }}
+
+  skill-bundles:
+    name: Skill Bundles (docx/pptx)
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '22.19'
+
+      - name: Create heavy skill bundles
+        run: node scripts/prepare-skill-bundles.mjs
+
+      - name: Upload skill bundles to GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
+        with:
+          files: release/skill-bundles/*.tar.gz
+          draft: true
+          tag_name: ${{ github.ref_name }}
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-macos, build-windows, build-linux, skill-bundles]
+    if: ${{ !cancelled() && needs.build-macos.result == 'success' && needs.build-windows.result == 'success' && needs.skill-bundles.result == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release (remove draft)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          echo "Publishing release ${TAG}"
+          gh release edit "${TAG}" --repo "${GITHUB_REPOSITORY}" --draft=false

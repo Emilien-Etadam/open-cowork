@@ -38,6 +38,7 @@ interface SandboxStatus {
 export function SettingsSandbox() {
   const { t } = useTranslation();
   const [sandboxEnabled, setSandboxEnabled] = useState(true);
+  const [lanNetworkEnabled, setLanNetworkEnabled] = useState(false);
   const [status, setStatus] = useState<SandboxStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
@@ -72,6 +73,7 @@ export function SettingsSandbox() {
         if (cancelled) return;
 
         setSandboxEnabled(cfg.sandboxEnabled === true);
+        setLanNetworkEnabled(cfg.sandboxLanNetworkEnabled === true);
         setStatus(s);
         setError(null);
       } catch (err) {
@@ -101,6 +103,29 @@ export function SettingsSandbox() {
     } catch (err) {
       console.error('Failed to load sandbox status:', err);
       setError({ text: t('sandbox.failedToLoad') });
+    }
+  }
+
+  async function handleToggleLanNetwork() {
+    if (!isElectron || isSaving || !sandboxEnabled) return;
+
+    const newEnabled = !lanNetworkEnabled;
+    setLanNetworkEnabled(newEnabled);
+    setError(null);
+    setSuccess(null);
+    setIsSaving(true);
+
+    try {
+      await window.electronAPI.config.save({ sandboxLanNetworkEnabled: newEnabled });
+      setSuccess({
+        text: newEnabled ? t('sandbox.lanNetworkEnabled') : t('sandbox.lanNetworkDisabled'),
+      });
+    } catch (err) {
+      console.error('Failed to save sandbox LAN network setting:', err);
+      setLanNetworkEnabled(!newEnabled);
+      setError({ text: t('sandbox.failedToSave') });
+    } finally {
+      setIsSaving(false);
     }
   }
 
@@ -397,6 +422,33 @@ export function SettingsSandbox() {
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-text-primary transition-transform ${
                   sandboxEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+        )}
+
+        {isElectron && isWindows && (
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border-subtle bg-background px-4 py-3">
+            <div className="min-w-0 text-left">
+              <p className="text-sm font-medium text-text-primary">
+                {t('sandbox.enableLanNetwork')}
+              </p>
+              <p className="mt-1 text-xs text-text-muted">{t('sandbox.lanNetworkDesc')}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={lanNetworkEnabled}
+              onClick={handleToggleLanNetwork}
+              disabled={isSaving || isLoading || !sandboxEnabled}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 disabled:opacity-50 ${
+                lanNetworkEnabled && sandboxEnabled ? 'bg-accent' : 'bg-surface-muted'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-text-primary transition-transform ${
+                  lanNetworkEnabled && sandboxEnabled ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
             </button>

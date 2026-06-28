@@ -1,6 +1,11 @@
 import { createHash } from 'crypto';
+import {
+  LEGACY_SYNC_MANIFEST_FILES,
+  SYNC_MANIFEST_FILE,
+  listSyncManifestFilenames,
+} from '../paths/sandbox-paths';
 
-export const SYNC_MANIFEST_FILE = '.opencowork-sync.json';
+export { SYNC_MANIFEST_FILE, LEGACY_SYNC_MANIFEST_FILES, listSyncManifestFilenames };
 
 export interface SandboxSyncManifest {
   workspacePath: string;
@@ -40,12 +45,12 @@ export function parseSandboxSyncManifest(raw: string): SandboxSyncManifest | nul
         lastExportAt: typeof parsed.lastExportAt === 'number' ? parsed.lastExportAt : undefined,
       };
     }
+    return null;
   } catch {
-    // Ignore invalid manifest files.
+    return null;
   }
-  return null;
 }
 
 export function serializeSandboxSyncManifest(manifest: SandboxSyncManifest): string {
-  return JSON.stringify(manifest);
+  return JSON.stringify(manifest, null, 2);
 }

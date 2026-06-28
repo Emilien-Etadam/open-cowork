@@ -13,6 +13,7 @@ import { isLoopbackBaseUrl } from '../../../shared/network/loopback';
 import type { ProviderPresets, ProviderType } from '../../types';
 import { buildApiConfigDraftSignature } from './api-config-builders';
 import {
+  canDiscoverProviderModels,
   isLocalOpenAiMode,
   modelPresetForProfile,
   profileKeyToProvider,
@@ -62,10 +63,25 @@ export function useApiConfigDerivedState({
   );
   const { apiKey, baseUrl, model, customModel, useCustomModel, contextWindow, maxTokens } =
     currentProfile;
+  const allowEmptyApiKey =
+    (provider === 'openai' && isLoopbackBaseUrl(baseUrl)) ||
+    (provider === 'anthropic' && isLoopbackBaseUrl(baseUrl));
+  const requiresApiKey = !allowEmptyApiKey;
   const localOpenAiMode = isLocalOpenAiMode(provider, baseUrl);
-  const modelOptions = localOpenAiMode
-    ? discoveredModels[activeProfileKey] || []
-    : currentPreset.models;
+  const supportsModelDiscovery = canDiscoverProviderModels(
+    provider,
+    baseUrl,
+    apiKey,
+    requiresApiKey,
+    currentPreset.baseUrl
+  );
+  const discovered = discoveredModels[activeProfileKey];
+  const hasDiscoveredModels = Array.isArray(discovered) && discovered.length > 0;
+  const modelOptions = hasDiscoveredModels
+    ? discovered
+    : localOpenAiMode
+      ? []
+      : currentPreset.models;
   const modelInputGuidance = getModelInputGuidance(provider);
   const currentConfigSet = useMemo(
     () => configSets.find((set) => set.id === activeConfigSetId) || null,
@@ -79,7 +95,7 @@ export function useApiConfigDerivedState({
     [configSets, pendingConfigSetAction]
   );
   const shouldShowLocalModelToggle =
-    localOpenAiMode && (useCustomModel || Boolean(error) || modelOptions.length === 0);
+    supportsModelDiscovery && (useCustomModel || Boolean(error) || modelOptions.length === 0);
   const detectedProviderSetup = useMemo(
     () => (provider === 'openai' ? detectCommonProviderSetup(baseUrl) : null),
     [baseUrl, provider]
@@ -190,9 +206,6 @@ export function useApiConfigDerivedState({
     testDetails,
   ]);
 
-  const allowEmptyApiKey =
-    (provider === 'openai' && isLoopbackBaseUrl(baseUrl)) ||
-    (provider === 'anthropic' && isLoopbackBaseUrl(baseUrl));
   const currentDraftSignature = useMemo(
     () => buildApiConfigDraftSignature(activeProfileKey, profiles, enableThinking),
     [activeProfileKey, enableThinking, profiles]
@@ -214,6 +227,7 @@ export function useApiConfigDerivedState({
     modelOptions,
     modelInputGuidance,
     isLocalOpenAiMode: localOpenAiMode,
+    supportsModelDiscovery,
     shouldShowLocalModelToggle,
     detectedProviderSetup,
     protocolGuidanceTone,

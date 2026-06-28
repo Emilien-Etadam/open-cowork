@@ -4,7 +4,16 @@ import type { CoreMemoryStore } from './core-memory-store';
 import type { ExperienceMemoryStore } from './experience-memory-store';
 import type { MemoryLLMClientLike } from './memory-llm-client';
 import type { MemoryNavigator } from './memory-navigator';
-import type { ProgressiveRetrievalResult } from './memory-types';
+import {
+  escapeMemoryContextText,
+  getMemoryInjectionPolicy,
+  sanitizeMemoryContent,
+} from './memory-sanitizer';
+import type {
+  MemoryContextBuildResult,
+  MemoryInjectedItem,
+  ProgressiveRetrievalResult,
+} from './memory-types';
 import { formatTimestamp, normalizeWorkspaceKey } from './memory-utils';
 
 interface MemoryContextHost {
@@ -32,35 +41,45 @@ interface ExpandedSessionData {
   chunks: Array<{ chunkId: string; summary: string; keywords: string[] }>;
 }
 
-export async function buildPromptPrefix(
+export async function buildPromptContext(
   host: MemoryContextHost,
   session: { cwd?: string },
   prompt: string,
   options?: { maxPrefixTokens?: number }
-): Promise<string> {
+): Promise<MemoryContextBuildResult> {
   if (!host.isEnabled()) {
-    return '';
+    return { prefix: '', items: [] };
   }
 
+  const injectionPolicy = getMemoryInjectionPolicy(host.getAppConfig().memoryRuntime);
+  const items: MemoryInjectedItem[] = [];
   const sections: string[] = [];
   const corePromptBlock = host.getCoreStore().toPromptBlock();
   if (corePromptBlock !== 'None') {
-    sections.push(`<core_memory>\n${escapeMemoryContextText(corePromptBlock)}\n</core_memory>`);
+    const sanitizedCore = sanitizeMemoryContent(corePromptBlock, injectionPolicy);
+    if (sanitizedCore) {
+      sections.push(`<core_memory>\n${escapeMemoryContextText(sanitizedCore)}\n</core_memory>`);
+      for (const entry of host.getCoreStore().getEntries()) {
+        items.push({
+          kind: 'core',
+          id: entry.combinedKey,
+          title: entry.combinedKey,
+          summary: entry.value,
+        });
+      }
+    }
   }
 
-  const experienceContext = await buildExperienceContext(
-    host,
-    prompt,
-    normalizeWorkspaceKey(session.cwd)
-  );
-  if (experienceContext.trim()) {
+  const experience = await buildExperienceContext(host, prompt, normalizeWorkspaceKey(session.cwd));
+  if (experience.text.trim()) {
     sections.push(
-      `<experience_memory>\n${escapeMemoryContextText(experienceContext)}\n</experience_memory>`
+      `<experience_memory>\n${escapeMemoryContextText(experience.text)}\n</experience_memory>`
     );
+    items.push(...experience.items);
   }
 
   if (!sections.length) {
-    return '';
+    return { prefix: '', items: [] };
   }
 
   const fullPrefix = [
@@ -76,12 +95,25 @@ export async function buildPromptPrefix(
   ].join('\n');
 
   if (options?.maxPrefixTokens === undefined) {
-    return fullPrefix;
+    return { prefix: fullPrefix, items };
   }
   if (options.maxPrefixTokens <= 0) {
-    return '';
+    return { prefix: '', items: [] };
   }
-  return trimPrefixToTokenBudget(fullPrefix, sections, options.maxPrefixTokens);
+  return {
+    prefix: trimPrefixToTokenBudget(fullPrefix, sections, options.maxPrefixTokens),
+    items,
+  };
+}
+
+export async function buildPromptPrefix(
+  host: MemoryContextHost,
+  session: { cwd?: string },
+  prompt: string,
+  options?: { maxPrefixTokens?: number }
+): Promise<string> {
+  const result = await buildPromptContext(host, session, prompt, options);
+  return result.prefix;
 }
 
 export function trimPrefixToTokenBudget(
@@ -119,33 +151,48 @@ export async function buildExperienceContext(
   host: MemoryContextHost,
   prompt: string,
   currentWorkspace: string | null
-): Promise<string> {
+): Promise<{ text: string; items: MemoryInjectedItem[] }> {
   if (!prompt.trim()) {
-    return '';
+    return { text: '', items: [] };
   }
 
+  const runtime = host.getAppConfig().memoryRuntime;
+  const injectionPolicy = getMemoryInjectionPolicy(runtime);
   const store = host.getExperienceStore();
   if (!store.sessions.length && !store.chunks.length) {
-    return '';
+    return { text: '', items: [] };
   }
 
   const queryEmbedding = await embedText(host, prompt);
   const retrieval = store.retrieveProgressive(prompt, {
-    chunkTopK: 10,
-    sessionTopK: 5,
+    chunkTopK: runtime.chunkTopK,
+    sessionTopK: runtime.sessionTopK,
     queryEmbedding,
     currentWorkspace,
   });
   if (!retrieval.broadSummaries.length) {
-    return '';
+    return { text: '', items: [] };
   }
+
+  const items = retrieval.broadSummaries.map(
+    (item): MemoryInjectedItem => ({
+      kind: item.type === 'chunk' ? 'chunk' : 'session',
+      id: item.id,
+      title: item.sourceSessionTitle || item.summary || item.id,
+      summary: item.summary,
+      score: item.score,
+      sourceWorkspace: item.sourceWorkspace,
+      sourceSessionId: item.sessionId,
+      sourceSessionTitle: item.sourceSessionTitle,
+    })
+  );
 
   let visibleContext = formatSummariesOnly(retrieval);
   const expandedChunks = new Map<string, ExpandedChunkData>();
   const expandedSessions = new Map<string, ExpandedSessionData>();
   const rawSessions = new Map<string, string>();
 
-  for (let step = 0; step < host.getAppConfig().memoryRuntime.maxNavSteps; step += 1) {
+  for (let step = 0; step < runtime.maxNavSteps; step += 1) {
     const decision = await host.navigator.decide(
       prompt,
       formatTimestamp(Date.now()),
@@ -160,7 +207,7 @@ export async function buildExperienceContext(
         const chunk = store.getChunk(action.chunkId);
         if (chunk) {
           expandedChunks.set(action.chunkId, {
-            rawText: chunk.rawText,
+            rawText: sanitizeMemoryContent(chunk.rawText, injectionPolicy),
             keywords: chunk.keywords,
             sessionId: chunk.sessionId,
             sourceWorkspace: chunk.sourceWorkspace || null,
@@ -171,14 +218,14 @@ export async function buildExperienceContext(
         const session = store.getSession(action.sessionId);
         if (session) {
           expandedSessions.set(action.sessionId, {
-            summary: session.summary,
+            summary: sanitizeMemoryContent(session.summary, injectionPolicy),
             keywords: session.keywords,
             sessionDate: session.sessionDate,
             sourceWorkspace: session.sourceWorkspace || null,
             sourceSessionTitle: session.sourceSessionTitle,
             chunks: store.getChunksBySession(action.sessionId).map((chunk) => ({
               chunkId: chunk.id,
-              summary: chunk.summary,
+              summary: sanitizeMemoryContent(chunk.summary, injectionPolicy),
               keywords: chunk.keywords,
             })),
           });
@@ -187,12 +234,14 @@ export async function buildExperienceContext(
       if (action.type === 'get_raw_session' && action.sessionId) {
         const session = store.getSession(action.sessionId);
         if (session) {
+          const safeSession = session.rawSession.map((turn) => ({
+            ...turn,
+            content: sanitizeMemoryContent(turn.content, injectionPolicy),
+          }));
           rawSessions.set(
             action.sessionId,
-            `[Raw Session ${action.sessionId} | Date: ${session.sessionDate} | Source: ${session.sourceWorkspace || 'global'}]\n${JSON.stringify(
-              session.rawSession,
-              null,
-              2
+            `[Raw Session ${action.sessionId} | Date: ${session.sessionDate} | Source: ${session.sourceWorkspace || 'global'}]\n${escapeMemoryContextText(
+              JSON.stringify(safeSession, null, 2)
             )}`
           );
         }
@@ -202,7 +251,10 @@ export async function buildExperienceContext(
     visibleContext = formatFullContext(retrieval, expandedChunks, expandedSessions, rawSessions);
   }
 
-  return visibleContext;
+  return {
+    text: sanitizeMemoryContent(visibleContext, injectionPolicy),
+    items,
+  };
 }
 
 export function formatSummariesOnly(retrieval: ProgressiveRetrievalResult): string {
@@ -253,7 +305,7 @@ export function formatFullContext(
       parts.push(
         `[chunk_id=${chunkId} | session=${value.sessionId} | source=${value.sourceWorkspace || 'global'}]\n  Keywords: ${value.keywords.join(
           ', '
-        )}\n  Raw text:\n${value.rawText}`
+        )}\n  Raw text:\n${escapeMemoryContextText(value.rawText)}`
       );
     }
   }
@@ -262,13 +314,13 @@ export function formatFullContext(
     parts.push('\n== Expanded Session Overview ==');
     for (const [sessionId, value] of expandedSessions.entries()) {
       parts.push(
-        `[session_id=${sessionId} | source=${value.sourceWorkspace || 'global'} | date=${value.sessionDate} | title=${value.sourceSessionTitle || 'untitled'}]\n  Summary: ${value.summary}\n  Keywords: ${value.keywords.join(
-          ', '
-        )}\n  Chunks:`
+        `[session_id=${sessionId} | source=${value.sourceWorkspace || 'global'} | date=${value.sessionDate} | title=${value.sourceSessionTitle || 'untitled'}]\n  Summary: ${escapeMemoryContextText(
+          value.summary
+        )}\n  Keywords: ${value.keywords.join(', ')}\n  Chunks:`
       );
       for (const chunk of value.chunks) {
         parts.push(
-          `    - [chunk_id=${chunk.chunkId}] ${chunk.summary} (keywords: ${chunk.keywords.join(', ')})`
+          `    - [chunk_id=${chunk.chunkId}] ${escapeMemoryContextText(chunk.summary)} (keywords: ${chunk.keywords.join(', ')})`
         );
       }
     }
@@ -297,6 +349,4 @@ export async function embedText(host: MemoryContextHost, text: string): Promise<
   }
 }
 
-function escapeMemoryContextText(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+export { escapeMemoryContextText } from './memory-sanitizer';

@@ -19,8 +19,8 @@ describe('memory integration wiring', () => {
   });
 
   it('injects runtime plugin skill paths and extension hooks into the agent runner', () => {
-    const piSetup = readProjectFile('src/main/claude/agent-runner-pi-setup.ts');
-    const skillPaths = readProjectFile('src/main/claude/agent-runner-skills-paths.ts');
+    const piSetup = readProjectFile('src/main/agent/agent-runner-pi-setup.ts');
+    const skillPaths = readProjectFile('src/main/agent/agent-runner-skills-paths.ts');
     const memoryExtension = readProjectFile('src/main/memory/memory-extension.ts');
     expect(piSetup).toContain('resolveSkillPaths(session.id)');
     expect(skillPaths).toContain("path.join(plugin.runtimePath, 'skills')");

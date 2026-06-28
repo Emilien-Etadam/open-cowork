@@ -5,11 +5,13 @@ import type {
   TraceStep,
   PermissionRequest,
   SudoPasswordRequest,
+  UserQuestionRequest,
   Settings,
   AppConfig,
   SandboxSetupProgress,
   SandboxSyncStatus,
   SkillsStorageChangeEvent,
+  MemoryInjectedItem,
 } from '../types';
 import { applySessionUpdate } from '../utils/session-update';
 
@@ -42,6 +44,7 @@ export interface SessionState {
   traceSteps: TraceStep[];
   contextWindow: number;
   maxTokens: number;
+  memoryContextItems: MemoryInjectedItem[];
 }
 
 const DEFAULT_SESSION_STATE: SessionState = {
@@ -54,6 +57,7 @@ const DEFAULT_SESSION_STATE: SessionState = {
   traceSteps: [],
   contextWindow: 0,
   maxTokens: 0,
+  memoryContextItems: [],
 };
 
 // Helper to immutably update a single session's state within the record
@@ -91,6 +95,9 @@ interface AppState {
 
   // Permission
   pendingPermission: PermissionRequest | null;
+
+  // AskUserQuestion
+  pendingQuestion: UserQuestionRequest | null;
 
   // Sudo password
   pendingSudoPassword: SudoPasswordRequest | null;
@@ -161,6 +168,8 @@ interface AppState {
 
   setPendingPermission: (permission: PermissionRequest | null) => void;
 
+  setPendingQuestion: (question: UserQuestionRequest | null) => void;
+
   setPendingSudoPassword: (request: SudoPasswordRequest | null) => void;
 
   setSettings: (updates: Partial<Settings>) => void;
@@ -191,6 +200,7 @@ interface AppState {
     sessionId: string,
     contextInfo: { contextWindow: number; maxTokens: number }
   ) => void;
+  setSessionMemoryContext: (sessionId: string, items: MemoryInjectedItem[]) => void;
   bumpPluginCommandsRevision: () => void;
 
   // System theme actions
@@ -236,6 +246,7 @@ export const useAppStore = create<AppState>((set) => ({
   showSettings: false,
   settingsTab: null,
   pendingPermission: null,
+  pendingQuestion: null,
   pendingSudoPassword: null,
   settings: defaultSettings,
   appConfig: null,
@@ -571,7 +582,8 @@ export const useAppStore = create<AppState>((set) => ({
   // Permission actions
   setPendingPermission: (permission) => set({ pendingPermission: permission }),
 
-  // Sudo password actions
+  setPendingQuestion: (question) => set({ pendingQuestion: question }),
+
   setPendingSudoPassword: (request) => set({ pendingSudoPassword: request }),
 
   // Settings actions
@@ -617,6 +629,13 @@ export const useAppStore = create<AppState>((set) => ({
       sessionStates: patchSession(state.sessionStates, sessionId, {
         contextWindow: contextInfo.contextWindow,
         maxTokens: contextInfo.maxTokens,
+      }),
+    })),
+
+  setSessionMemoryContext: (sessionId, items) =>
+    set((state) => ({
+      sessionStates: patchSession(state.sessionStates, sessionId, {
+        memoryContextItems: items,
       }),
     })),
 

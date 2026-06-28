@@ -41,7 +41,7 @@ export function sessionRowToSession(row: SessionRow): MemoryIngestionInput['sess
     model: row.model || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    claudeSessionId: row.claude_session_id || undefined,
+    claudeSessionId: row.agent_session_id || row.claude_session_id || undefined,
     openaiThreadId: row.openai_thread_id || undefined,
   };
 }

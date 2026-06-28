@@ -39,7 +39,14 @@ async function loadBootstrap() {
 const execAsync = promisify(exec);
 const execFileAsync = promisify(execFile);
 
-const LIMA_INSTANCE_NAME = 'claude-sandbox';
+import {
+  LIMA_INSTANCE_NAME,
+  LEGACY_LIMA_INSTANCE_NAME,
+  resolveLimaInstanceName,
+  resolveActiveLimaInstanceName,
+  setCachedLimaInstanceName,
+  getCachedLimaInstanceName,
+} from '../paths/sandbox-paths';
 const LIMA_SHELL_RETRY_DELAY_MS = 1000;
 const LIMA_SHELL_RETRY_COUNT = 12;
 
@@ -63,6 +70,7 @@ const isLimaShellConnectionError = (error: unknown): boolean => {
 };
 
 const execLimaShellWithRetry = async (
+  instanceName: string,
   command: string,
   timeout: number,
   retries: number = LIMA_SHELL_RETRY_COUNT
@@ -72,7 +80,7 @@ const execLimaShellWithRetry = async (
     try {
       return await execFileAsync(
         'limactl',
-        ['shell', LIMA_INSTANCE_NAME, '--', 'bash', '-c', command],
+        ['shell', instanceName, '--', 'bash', '-c', command],
         { timeout, encoding: 'utf-8', maxBuffer: 50 * 1024 * 1024 }
       );
     } catch (error) {
@@ -150,6 +158,7 @@ export class LimaBridge implements SandboxExecutor {
       // Check if our instance exists using limactl list (plain text, more reliable)
       let instanceExists = false;
       let instanceRunning = false;
+      let activeInstance = LIMA_INSTANCE_NAME;
       try {
         // First try plain text list which is more reliable
         const { stdout } = await execAsync('limactl list', {
@@ -157,14 +166,16 @@ export class LimaBridge implements SandboxExecutor {
         });
         log('[Lima] limactl list output:', stdout);
 
+        activeInstance = resolveLimaInstanceName(stdout);
+        setCachedLimaInstanceName(activeInstance);
+
         // Parse text output - format is: NAME STATUS SSH CPUS MEMORY DISK DIR
         const lines = stdout.trim().split(/\r?\n/);
         for (const line of lines) {
-          if (line.includes(LIMA_INSTANCE_NAME)) {
+          if (line.includes(activeInstance)) {
             instanceExists = true;
-            // Check if status is Running
             instanceRunning = line.includes('Running');
-            log('[Lima] Instance found:', LIMA_INSTANCE_NAME, 'Running:', instanceRunning);
+            log('[Lima] Instance found:', activeInstance, 'Running:', instanceRunning);
             break;
           }
         }
@@ -175,11 +186,19 @@ export class LimaBridge implements SandboxExecutor {
       } catch (error) {
         log('[Lima] Error checking instances:', error);
         // Try alternative check - see if instance directory exists
-        try {
-          await execAsync(`limactl info ${LIMA_INSTANCE_NAME}`, { timeout: 5000 });
-          instanceExists = true;
-          log('[Lima] Instance exists (found via limactl info)');
-        } catch {
+        for (const candidate of [LIMA_INSTANCE_NAME, LEGACY_LIMA_INSTANCE_NAME]) {
+          try {
+            await execAsync(`limactl info ${candidate}`, { timeout: 5000 });
+            instanceExists = true;
+            activeInstance = candidate;
+            setCachedLimaInstanceName(candidate);
+            log('[Lima] Instance exists (found via limactl info):', candidate);
+            break;
+          } catch {
+            // try next
+          }
+        }
+        if (!instanceExists) {
           log('[Lima] Instance does not exist');
         }
       }
@@ -190,7 +209,7 @@ export class LimaBridge implements SandboxExecutor {
           available: true,
           instanceExists,
           instanceRunning: false,
-          instanceName: LIMA_INSTANCE_NAME,
+          instanceName: activeInstance,
         };
       }
 
@@ -198,7 +217,7 @@ export class LimaBridge implements SandboxExecutor {
       let nodeAvailable = false;
       let nodeVersion = '';
       try {
-        const { stdout } = await execLimaShellWithRetry('node --version', 10000);
+        const { stdout } = await execLimaShellWithRetry(activeInstance, 'node --version', 10000);
         nodeVersion = stdout.trim();
         if (nodeVersion.startsWith('v')) {
           nodeAvailable = true;
@@ -209,6 +228,7 @@ export class LimaBridge implements SandboxExecutor {
           // Try with nvm
           try {
             const { stdout } = await execLimaShellWithRetry(
+              activeInstance,
               'bash -c "source ~/.nvm/nvm.sh 2>/dev/null && node --version"',
               10000
             );
@@ -231,7 +251,7 @@ export class LimaBridge implements SandboxExecutor {
       let pipAvailable = false;
       let pythonVersion = '';
       try {
-        const { stdout } = await execLimaShellWithRetry('python3 --version', 10000);
+        const { stdout } = await execLimaShellWithRetry(activeInstance, 'python3 --version', 10000);
         pythonVersion = stdout.trim();
         if (pythonVersion.startsWith('Python')) {
           pythonAvailable = true;
@@ -239,7 +259,7 @@ export class LimaBridge implements SandboxExecutor {
 
           // Check pip
           try {
-            await execLimaShellWithRetry('python3 -m pip --version', 10000);
+            await execLimaShellWithRetry(activeInstance, 'python3 -m pip --version', 10000);
             pipAvailable = true;
           } catch {
             log('[Lima] pip not available');
@@ -254,6 +274,7 @@ export class LimaBridge implements SandboxExecutor {
       if (nodeAvailable) {
         try {
           await execLimaShellWithRetry(
+            activeInstance,
             'bash -c "source ~/.nvm/nvm.sh 2>/dev/null; which claude"',
             10000
           );
@@ -268,7 +289,7 @@ export class LimaBridge implements SandboxExecutor {
         available: true,
         instanceExists,
         instanceRunning,
-        instanceName: LIMA_INSTANCE_NAME,
+        instanceName: activeInstance,
         nodeAvailable,
         pythonAvailable,
         pipAvailable,
@@ -291,8 +312,12 @@ export class LimaBridge implements SandboxExecutor {
     // First check if instance already exists
     try {
       const { stdout } = await execAsync('limactl list', { timeout: 5000 });
-      if (stdout.includes(LIMA_INSTANCE_NAME)) {
+      if (
+        stdout.includes(LIMA_INSTANCE_NAME) ||
+        stdout.includes(LEGACY_LIMA_INSTANCE_NAME)
+      ) {
         log('[Lima] Instance already exists, skipping creation');
+        setCachedLimaInstanceName(resolveLimaInstanceName(stdout));
         return true;
       }
     } catch {
@@ -347,7 +372,8 @@ export class LimaBridge implements SandboxExecutor {
    * Start Lima instance
    */
   static async startLimaInstance(): Promise<boolean> {
-    log('[Lima] Starting instance:', LIMA_INSTANCE_NAME);
+    const instanceName = await resolveActiveLimaInstanceName();
+    log('[Lima] Starting instance:', instanceName);
     log('[Lima] This may take several minutes (first start includes image download)...');
 
     return new Promise((resolve) => {
@@ -366,15 +392,13 @@ export class LimaBridge implements SandboxExecutor {
         try {
           const { stdout } = await execAsync('limactl list', { timeout: 5000 });
           const lines = stdout.trim().split(/\r?\n/);
-          return lines.some(
-            (line) => line.includes(LIMA_INSTANCE_NAME) && line.includes('Running')
-          );
+          return lines.some((line) => line.includes(instanceName) && line.includes('Running'));
         } catch {
           return false;
         }
       };
 
-      const limaProcess = spawn('limactl', ['start', LIMA_INSTANCE_NAME], {
+      const limaProcess = spawn('limactl', ['start', instanceName], {
         stdio: ['ignore', 'pipe', 'pipe'],
       });
 
@@ -436,9 +460,10 @@ export class LimaBridge implements SandboxExecutor {
    * Stop Lima instance
    */
   static async stopLimaInstance(): Promise<boolean> {
-    log('[Lima] Stopping instance:', LIMA_INSTANCE_NAME);
+    const instanceName = await resolveActiveLimaInstanceName();
+    log('[Lima] Stopping instance:', instanceName);
     try {
-      await execAsync(`limactl stop ${LIMA_INSTANCE_NAME}`, {
+      await execAsync(`limactl stop ${instanceName}`, {
         timeout: 30000,
       });
       log('[Lima] Instance stopped');
@@ -456,20 +481,17 @@ export class LimaBridge implements SandboxExecutor {
     log('[Lima] Installing Node.js via nvm...');
     try {
       // Install nvm
-      await execLimaShellWithRetry(
-        'bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"',
+      await execLimaShellWithRetry(getCachedLimaInstanceName(),         'bash -c "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash"',
         120000
       );
 
       // Install Node.js 20
-      await execLimaShellWithRetry(
-        'bash -c "source ~/.nvm/nvm.sh && nvm install 20 && nvm alias default 20"',
+      await execLimaShellWithRetry(getCachedLimaInstanceName(),         'bash -c "source ~/.nvm/nvm.sh && nvm install 20 && nvm alias default 20"',
         180000
       );
 
       // Verify
-      const { stdout } = await execLimaShellWithRetry(
-        'bash -c "source ~/.nvm/nvm.sh && node --version"',
+      const { stdout } = await execLimaShellWithRetry(getCachedLimaInstanceName(),         'bash -c "source ~/.nvm/nvm.sh && node --version"',
         10000
       );
       log('[Lima] Node.js installed:', stdout.trim());
@@ -486,16 +508,14 @@ export class LimaBridge implements SandboxExecutor {
   static async installPythonInLima(): Promise<boolean> {
     log('[Lima] Installing Python...');
     try {
-      await execLimaShellWithRetry(
-        'sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv',
+      await execLimaShellWithRetry(getCachedLimaInstanceName(),         'sudo apt-get update && sudo apt-get install -y python3 python3-pip python3-venv',
         180000
       );
 
       // Create python symlink (many tools expect 'python' command)
       log('[Lima] Creating python symlink...');
       try {
-        await execLimaShellWithRetry(
-          'sudo ln -sf /usr/bin/python3 /usr/bin/python 2>/dev/null || true',
+        await execLimaShellWithRetry(getCachedLimaInstanceName(),           'sudo ln -sf /usr/bin/python3 /usr/bin/python 2>/dev/null || true',
           10000
         );
         log('[Lima] Created python -> python3 symlink');
@@ -503,7 +523,11 @@ export class LimaBridge implements SandboxExecutor {
         log('[Lima] Could not create python symlink (non-critical)');
       }
 
-      const { stdout } = await execLimaShellWithRetry('python3 --version', 10000);
+      const { stdout } = await execLimaShellWithRetry(
+        getCachedLimaInstanceName(),
+        'python3 --version',
+        10000
+      );
       log('[Lima] Python installed:', stdout.trim());
 
       // Install commonly needed packages for skills (PDF, PPTX processing)
@@ -535,8 +559,7 @@ export class LimaBridge implements SandboxExecutor {
     try {
       // Install packages with pip (user install to avoid permission issues)
       const packagesStr = packages.map((p) => `"${p}"`).join(' ');
-      await execLimaShellWithRetry(
-        `python3 -m pip install --user ${packagesStr} 2>&1 | tail -5`,
+      await execLimaShellWithRetry(getCachedLimaInstanceName(),         `python3 -m pip install --user ${packagesStr} 2>&1 | tail -5`,
         300000 // 5 min timeout for package install
       );
       log('[Lima] Skill dependencies installed successfully');
@@ -555,8 +578,7 @@ export class LimaBridge implements SandboxExecutor {
   static async installClaudeCodeInLima(): Promise<boolean> {
     log('[Lima] Installing claude-code...');
     try {
-      await execLimaShellWithRetry(
-        'bash -c "source ~/.nvm/nvm.sh && npm install -g @anthropic-ai/claude-code"',
+      await execLimaShellWithRetry(getCachedLimaInstanceName(),         'bash -c "source ~/.nvm/nvm.sh && npm install -g @anthropic-ai/claude-code"',
         180000
       );
       log('[Lima] claude-code installed');
@@ -698,7 +720,7 @@ export class LimaBridge implements SandboxExecutor {
 
     this.limaProcess = spawn(
       'limactl',
-      ['shell', LIMA_INSTANCE_NAME, '--', 'bash', '-c', nodeCommand],
+      ['shell', getCachedLimaInstanceName(), '--', 'bash', '-c', nodeCommand],
       {
         stdio: ['pipe', 'pipe', 'pipe'],
       }

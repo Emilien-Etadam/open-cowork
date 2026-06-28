@@ -123,7 +123,7 @@ describe('lima-bridge execLimaShellWithRetry uses execFileAsync', () => {
     expect(fnBody).not.toContain('execAsync(');
 
     // Should pass arguments as array, not string interpolation
-    expect(fnBody).toContain("['shell', LIMA_INSTANCE_NAME, '--', 'bash', '-c', command]");
+    expect(fnBody).toContain("['shell', instanceName, '--', 'bash', '-c', command]");
   });
 });
 

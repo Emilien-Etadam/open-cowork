@@ -66,30 +66,36 @@
 
 ## 📦 Releases
 
-| Tag             | Date       | Highlights                                                              |
-| --------------- | ---------- | ----------------------------------------------------------------------- |
-| `v5.0.0`        | 2026-06-27 | **Latest** — logo gecko Lygodactylus, série v5, rebranding complet      |
-| `v3.3.1-EE4.98` | 2026-06-26 | rebranding Lygodactylus                                                 |
-| `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar       |
-| `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input             |
-| `v3.3.1-EE4.95` | 2026-06-25 | Fix auto-update Windows (`latest.yml` + nom installateur)               |
-| `v3.3.1-EE4.94` | 2026-06-25 | Fix Chat LAN UI missing (extraResources)                                |
-| `v3.3.1-EE4.93` | 2026-06-25 | Fix auto-update Windows (download + bouton installer)                   |
-| `v3.3.1-EE4.92` | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                    |
-| `v3.3.1-EE4.91` | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API           |
-| `v3.3.1-EE4.9`  | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                      |
-| `v3.3.1-EE4.8`  | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft) |
-| `v3.3.1-EE4.7`  | 2026-06-25 | Fix fond opaque menu slash                                              |
-| `v3.3.1-EE4.6`  | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`                          |
-| `v3.3.1-EE4.5`  | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests             |
-| `v3.3.1-EE4.4`  | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests                 |
-| `v3.3.1-EE4.3`  | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                                 |
-| `v3.3.1-EE4.2`  | 2026-06-24 | Refactor `index.ts`, `gui-operate`, `agent-runner`                      |
-| `v3.3.1-EE4.1`  | 2026-06-23 | Sandbox sync, config-store, handoff, branding                           |
-| `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                        |
-| `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                 |
+| Tag             | Date       | Highlights                                                                    |
+| --------------- | ---------- | ----------------------------------------------------------------------------- |
+| `v5.7.0`        | 2026-06-28 | **Latest** — Tool Completeness (glob/grep/web/todo/ask), LiteLLM/Qwen schemas |
+| `v5.6.0`        | 2026-06-28 | memory UX + injection controls, Linux AppImage CI releases                    |
+| `v5.5.0`        | 2026-06-28 | naming standardization (paths agent, sandbox, Lima)                           |
+| `v5.4.0`        | 2026-06-28 | skills split on-demand (docx/pptx), lazy-load SDKs, ~2.7 MB installer savings |
+| `v5.3.0`        | 2026-06-28 | slimming on-demand (Node, Python, cliclick), 1086 tests                       |
+| `v5.1.0`        | 2026-06-27 | Hardening v5 (phases 0–3), pi-agent 0.80.2, Node 22.19, slimming quick wins   |
+| `v5.0.0`        | 2026-06-27 | logo gecko Lygodactylus, série v5, rebranding complet                         |
+| `v3.3.1-EE4.98` | 2026-06-26 | rebranding Lygodactylus                                                       |
+| `v3.3.1-EE4.97` | 2026-06-25 | compaction proactive, fork/édition prompt, barre contexte sidebar             |
+| `v3.3.1-EE4.96` | 2026-06-25 | Fix chat streaming + barre de contexte au-dessus de l’input                   |
+| `v3.3.1-EE4.95` | 2026-06-25 | Fix auto-update Windows (`latest.yml` + nom installateur)                     |
+| `v3.3.1-EE4.94` | 2026-06-25 | Fix Chat LAN UI missing (extraResources)                                      |
+| `v3.3.1-EE4.93` | 2026-06-25 | Fix auto-update Windows (download + bouton installer)                         |
+| `v3.3.1-EE4.92` | 2026-06-25 | Chat LAN, 2 providers API, suppression remote/Feishu                          |
+| `v3.3.1-EE4.91` | 2026-06-25 | Hotfix vérification mises à jour, `createRequire`, GitHub API                 |
+| `v3.3.1-EE4.9`  | 2026-06-25 | Fix chat « Traitement… », slash plugin, CI release                            |
+| `v3.3.1-EE4.8`  | 2026-06-25 | Mises à jour EE4.8, fix chat bloqué, slash plugin (non publiée — draft)       |
+| `v3.3.1-EE4.7`  | 2026-06-25 | Fix fond opaque menu slash                                                    |
+| `v3.3.1-EE4.6`  | 2026-06-25 | Auto-update Windows, commandes plugin menu `/`                                |
+| `v3.3.1-EE4.5`  | 2026-06-24 | Catalogue 21 entrées, fix Context7 + Chrome MCP, 1048 tests                   |
+| `v3.3.1-EE4.4`  | 2026-06-24 | Marketplace curated, cleanup legacy plugins, 1035 tests                       |
+| `v3.3.1-EE4.3`  | 2026-06-24 | God-file cleanup phases 2–6, 1043 tests                                       |
+| `v3.3.1-EE4.2`  | 2026-06-24 | Refactor `index.ts`, `gui-operate`, `agent-runner`                            |
+| `v3.3.1-EE4.1`  | 2026-06-23 | Sandbox sync, config-store, handoff, branding                                 |
+| `v3.3.1-EE4`    | 2026-06-23 | Slash autocomplete, agent-runner split (phase 1)                              |
+| `v3.3.1-EE3.x`  | 2026-06    | Security, WSL sandbox, Windows perf, pi-agent migration                       |
 
-Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emilien-Etadam/lygodactylus/releases/tag/v5) · [CHANGELOG](CHANGELOG.md)
+Current stable fork baseline: **`5.6.0`** — [CHANGELOG](CHANGELOG.md)
 
 ### v5.x hardening
 
@@ -99,28 +105,23 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 - **Phase 1**: macOS sandbox default, IPC allowlist in main process, Chat LAN hardening (Bearer SSE, security headers)
 - **Phase 2**: extracted `command-sandbox-validation`, `skills-frontmatter`, `use-ipc-stream-batching`; expanded tool-executor tests; CI coverage floor 40%
 - **Phase 3**: migration `@earendil-works/pi-ai` / `@earendil-works/pi-coding-agent` ^0.80.2 (0 CVE runtime), compat entrypoint for legacy API, DeepSeek V4 thinking patch ported
-
-## 🚧 In Progress
-
-### Validation v5.0.0
-
-- Smoke test chat LAN : serveur local, permissions, UI web
-- Migration config API → deux fournisseurs
-- Régression : chat principal, slash commands, vérification mises à jour (EE4.91)
+- **v5.1 prep**: Node `>=22.19.0`, installer slimming (@img removed, MCP minify, locales win/linux), legacy rename `src/main/claude/` → `src/main/agent/`, `pi-ai-one-shot`, `AgentRunner`
+- **v5.5 naming**: `userData/skills`, `lygodactylus-sandbox`, `~/.lygodactylus/sandbox`, sync manifest Lygodactylus
+- **Validation v5.1.0** (2026-06-27) : smoke tests Chat LAN, migration config deux fournisseurs, régression chat/slash/auto-update — validés
 
 ## 📋 Planned
 
-### Near-term (v5.1+)
+### Near-term (v5.2+)
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
-- **App Slimming**: Reduce installer from ~156 MB to ~80 MB — on-demand Python/Node.js download, lazy-load SDKs, strip unused files (Feishu SDK retiré #40)
-- **Naming Standardization**: Clean up legacy references (`claude-sdk`, `claude-sandbox`, `claude-plugin`, `pi-coding-agent`) to consistent Lygodactylus naming
-- **Tool Completeness**: Native TodoWrite, AskUserQuestion, Glob, Grep, WebFetch, WebSearch tool schemas + handlers for API key users
-- **Memory System Enhancements**: Prompt injection controls, cross-session retrieval UX, memory source inspection, reranking quality
+- **App Slimming**: Node.js on-demand — **done v5.2**; Python + cliclick on-demand — **done v5.3**; skills split (docx/pptx on-demand) — **done v5.4**; naming cleanup — **done v5.5**
+- **Schema naming**: `claude_session_id`, `claudeCodePath` → `agent_session_id`, `agentCliPath` — **done v5.5** (migration auto, champs legacy conservés en lecture)
+- **Tool Completeness**: Native TodoWrite, AskUserQuestion, Glob, Grep, WebFetch, WebSearch tool schemas + handlers for API key users — **done v5.7**
+- **Memory System Enhancements**: Prompt injection controls, cross-session retrieval UX, memory source inspection, reranking quality — **done v5.6**
 - **Scheduled Tasks**: Cron-like scheduling with UI management (backend exists; polish UX and edge cases)
 - **Log Management**: Structured logging with rotation, size limits, log viewer improvements
 - **Installation Experience**: Smoother first-run — auto-detect dependencies, clearer errors, one-click setup
-- **Linux Support**: First-class Linux builds (currently build-from-source only)
+- **Linux Support**: First-class Linux builds — **done v5.6** (AppImage CI release; deb/rpm later)
 
 ### Mid-term (v3.5.0+)
 
@@ -136,4 +137,4 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (Phase 3 — pi-agent 0.80.2 migration, CVE cleanup)_
+_Last updated: 2026-06-28 (v5.7.0 release)_

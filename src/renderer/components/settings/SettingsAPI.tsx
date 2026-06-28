@@ -47,6 +47,7 @@ export function SettingsAPI() {
     isDiscoveringLocalOllama,
     enableThinking,
     isLocalOpenAiMode,
+    supportsModelDiscovery,
     requiresApiKey,
     baseUrlGuidanceText,
     commonProviderSetups,
@@ -224,7 +225,7 @@ export function SettingsAPI() {
             {t('api.model')}
           </label>
           <div className="flex items-center gap-2">
-            {isLocalOpenAiMode && (
+            {supportsModelDiscovery && (
               <button
                 type="button"
                 onClick={() => {
@@ -248,7 +249,7 @@ export function SettingsAPI() {
                 }`}
               >
                 <Edit3 className="w-3 h-3" />
-                {isLocalOpenAiMode
+                {supportsModelDiscovery
                   ? useCustomModel
                     ? t('api.useDetectedModels')
                     : t('api.manualModel')

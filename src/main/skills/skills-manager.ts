@@ -19,11 +19,9 @@ import type { Skill, PluginInstallResult } from '../../renderer/types';
 import type { DatabaseInstance } from '../db/database';
 import { log, logError, logWarn } from '../utils/logger';
 import { isPathWithinRoot } from '../tools/path-containment';
-import {
-  isDanglingSymlink,
-  readSkillMetadata,
-  validateSkillName,
-} from './skills-frontmatter';
+import { isDanglingSymlink, readSkillMetadata, validateSkillName } from './skills-frontmatter';
+import { listBuiltinSkillRoots } from './builtin-skills-paths';
+import { getRuntimeSkillsDir } from '../paths/app-data-paths';
 
 interface McpServerConfig {
   command: string;
@@ -68,7 +66,7 @@ export interface SetGlobalSkillsPathResult {
  *
  * Skills loading priority:
  * 1. Project-level: <project>/.skills/ or <project>/skills/
- * 2. Global: <userData>/claude/skills/ (includes ~/.claude/skills read-only)
+ * 2. Global: <userData>/skills/ (includes ~/.claude/skills read-only import)
  * 3. Built-in skills
  *
  * MCP connectors are managed via mcp-config-store / marketplace — not per-skill processes here.
@@ -101,13 +99,17 @@ export class SkillsManager {
    * Load built-in skills
    */
   private loadBuiltinSkills(): void {
-    // Load skills from .claude/skills directory (like pdf, xlsx, docx, pptx)
-    const builtinSkillsPath = this.getBuiltinSkillsPath();
-    if (builtinSkillsPath) {
+    const loadedNames = new Set<string>();
+
+    for (const builtinSkillsPath of listBuiltinSkillRoots()) {
+      if (!builtinSkillsPath) continue;
+
       try {
         const skillDirs = fs.readdirSync(builtinSkillsPath);
 
         for (const dir of skillDirs) {
+          if (loadedNames.has(dir)) continue;
+
           const skillPath = path.join(builtinSkillsPath, dir);
 
           if (isDanglingSymlink(skillPath)) {
@@ -124,11 +126,9 @@ export class SkillsManager {
 
           if (!stat.isDirectory()) continue;
 
-          // Look for SKILL.md
           const skillMdPath = path.join(skillPath, 'SKILL.md');
           if (!fs.existsSync(skillMdPath)) continue;
 
-          // Parse metadata
           const metadata = this.getSkillMetadata(skillPath);
           if (!metadata) continue;
 
@@ -142,59 +142,17 @@ export class SkillsManager {
           };
 
           this.loadedSkills.set(skill.id, skill);
+          loadedNames.add(dir);
           log(`Loaded built-in skill: ${skill.name}`);
         }
       } catch (error) {
-        logError('Failed to load built-in skills from .claude/skills:', error);
+        logError('Failed to load built-in skills:', error);
       }
-    }
-  }
-
-  /**
-   * Get the built-in skills directory path
-   */
-  private getBuiltinSkillsPath(): string {
-    const appPath = app.getAppPath();
-    const unpackedPath = appPath.replace(/\.asar$/, '.asar.unpacked');
-
-    const possiblePaths = [
-      // Development
-      path.join(__dirname, '..', '..', '..', '.claude', 'skills'),
-      // Production: extraResources extracts .claude/skills → resources/skills
-      path.join(process.resourcesPath || '', 'skills'),
-      // Legacy: in app.asar.unpacked (for older builds with asarUnpack)
-      ...(this.physicalDirExists(path.join(unpackedPath, '.claude', 'skills'))
-        ? [path.join(unpackedPath, '.claude', 'skills')]
-        : []),
-      // Last resort: read from inside the asar archive (Electron intercepts this)
-      path.join(appPath, '.claude', 'skills'),
-    ];
-
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        return p;
-      }
-    }
-
-    return '';
-  }
-
-  /**
-   * Check if a directory physically exists on disk, bypassing Electron's
-   * asar interception. Uses try/catch with lstatSync on the real filesystem.
-   */
-  private physicalDirExists(dirPath: string): boolean {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const originalFs = require('original-fs') as typeof import('fs');
-      return originalFs.existsSync(dirPath) && originalFs.statSync(dirPath).isDirectory();
-    } catch {
-      return false;
     }
   }
 
   private getDefaultGlobalSkillsPath(): string {
-    return path.join(app.getPath('userData'), 'claude', 'skills');
+    return getRuntimeSkillsDir();
   }
 
   getGlobalSkillsPath(): string {

@@ -1,0 +1,97 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const completeSimpleMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@earendil-works/pi-ai/compat', () => ({
+  completeSimple: completeSimpleMock,
+  getModel: vi.fn(() => undefined),
+}));
+
+vi.mock('../../main/agent/shared-auth', () => ({
+  getSharedAuthStorage: () => ({
+    setRuntimeApiKey: vi.fn(),
+  }),
+  ModelRegistry: vi.fn(),
+}));
+
+import type { AppConfig } from '../../main/config/config-store';
+import { DEFAULT_WEB_SEARCH_CONFIG } from '../../main/config/config-store';
+import { runPiAiOneShot } from '../../main/agent/pi-ai-one-shot';
+
+function makeConfig(): AppConfig {
+  return {
+    provider: 'openai',
+    customProtocol: 'openai',
+    apiKey: 'test-key',
+    baseUrl: 'https://example.test/v1',
+    model: 'test-model',
+    activeProfileKey: 'openai',
+    profiles: {},
+    activeConfigSetId: 'default',
+    configSets: [],
+    claudeCodePath: '',
+    defaultWorkdir: '',
+    globalSkillsPath: '',
+    enableDevLogs: false,
+    theme: 'light',
+    sandboxEnabled: false,
+    sandboxLanNetworkEnabled: false,
+    memoryEnabled: true,
+    memoryRuntime: {
+      llm: {
+        inheritFromActive: true,
+        apiKey: '',
+        baseUrl: '',
+        model: '',
+        timeoutMs: 180000,
+      },
+      embedding: {
+        inheritFromActive: true,
+        apiKey: '',
+        baseUrl: '',
+        model: 'text-embedding-3-small',
+        timeoutMs: 180000,
+      },
+      useEmbedding: false,
+      maxNavSteps: 2,
+      ingestionConcurrency: 4,
+      chunkTopK: 10,
+      sessionTopK: 5,
+      injectionPolicy: 'escape',
+      showInjectedMemoryInChat: true,
+      storageRoot: '',
+      evalEnabled: false,
+      evalWorkspaces: [],
+      evalMaxRounds: 12,
+      evalArtifactsRoot: '',
+      promptIterationRounds: 2,
+    },
+    webSearch: { ...DEFAULT_WEB_SEARCH_CONFIG },
+    enableThinking: false,
+    isConfigured: true,
+  };
+}
+
+describe('runPiAiOneShot', () => {
+  beforeEach(() => {
+    completeSimpleMock.mockReset();
+    completeSimpleMock.mockResolvedValue({
+      content: [{ type: 'text', text: 'ok' }],
+      stopReason: 'stop',
+    });
+  });
+
+  it('passes generation options through to completeSimple', async () => {
+    await runPiAiOneShot('hello', 'system', makeConfig(), {
+      temperature: 0.2,
+      maxTokens: 1234,
+    });
+
+    expect(completeSimpleMock).toHaveBeenCalledTimes(1);
+    expect(completeSimpleMock.mock.calls[0][2]).toMatchObject({
+      apiKey: 'test-key',
+      temperature: 0.2,
+      maxTokens: 1234,
+    });
+  });
+});

@@ -74,6 +74,7 @@ export function buildApiConfigStateResult({
   setSuccessMessage,
   shouldShowLocalModelToggle,
   successMessage,
+  supportsModelDiscovery,
   testResult,
   toggleCustomModel,
   useCustomModel,
@@ -151,6 +152,7 @@ export function buildApiConfigStateResult({
   setSuccessMessage: (text: string) => void;
   shouldShowLocalModelToggle: boolean;
   successMessage: string;
+  supportsModelDiscovery: boolean;
   testResult: ApiTestResult | null;
   toggleCustomModel: () => void;
   useCustomModel: boolean;
@@ -194,6 +196,7 @@ export function buildApiConfigStateResult({
     shouldShowLocalModelToggle,
     /** @deprecated Use shouldShowLocalModelToggle */
     shouldShowOllamaManualModelToggle: shouldShowLocalModelToggle,
+    supportsModelDiscovery,
     requiresApiKey,
     detectedProviderSetup,
     protocolGuidanceText,

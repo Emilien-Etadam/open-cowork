@@ -29,6 +29,7 @@ import { initAutoUpdater } from './auto-updater';
 import { log, logWarn, logError, setDevLogsEnabled } from './utils/logger';
 import { mainAppState } from './main-app-state';
 import { sendToRenderer } from './main-renderer-bridge';
+import { migrateLegacyAgentDataPaths } from './paths/app-data-paths';
 import { initializeDefaultWorkingDir } from './main-working-dir';
 import {
   createWindow,
@@ -99,6 +100,7 @@ app
     log('  OPENAI_API_MODE:', process.env.OPENAI_API_MODE || '(default)');
     log('===========================');
 
+    migrateLegacyAgentDataPaths();
     initializeDefaultWorkingDir();
     log('Working directory:', mainAppState.currentWorkingDir);
 
