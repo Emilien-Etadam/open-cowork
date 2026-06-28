@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.8.0] - 2026-06-28
+
+### Added
+
+- **Sandbox LAN network** : outil `http_request` (method, headers, body), headers optionnels sur `web_fetch`, proxy hôte authentifié pour curl/wget WSL (opt-in Réglages)
+- Filtrage RFC1918 sur le proxy sandbox ; internet public reste direct depuis WSL
+
+### Changed
+
+- **Repo app-only** : suppression site VitePress, bots DeepSeek, gouvernance upstream (CODEOWNERS, templates, CONTRIBUTING), husky/commitlint
+- Dépendance directe `typebox` pour la résolution TypeScript
+
 ## [5.7.0] - 2026-06-28
 
 ### Added
@@ -431,7 +443,8 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 - Initial release of Lygodactylus — open-source AI agent desktop app with one-click install for Windows and macOS
 
-[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.7.0...HEAD
+[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.8.0...HEAD
+[5.8.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.7.0...v5.8.0
 [5.7.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...v5.7.0
 [5.5.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.4.0...v5.5.0
 [5.4.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...v5.4.0
