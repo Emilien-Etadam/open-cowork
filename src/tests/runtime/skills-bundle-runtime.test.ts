@@ -67,6 +67,7 @@ describe('skills-bundle-runtime', () => {
   });
 
   it('copies heavy skill from dev source without network', async () => {
+    const projectRoot = path.resolve(__dirname, '../../..');
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'skills-bundle-dev-'));
     const userData = path.join(tmp, 'userdata');
     fs.mkdirSync(userData, { recursive: true });
@@ -74,7 +75,7 @@ describe('skills-bundle-runtime', () => {
     vi.doMock('electron', () => ({
       app: {
         isPackaged: false,
-        getAppPath: () => '/workspace',
+        getAppPath: () => projectRoot,
         getVersion: () => '5.4.0',
         getPath: (name: string) => (name === 'userData' ? userData : path.join(tmp, name)),
       },
