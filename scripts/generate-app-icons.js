@@ -6,7 +6,7 @@
  *   resources/icon.png, icon.ico, icon.icns, icon.iconset/*
  *   resources/tray-icon.png, tray-icon.ico, tray-iconTemplate.png
  *   public/favicon.png, public/logo.png
- *   src/renderer/assets/logo.png, website/public/logo.png
+ *   src/renderer/assets/logo.png
  */
 
 'use strict';
@@ -22,7 +22,6 @@ const LOGO_PATH = path.join(PROJECT_ROOT, 'resources', 'logo.png');
 const LOGO_COPIES = [
   path.join(PROJECT_ROOT, 'public', 'logo.png'),
   path.join(PROJECT_ROOT, 'src', 'renderer', 'assets', 'logo.png'),
-  path.join(PROJECT_ROOT, 'website', 'public', 'logo.png'),
 ];
 const RESOURCES_DIR = path.join(PROJECT_ROOT, 'resources');
 const ICONSET_DIR = path.join(RESOURCES_DIR, 'icon.iconset');

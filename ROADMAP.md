@@ -137,5 +137,4 @@ Current stable fork baseline: **`5.6.0`** — [CHANGELOG](CHANGELOG.md)
 
 ---
 
-_Last updated: 2026-06-28 (v5.7.0 release)_  
-_Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._
+_Last updated: 2026-06-28 (v5.7.0 release)_
