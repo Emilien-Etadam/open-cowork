@@ -27,6 +27,7 @@ function makeConfig(timeoutMs: number): AppConfig {
     enableDevLogs: false,
     theme: 'light',
     sandboxEnabled: false,
+    sandboxLanNetworkEnabled: false,
     memoryEnabled: true,
     memoryRuntime: {
       llm: {
