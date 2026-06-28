@@ -12,6 +12,7 @@ export function getToolIcon(name: string) {
   if (n === 'glob' || n === 'find') return <FolderSearch className="w-3.5 h-3.5" />;
   if (n === 'websearch' || n === 'web_search') return <Globe className="w-3.5 h-3.5" />;
   if (n === 'webfetch' || n === 'web_fetch') return <Globe className="w-3.5 h-3.5" />;
+  if (n === 'httprequest' || n === 'http_request') return <Globe className="w-3.5 h-3.5" />;
   return <Terminal className="w-3.5 h-3.5" />;
 }
 
@@ -79,6 +80,12 @@ export function getToolLabel(
   if (nameLower === 'webfetch' || nameLower === 'web_fetch') {
     const url = String(inp.url || '');
     return url ? `Fetch ${url.length > 50 ? url.substring(0, 47) + '...' : url}` : 'Fetch URL';
+  }
+  if (nameLower === 'httprequest' || nameLower === 'http_request') {
+    const url = String(inp.url || '');
+    const method = String(inp.method || 'GET').toUpperCase();
+    const shortUrl = url.length > 40 ? `${url.substring(0, 37)}...` : url;
+    return url ? `${method} ${shortUrl}` : 'HTTP request';
   }
   return name;
 }
