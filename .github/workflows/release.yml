@@ -159,6 +159,7 @@ jobs:
             release/*.dmg
             release/*.zip
           draft: true
+          tag_name: ${{ github.ref_name }}
 
   build-windows:
     name: Release Windows
@@ -301,3 +302,18 @@ jobs:
             release/latest.yml
             release/*.blockmap
           draft: true
+          tag_name: ${{ github.ref_name }}
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release (remove draft)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          echo "Publishing release ${TAG}"
+          gh release edit "${TAG}" --repo "${GITHUB_REPOSITORY}" --draft=false
