@@ -136,5 +136,4 @@ Current stable fork baseline: **`5.0.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (Phase 3 — pi-agent 0.80.2 migration, CVE cleanup)_  
-_Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._
+_Last updated: 2026-06-27 (Phase 3 — pi-agent 0.80.2 migration, CVE cleanup)_

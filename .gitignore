@@ -96,10 +96,6 @@ DEV_LOG.md
 .build-cache/
 .bundle-resources/
 
-# VitePress
-website/.vitepress/dist/
-website/.vitepress/cache/
-
 # Temp directories
 .tmp/
 
@@ -107,5 +103,4 @@ website/.vitepress/cache/
 *.png
 !src/renderer/assets/*.png
 !public/*.png
-!website/public/*.png
 !resources/social-preview.png
