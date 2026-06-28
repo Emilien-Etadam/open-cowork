@@ -115,7 +115,7 @@ Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emili
 - **Scheduled Tasks**: Cron-like scheduling with UI management (backend exists; polish UX and edge cases)
 - **Log Management**: Structured logging with rotation, size limits, log viewer improvements
 - **Installation Experience**: Smoother first-run — auto-detect dependencies, clearer errors, one-click setup
-- **Linux Support**: First-class Linux builds (currently build-from-source only)
+- **Linux Support**: First-class Linux AppImage builds — **in progress v5.3** (ported from upstream open-cowork PR #264 + CI release job)
 
 ### Mid-term (v3.5.0+)
 

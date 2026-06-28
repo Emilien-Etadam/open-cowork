@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-blue" alt="Platform" />
+  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
   <img src="https://img.shields.io/badge/version-5.0.0-orange" alt="Version" />
@@ -24,7 +24,7 @@
 
 ## What is it?
 
-**Lygodactylus** is a desktop AI agent app (Electron) for Windows and macOS. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a web UI on your network — recommended over a WireGuard VPN tunnel).
+**Lygodactylus** is a desktop AI agent app (Electron) for Windows, macOS, and Linux. It manages your files, generates documents via **Skills** (PPTX, DOCX, XLSX, PDF), installs extensions through a curated **marketplace** (Skills, MCP, plugins), isolates commands in a **sandbox** (WSL2 / Lima), and offers **LAN chat** (a web UI on your network — recommended over a WireGuard VPN tunnel).
 
 > [!NOTE]
 > This repository is a **personal fork**. The **v5.x** series is an experimental **alpha**. Older `EE*` releases remain available but are no longer the active branch. For the official stable upstream version, see [OpenCoworkAI/open-cowork](https://github.com/OpenCoworkAI/open-cowork).
@@ -51,10 +51,23 @@
 
 Download the latest build from [Releases](https://github.com/emilien-etadam/lygodactylus/releases):
 
-| Platform              | File   |
-| --------------------- | ------ |
-| Windows               | `.exe` |
-| macOS (Apple Silicon) | `.dmg` |
+| Platform              | File        |
+| --------------------- | ----------- |
+| Windows               | `.exe`      |
+| macOS (Apple Silicon) | `.dmg`      |
+| Linux (x64)           | `.AppImage` |
+
+#### Linux desktop integration
+
+After downloading the AppImage:
+
+```bash
+chmod +x Lygodactylus-*-linux-*.AppImage
+npm run build:linux   # or place the AppImage in release/
+./scripts/install-linux-desktop.sh ./release
+```
+
+Press **Super** and search for “Lygodactylus” in your application launcher.
 
 On **Windows**, the app checks for updates on startup. Otherwise use **Settings → General → Check for updates**.
 
@@ -67,7 +80,7 @@ npm install   # Node.js 22+
 npm run dev
 ```
 
-To build a local installer: `npm run build`
+To build a local installer: `npm run build` (current platform) or `npm run build:linux` on Linux.
 
 ---
 

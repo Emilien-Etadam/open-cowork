@@ -160,6 +160,117 @@ jobs:
             release/*.zip
           draft: true
 
+  build-linux:
+    name: Release Linux
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '22.19'
+          cache: npm
+
+      - name: Cache Electron
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5
+        with:
+          path: ~/.cache/electron
+          key: electron-linux-${{ hashFiles('package-lock.json') }}
+          restore-keys: electron-linux-
+
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build MCP servers
+        run: npm run build:mcp
+
+      - name: TypeScript compile
+        run: npx tsc
+
+      - name: Vite build
+        run: npx vite build
+
+      - name: Generate app icons
+        run: npm run generate:icons
+
+      - name: Pre-build check
+        run: node scripts/pre-build-check.js
+
+      - name: Electron Builder (AppImage)
+        run: npx electron-builder --linux AppImage --publish never
+
+      - name: Smoke test - verify packaged resources
+        run: |
+          set -euo pipefail
+          APPIMAGE=$(find release -maxdepth 1 -name 'Lygodactylus-*-linux-*.AppImage' -print -quit)
+          if [ -z "$APPIMAGE" ]; then
+            echo "::error::No Linux AppImage found in release/"
+            exit 1
+          fi
+          echo "Found AppImage: $APPIMAGE"
+          chmod +x "$APPIMAGE"
+          EXTRACT_DIR=$(mktemp -d)
+          cd "$EXTRACT_DIR"
+          "$APPIMAGE" --appimage-extract >/dev/null
+          RESOURCES="squashfs-root/resources"
+          FAILED=0
+          for check in \
+            "mcp/gui-operate-server.js" \
+            "mcp/software-dev-server-example.js" \
+            "skills" \
+            "icon.png" \
+            "tray-icon.png"; do
+            if [ -e "$RESOURCES/$check" ]; then
+              echo "  OK: $check"
+            else
+              echo "::error::Missing resource: $check"
+              FAILED=1
+            fi
+          done
+          if [ "$FAILED" -eq 1 ]; then
+            echo "::error::Packaged AppImage is missing critical resources"
+            exit 1
+          fi
+          echo "All packaged resources verified."
+
+      - name: Smoke test - launch app
+        run: |
+          set -euo pipefail
+          APPIMAGE=$(find release -maxdepth 1 -name 'Lygodactylus-*-linux-*.AppImage' -print -quit)
+          chmod +x "$APPIMAGE"
+          EXTRACT_DIR=$(mktemp -d)
+          cd "$EXTRACT_DIR"
+          "$APPIMAGE" --appimage-extract >/dev/null
+          EXECUTABLE=$(find squashfs-root -maxdepth 2 -type f -name 'lygodactylus' -o -name 'Lygodactylus' | head -1)
+          if [ -z "$EXECUTABLE" ]; then
+            EXECUTABLE=$(find squashfs-root -maxdepth 2 -type f -perm -111 ! -name 'AppRun' ! -name '*.so*' | head -1)
+          fi
+          if [ -z "$EXECUTABLE" ]; then
+            echo "::error::Could not locate AppImage executable"
+            exit 1
+          fi
+          echo "Launching: $EXECUTABLE --smoke-test"
+          timeout 30 "$EXECUTABLE" --smoke-test 2>&1 || EXIT_CODE=$?
+          if [ "${EXIT_CODE:-0}" -eq 0 ]; then
+            echo "Launch smoke test passed"
+          else
+            echo "::error::Launch smoke test failed with exit code ${EXIT_CODE}"
+            exit 1
+          fi
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
+        with:
+          files: |
+            release/*.AppImage
+          draft: true
+
   build-windows:
     name: Release Windows
     needs: [lint-and-test]
