@@ -113,7 +113,7 @@ Current stable fork baseline: **`5.5.0`** — [CHANGELOG](CHANGELOG.md)
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
 - **App Slimming**: Node.js on-demand — **done v5.2**; Python + cliclick on-demand — **done v5.3**; skills split (docx/pptx on-demand) — **done v5.4**; naming cleanup — **done v5.5**
-- **Schema naming**: `claude_session_id`, `claudeCodePath`, `claudeCodeAvailable` → agent-prefixed fields (SQLite + config migration)
+- **Schema naming**: `claude_session_id`, `claudeCodePath` → `agent_session_id`, `agentCliPath` — **done v5.5** (migration auto, champs legacy conservés en lecture)
 - **Tool Completeness**: Native TodoWrite, AskUserQuestion, Glob, Grep, WebFetch, WebSearch tool schemas + handlers for API key users
 - **Memory System Enhancements**: Prompt injection controls, cross-session retrieval UX, memory source inspection, reranking quality
 - **Scheduled Tasks**: Cron-like scheduling with UI management (backend exists; polish UX and edge cases)

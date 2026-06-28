@@ -433,6 +433,12 @@ export function normalizeConfig(rawConfig: Partial<AppConfig> | undefined): AppC
     configSets,
     claudeCodePath:
       typeof raw.claudeCodePath === 'string' ? raw.claudeCodePath : defaultConfig.claudeCodePath,
+    agentCliPath:
+      typeof raw.agentCliPath === 'string'
+        ? raw.agentCliPath
+        : typeof raw.claudeCodePath === 'string'
+          ? raw.claudeCodePath
+          : defaultConfig.agentCliPath,
     defaultWorkdir:
       typeof raw.defaultWorkdir === 'string' ? raw.defaultWorkdir : defaultConfig.defaultWorkdir,
     globalSkillsPath:

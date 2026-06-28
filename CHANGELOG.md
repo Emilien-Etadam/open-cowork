@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Manifeste sync** : `.opencowork-sync.json` → `.lygodactylus-sync.json` (lecture legacy)
 - Préfixes temporaires `opencowork-*` → `lygodactylus-*` (plugins, export logs)
 - Skills sandbox : `{sandbox}/skills` au lieu de `{sandbox}/.claude/skills`
+- **Schéma** : colonne SQLite `agent_session_id` (migration depuis `claude_session_id`) ; config `agentCliPath` (migration depuis `claudeCodePath`)
 
 ## [5.4.0] - 2026-06-28
 

@@ -58,6 +58,7 @@ export interface AppConfig {
   activeConfigSetId: ConfigSetId;
   configSets: ApiConfigSet[];
   claudeCodePath?: string;
+  agentCliPath?: string;
   defaultWorkdir?: string;
   globalSkillsPath?: string;
   enableDevLogs: boolean;
@@ -110,6 +111,7 @@ export const DIRECT_READ_KEYS = new Set<keyof AppConfig>([
   'activeProfileKey',
   'activeConfigSetId',
   'claudeCodePath',
+  'agentCliPath',
   'defaultWorkdir',
   'globalSkillsPath',
   'enableDevLogs',
@@ -182,6 +184,7 @@ export const defaultConfig: AppConfig = {
   activeConfigSetId: DEFAULT_CONFIG_SET_ID,
   configSets: [defaultConfigSet],
   claudeCodePath: '',
+  agentCliPath: '',
   defaultWorkdir: '',
   globalSkillsPath: '',
   enableDevLogs: false,
