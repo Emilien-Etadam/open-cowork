@@ -22,24 +22,48 @@ function parseEeSuffix(version: string): number[] | null {
   return match[1].split('.').map((part) => Number.parseInt(part, 10));
 }
 
-/** True when `candidate` is a newer EE build than `current`. */
+function parseSemver(version: string): number[] | null {
+  const normalized = normalizeVersionTag(version);
+  const match = normalized.match(/^(\d+)\.(\d+)\.(\d+)/);
+  if (!match) {
+    return null;
+  }
+
+  return [
+    Number.parseInt(match[1], 10),
+    Number.parseInt(match[2], 10),
+    Number.parseInt(match[3], 10),
+  ];
+}
+
+function compareNumericParts(left: number[], right: number[]): number {
+  const length = Math.max(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    const next = left[index] ?? 0;
+    const prev = right[index] ?? 0;
+    if (next > prev) {
+      return 1;
+    }
+    if (next < prev) {
+      return -1;
+    }
+  }
+  return 0;
+}
+
+/** True when `candidate` is a newer build than `current` (EE suffix or semver). */
 export function isEeVersionNewer(candidate: string, current: string): boolean {
   const candidateParts = parseEeSuffix(candidate);
   const currentParts = parseEeSuffix(current);
 
   if (candidateParts && currentParts) {
-    const length = Math.max(candidateParts.length, currentParts.length);
-    for (let index = 0; index < length; index += 1) {
-      const next = candidateParts[index] ?? 0;
-      const prev = currentParts[index] ?? 0;
-      if (next > prev) {
-        return true;
-      }
-      if (next < prev) {
-        return false;
-      }
-    }
-    return false;
+    return compareNumericParts(candidateParts, currentParts) > 0;
+  }
+
+  const candidateSemver = parseSemver(candidate);
+  const currentSemver = parseSemver(current);
+  if (candidateSemver && currentSemver) {
+    return compareNumericParts(candidateSemver, currentSemver) > 0;
   }
 
   return normalizeVersionTag(candidate) !== normalizeVersionTag(current);
