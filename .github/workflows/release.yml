@@ -60,15 +60,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install cliclick for GUI tools
-        run: brew install cliclick
-
-      - name: Prepare Python runtime
-        run: node scripts/prepare-python.js
-
-      - name: Prepare GUI tools
-        run: node scripts/prepare-gui-tools.js
-
       - name: Build Lima agent
         run: npm run build:lima-agent
 

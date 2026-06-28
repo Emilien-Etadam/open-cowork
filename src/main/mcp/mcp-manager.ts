@@ -9,7 +9,11 @@ import { app, shell } from 'electron';
 
 import path from 'path';
 import { ensureChromeReady } from './mcp-chrome-debug.js';
-import { getBundledNodePaths as resolveBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime.js';
+import {
+  getBundledNodePaths as resolveBundledNodePaths,
+  ensureNodeRuntime,
+} from '../runtime/node-runtime.js';
+import { ensureGuiRuntimeReady as ensureGuiRuntime } from '../runtime/gui-runtime.js';
 import { connectServerInternal as connectServerInternalImpl } from './mcp-connection.js';
 import {
   getEnhancedEnv,
@@ -117,6 +121,10 @@ export class MCPManager {
 
   async ensureNodeRuntimeReady(): Promise<void> {
     await ensureNodeRuntime();
+  }
+
+  async ensureGuiRuntimeReady(): Promise<void> {
+    await ensureGuiRuntime();
   }
 
   private async resolvePreferredNpxPath(pathEnv: string | undefined): Promise<string> {

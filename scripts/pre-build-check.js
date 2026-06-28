@@ -118,13 +118,13 @@ function buildCheckList(platform, arch) {
         severity: 'fatal',
       },
       {
-        label: `Python runtime for macOS ${arch} (GUI automation)`,
+        label: `Python runtime for macOS ${arch} (GUI automation, on-demand in packaged apps)`,
         relPath: `resources/python/darwin-${arch}`,
         type: 'dir',
         severity: 'warn',
       },
       {
-        label: `CLI tools for macOS ${arch} (cliclick)`,
+        label: `CLI tools for macOS ${arch} (cliclick, on-demand in packaged apps)`,
         relPath: `resources/tools/darwin-${arch}`,
         type: 'dir',
         severity: 'warn',
@@ -140,7 +140,12 @@ function buildCheckList(platform, arch) {
       }
     );
   } else if (platform === 'linux') {
-    // Node.js is downloaded on first use in packaged apps; dev uses resources/node via postinstall.
+    checks.push({
+      label: `Python runtime for Linux ${arch} (on-demand in packaged apps)`,
+      relPath: `resources/python/linux-${arch}`,
+      type: 'dir',
+      severity: 'warn',
+    });
   }
 
   return checks;
