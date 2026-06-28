@@ -21,4 +21,12 @@ describe('app version helpers', () => {
     expect(isEeVersionNewer('3.3.1-EE4.6', '3.3.1-EE4.7')).toBe(false);
     expect(isEeVersionNewer('3.3.1-EE4.7', '3.3.1-EE4.7')).toBe(false);
   });
+
+  it('compares semver v5.x versions', () => {
+    expect(isEeVersionNewer('5.3.0', '5.1.0')).toBe(true);
+    expect(isEeVersionNewer('5.1.0', '5.3.0')).toBe(false);
+    expect(isEeVersionNewer('5.1.0', '5.1.0')).toBe(false);
+    expect(isEeVersionNewer('5.10.0', '5.9.0')).toBe(true);
+    expect(isEeVersionNewer('5.9.0', '5.10.0')).toBe(false);
+  });
 });
