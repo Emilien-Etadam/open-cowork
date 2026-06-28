@@ -785,7 +785,11 @@
     "compactionMeta": "已总结 {{tokensBefore}} 个 token",
     "compactionInstructions": "重点：{{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "问题已回答",
+    "pleaseAnswerToContinue": "请回答以继续",
+    "questionClosed": "问题已关闭",
+    "submitAnswers": "提交回答"
   },
   "schedule": {
     "createTitle": "新建定时任务",

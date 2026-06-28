@@ -785,7 +785,11 @@
     "compactionMeta": "{{tokensBefore}} tokens samengevat",
     "compactionInstructions": "Focus: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "Vragen beantwoord",
+    "pleaseAnswerToContinue": "Beantwoord om door te gaan",
+    "questionClosed": "Vraag gesloten",
+    "submitAnswers": "Antwoorden verzenden"
   },
   "schedule": {
     "createTitle": "Planning maken",

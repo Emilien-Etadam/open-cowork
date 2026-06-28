@@ -38,10 +38,11 @@ export const ToolUseBlock = memo(function ToolUseBlock({
   const [expanded, setExpanded] = useState(false);
 
   // Special-case tool UIs
-  if (block.name === 'AskUserQuestion') {
+  const toolNameLower = block.name.toLowerCase().replace(/_/g, '');
+  if (toolNameLower === 'askuserquestion') {
     return <AskUserQuestionBlock block={block} />;
   }
-  if (block.name === 'TodoWrite') {
+  if (toolNameLower === 'todowrite') {
     return <TodoWriteBlock block={block} />;
   }
 

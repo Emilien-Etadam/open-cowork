@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-import type { Message } from '../../renderer/types';
+import type { Message, QuestionItem } from '../../renderer/types';
 import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-extension-manager';
 import type { MCPManager } from '../mcp/mcp-manager';
 import type { PathResolver } from '../sandbox/path-resolver';
@@ -37,6 +37,11 @@ export interface AgentRunnerRunContext {
     toolName: string,
     input: Record<string, unknown>
   ) => Promise<'allow' | 'deny' | 'allow_always'>;
+  requestUserQuestion?: (
+    sessionId: string,
+    toolUseId: string,
+    questions: QuestionItem[]
+  ) => Promise<string>;
   skillsPaths: AgentRunnerSkillsPaths;
   getToolDisplayName(toolName: string): string;
   getCurrentModelString(preferredModel?: string): string;

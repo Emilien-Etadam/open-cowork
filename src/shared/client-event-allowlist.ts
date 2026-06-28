@@ -14,6 +14,7 @@ export const ALLOWED_CLIENT_EVENT_TYPES = [
   'session.getMessages',
   'session.getTraceSteps',
   'permission.response',
+  'question.response',
   'sudo.password.response',
   'settings.update',
   'folder.select',

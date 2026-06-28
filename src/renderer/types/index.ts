@@ -430,7 +430,7 @@ export interface SudoPasswordRequest {
   sessionId: string;
 }
 
-// AskUserQuestion display types - kept for rendering historical messages
+// AskUserQuestion types
 export interface QuestionOption {
   label: string;
   description?: string;
@@ -441,6 +441,18 @@ export interface QuestionItem {
   header?: string;
   options?: QuestionOption[];
   multiSelect?: boolean;
+}
+
+export interface UserQuestionRequest {
+  questionId: string;
+  sessionId: string;
+  toolUseId: string;
+  questions: QuestionItem[];
+}
+
+export interface UserQuestionResponse {
+  questionId: string;
+  answer: string;
 }
 
 export interface PermissionRule {
@@ -490,6 +502,7 @@ export type ClientEvent =
   | { type: 'session.getMessages'; payload: { sessionId: string } }
   | { type: 'session.getTraceSteps'; payload: { sessionId: string } }
   | { type: 'permission.response'; payload: { toolUseId: string; result: PermissionResult } }
+  | { type: 'question.response'; payload: UserQuestionResponse }
   | { type: 'sudo.password.response'; payload: { toolUseId: string; password: string | null } }
   | { type: 'settings.update'; payload: Record<string, unknown> }
   | { type: 'folder.select'; payload: Record<string, never> }
@@ -551,6 +564,8 @@ export type ServerEvent =
   | { type: 'session.list'; payload: { sessions: Session[] } }
   | { type: 'permission.request'; payload: PermissionRequest }
   | { type: 'permission.dismiss'; payload: { toolUseId: string } }
+  | { type: 'question.request'; payload: UserQuestionRequest }
+  | { type: 'question.dismiss'; payload: { questionId: string; toolUseId: string } }
   | { type: 'sudo.password.request'; payload: SudoPasswordRequest }
   | { type: 'sudo.password.dismiss'; payload: { toolUseId: string } }
   | { type: 'trace.step'; payload: { sessionId: string; step: TraceStep } }

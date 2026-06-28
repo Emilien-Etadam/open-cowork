@@ -2,6 +2,7 @@ import type {
   ContentBlock,
   Message,
   PermissionResult,
+  QuestionItem,
   ServerEvent,
   Session,
   TraceStep,
@@ -17,6 +18,7 @@ import { PathResolver } from '../sandbox/path-resolver';
 import { SandboxAdapter, getSandboxAdapter } from '../sandbox/sandbox-adapter';
 import { PluginRuntimeService } from '../skills/plugin-runtime-service';
 import { log, logError } from '../utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 import { processFileAttachments } from './session-manager-attachments';
 import {
   SessionManagerFacadeSupport,
@@ -50,6 +52,7 @@ export class SessionManager {
   private readonly activeSessions = new Map<string, AbortController>();
   private readonly promptQueues: PromptQueues = new Map();
   private readonly pendingPermissions = new Map<string, (result: PermissionResult) => void>();
+  private readonly pendingQuestions = new Map<string, (answer: string) => void>();
   private readonly pendingSudoPasswords = new Map<
     string,
     { sessionId: string; resolve: (password: string | null) => void }
@@ -113,6 +116,8 @@ export class SessionManager {
           this.requestSudoPassword(sessionId, toolUseId, command),
         requestPermission: (sessionId, toolUseId, toolName, input) =>
           this.requestPermission(sessionId, toolUseId, toolName, input),
+        requestUserQuestion: (sessionId, toolUseId, questions) =>
+          this.requestUserQuestion(sessionId, toolUseId, questions),
       },
       this.pathResolver,
       this.mcpManager,
@@ -313,6 +318,44 @@ export class SessionManager {
       resolver(result);
       this.pendingPermissions.delete(toolUseId);
     }
+  }
+
+  handleQuestionResponse(questionId: string, answer: string): void {
+    const resolver = this.pendingQuestions.get(questionId);
+    if (resolver) {
+      resolver(answer);
+      this.pendingQuestions.delete(questionId);
+    }
+  }
+
+  async requestUserQuestion(
+    sessionId: string,
+    toolUseId: string,
+    questions: QuestionItem[]
+  ): Promise<string> {
+    const questionId = uuidv4();
+    return new Promise((resolve) => {
+      const timeoutId = setTimeout(() => {
+        this.pendingQuestions.delete(questionId);
+        resolve('{}');
+        this.sendToRenderer({ type: 'question.dismiss', payload: { questionId, toolUseId } });
+      }, 60_000);
+
+      this.pendingQuestions.set(questionId, (answer) => {
+        clearTimeout(timeoutId);
+        resolve(answer);
+      });
+
+      this.sendToRenderer({
+        type: 'question.request',
+        payload: {
+          questionId,
+          sessionId,
+          toolUseId,
+          questions,
+        },
+      });
+    });
   }
 
   async requestPermission(

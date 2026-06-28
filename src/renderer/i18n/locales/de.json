@@ -785,7 +785,11 @@
     "compactionMeta": "{{tokensBefore}} Tokens zusammengefasst",
     "compactionInstructions": "Fokus: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "Fragen beantwortet",
+    "pleaseAnswerToContinue": "Bitte antworten, um fortzufahren",
+    "questionClosed": "Frage geschlossen",
+    "submitAnswers": "Antworten senden"
   },
   "schedule": {
     "createTitle": "Zeitplan erstellen",
