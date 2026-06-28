@@ -785,7 +785,11 @@
     "compactionMeta": "{{tokensBefore}} tokens sammanfattade",
     "compactionInstructions": "Fokus: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "Frågor besvarade",
+    "pleaseAnswerToContinue": "Svara för att fortsätta",
+    "questionClosed": "Fråga stängd",
+    "submitAnswers": "Skicka svar"
   },
   "schedule": {
     "createTitle": "Skapa schema",

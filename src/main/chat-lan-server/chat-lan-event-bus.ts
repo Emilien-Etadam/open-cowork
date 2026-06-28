@@ -13,6 +13,8 @@ const CHAT_LAN_EVENT_TYPES = new Set<ServerEvent['type']>([
   'session.notice',
   'permission.request',
   'permission.dismiss',
+  'question.request',
+  'question.dismiss',
   'sudo.password.request',
   'sudo.password.dismiss',
   'error',

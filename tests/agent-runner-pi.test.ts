@@ -113,15 +113,11 @@ describe('AgentRunner Lygodactylus SDK integration', () => {
   });
 
   it('keeps MCP server logging compact unless full debug logging is enabled', () => {
-    expect(agentRunnerMcpServersContent).toContain(
-      "log('[AgentRunner] Final mcpServers summary:'"
-    );
+    expect(agentRunnerMcpServersContent).toContain("log('[AgentRunner] Final mcpServers summary:'");
     expect(agentRunnerMcpServersContent).toContain(
       "if (process.env.COWORK_LOG_SDK_MESSAGES_FULL === '1') {"
     );
-    expect(agentRunnerMcpServersContent).toContain(
-      "log('[AgentRunner] Final mcpServers config:'"
-    );
+    expect(agentRunnerMcpServersContent).toContain("log('[AgentRunner] Final mcpServers config:'");
   });
 
   it('summarizes noisy SDK message updates instead of logging every text delta', () => {
@@ -155,16 +151,10 @@ describe('AgentRunner Lygodactylus SDK integration', () => {
     expect(agentRunnerPiSetupContent).toContain('createPiSession');
     expect(agentRunnerPiSetupContent).not.toContain('systemPromptOverride');
     expect(
-      readFileSync(
-        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
-        'utf8'
-      )
+      readFileSync(path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'), 'utf8')
     ).toContain('additionalSkillPaths: skillPaths');
     expect(
-      readFileSync(
-        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
-        'utf8'
-      )
+      readFileSync(path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'), 'utf8')
     ).toContain('appendSystemPrompt: coworkAppendPrompt');
   });
 
@@ -180,10 +170,7 @@ describe('AgentRunner Lygodactylus SDK integration', () => {
     );
     expect(agentRunnerPiSetupContent).toContain('Runtime changed, recreating cached pi session:');
     expect(
-      readFileSync(
-        path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'),
-        'utf8'
-      )
+      readFileSync(path.resolve(process.cwd(), 'src/main/agent/agent-runner-pi-session.ts'), 'utf8')
     ).toContain('runtimeSignature: sessionRuntimeSignature');
   });
 
@@ -223,19 +210,11 @@ describe('AgentRunner Lygodactylus SDK integration', () => {
     expect(agentRunnerStreamMessageEventsContent).toContain('model: deps.piSetup.piModel.id');
   });
 
-  it('does not reference removed AskUserQuestion or TodoWrite tools', () => {
-    expect(agentRunnerContent).not.toContain('AskUserQuestion');
-    expect(agentRunnerContent).not.toContain('TodoWrite');
-    expect(agentRunnerContent).not.toContain('pendingQuestions');
-    expect(agentRunnerPiSetupContent).toContain('buildCoworkAppendPrompt');
-    expect(agentRunnerPiSetupContent).not.toContain('AskUserQuestion');
-    expect(agentRunnerPiSetupContent).not.toContain('TodoWrite');
-    expect(agentRunnerPromptsContent).not.toContain('AskUserQuestion');
-    expect(agentRunnerPromptsContent).not.toContain('TodoWrite');
-    expect(agentRunnerStreamHandlerContent).not.toContain('AskUserQuestion');
-    expect(agentRunnerStreamHandlerContent).not.toContain('TodoWrite');
-    expect(agentRunnerStreamCombinedContent).not.toContain('AskUserQuestion');
-    expect(agentRunnerStreamCombinedContent).not.toContain('TodoWrite');
+  it('registers native planning and filesystem tools for OpenAI-compatible providers', () => {
+    expect(agentRunnerPiSetupContent).toContain('buildNativeCustomTools');
+    expect(agentRunnerPiSetupContent).toContain('buildWebSearchCustomTools');
+    expect(agentRunnerPiSetupContent).toContain('glob');
+    expect(agentRunnerPiSetupContent).toContain('ask_user_question');
   });
 
   it('chat-first behavioral rules are present', () => {

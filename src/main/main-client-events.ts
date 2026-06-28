@@ -114,6 +114,9 @@ export async function handleClientEvent(event: ClientEvent): Promise<unknown> {
     case 'permission.response':
       return sm.handlePermissionResponse(event.payload.toolUseId, event.payload.result);
 
+    case 'question.response':
+      return sm.handleQuestionResponse(event.payload.questionId, event.payload.answer);
+
     case 'sudo.password.response':
       return sm.handleSudoPasswordResponse(event.payload.toolUseId, event.payload.password);
 

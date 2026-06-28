@@ -9,9 +9,9 @@ export function getToolIcon(name: string) {
   if (n === 'write' || n === 'write_file') return <FileText className="w-3.5 h-3.5" />;
   if (n === 'edit' || n === 'edit_file') return <Pencil className="w-3.5 h-3.5" />;
   if (n === 'grep') return <Search className="w-3.5 h-3.5" />;
-  if (n === 'glob') return <FolderSearch className="w-3.5 h-3.5" />;
-  if (n === 'websearch') return <Globe className="w-3.5 h-3.5" />;
-  if (n === 'webfetch') return <Globe className="w-3.5 h-3.5" />;
+  if (n === 'glob' || n === 'find') return <FolderSearch className="w-3.5 h-3.5" />;
+  if (n === 'websearch' || n === 'web_search') return <Globe className="w-3.5 h-3.5" />;
+  if (n === 'webfetch' || n === 'web_fetch') return <Globe className="w-3.5 h-3.5" />;
   return <Terminal className="w-3.5 h-3.5" />;
 }
 
@@ -69,10 +69,14 @@ export function getToolLabel(
     }
     return 'Run command';
   }
-  if (nameLower === 'glob') return inp.pattern ? `Glob ${String(inp.pattern)}` : 'Glob';
+  if (nameLower === 'glob' || nameLower === 'find') {
+    return inp.pattern ? `Glob ${String(inp.pattern)}` : 'Glob';
+  }
   if (nameLower === 'grep') return inp.pattern ? `Grep "${String(inp.pattern)}"` : 'Grep';
-  if (nameLower === 'websearch') return inp.query ? `Search "${String(inp.query)}"` : 'Web search';
-  if (nameLower === 'webfetch') {
+  if (nameLower === 'websearch' || nameLower === 'web_search') {
+    return inp.query ? `Search "${String(inp.query)}"` : 'Web search';
+  }
+  if (nameLower === 'webfetch' || nameLower === 'web_fetch') {
     const url = String(inp.url || '');
     return url ? `Fetch ${url.length > 50 ? url.substring(0, 47) + '...' : url}` : 'Fetch URL';
   }

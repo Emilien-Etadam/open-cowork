@@ -172,6 +172,18 @@ export function useIPC() {
             break;
           }
 
+          case 'question.request':
+            store.setPendingQuestion(event.payload);
+            break;
+
+          case 'question.dismiss': {
+            const currentQuestion = useAppStore.getState().pendingQuestion;
+            if (currentQuestion?.questionId === event.payload.questionId) {
+              store.setPendingQuestion(null);
+            }
+            break;
+          }
+
           case 'stream.executionTime':
             store.updateMessage(event.payload.sessionId, event.payload.messageId, {
               executionTimeMs: event.payload.executionTimeMs,
@@ -357,6 +369,7 @@ export function useIPC() {
   const addMessage = useAppStore((s) => s.addMessage);
   const setLoading = useAppStore((s) => s.setLoading);
   const setPendingPermission = useAppStore((s) => s.setPendingPermission);
+  const setPendingQuestion = useAppStore((s) => s.setPendingQuestion);
   const clearActiveTurn = useAppStore((s) => s.clearActiveTurn);
   const activateNextTurn = useAppStore((s) => s.activateNextTurn);
   const startActiveTurn = useAppStore((s) => s.startActiveTurn);
@@ -949,6 +962,17 @@ export function useIPC() {
     [send, setPendingPermission]
   );
 
+  const respondToQuestion = useCallback(
+    (questionId: string, answer: string) => {
+      send({
+        type: 'question.response',
+        payload: { questionId, answer },
+      });
+      setPendingQuestion(null);
+    },
+    [send, setPendingQuestion]
+  );
+
   const setPendingSudoPassword = useAppStore((s) => s.setPendingSudoPassword);
 
   const respondToSudoPassword = useCallback(
@@ -1031,6 +1055,7 @@ export function useIPC() {
     getSessionMessages,
     getSessionTraceSteps,
     respondToPermission,
+    respondToQuestion,
     respondToSudoPassword,
     selectFolder,
     getWorkingDir,

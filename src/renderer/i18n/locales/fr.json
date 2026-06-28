@@ -832,7 +832,11 @@
     "compactionTitle": "Contexte compacté",
     "compactionHandoffTitle": "Reprise depuis « {{sourceTitle}} »",
     "compactionMeta": "{{tokensBefore}} tokens résumés",
-    "compactionInstructions": "Focus : {{instructions}}"
+    "compactionInstructions": "Focus : {{instructions}}",
+    "questionsAnswered": "Questions répondues",
+    "pleaseAnswerToContinue": "Veuillez répondre pour continuer",
+    "questionClosed": "Question fermée",
+    "submitAnswers": "Envoyer les réponses"
   },
   "schedule": {
     "createTitle": "Créer une planification",

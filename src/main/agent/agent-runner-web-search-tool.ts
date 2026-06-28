@@ -32,5 +32,6 @@ export function buildWebSearchCustomTools(): ToolDefinition[] {
   return [
     createWebSearchTool('web_search', 'Web Search'),
     createWebSearchTool('websearch', 'Web Search'),
+    createWebSearchTool('WebSearch', 'Web Search'),
   ];
 }

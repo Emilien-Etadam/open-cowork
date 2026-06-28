@@ -25,6 +25,7 @@ import {
   wrapBashToolWithDefaultTimeout,
 } from './agent-runner-pi-session';
 import { buildCoworkAppendPrompt } from './agent-runner-prompts';
+import { buildNativeCustomTools } from './agent-runner-native-tools';
 import { buildWebSearchCustomTools } from './agent-runner-web-search-tool';
 import {
   AgentRunnerRunContext,
@@ -333,6 +334,11 @@ export async function preparePiSessionRun({
   );
   const mcpCustomTools = ctx.mcpManager ? buildMcpCustomTools(ctx.mcpManager) : [];
   const webSearchCustomTools = buildWebSearchCustomTools();
+  const nativeCustomTools = buildNativeCustomTools({
+    cwd: effectiveCwd,
+    sessionId: session.id,
+    requestUserQuestion: ctx.requestUserQuestion,
+  });
   const extensionCustomTools = extensionResult.customTools || [];
   if (mcpCustomTools.length > 0) {
     log(
@@ -344,6 +350,12 @@ export async function preparePiSessionRun({
     log(
       `[AgentRunner] Registered ${webSearchCustomTools.length} web search tools as customTools:`,
       webSearchCustomTools.map((tool) => tool.name).join(', ')
+    );
+  }
+  if (nativeCustomTools.length > 0) {
+    log(
+      `[AgentRunner] Registered ${nativeCustomTools.length} native tools as customTools:`,
+      nativeCustomTools.map((tool) => tool.name).join(', ')
     );
   }
   if (extensionCustomTools.length > 0) {
@@ -383,6 +395,7 @@ export async function preparePiSessionRun({
   ).find((tool) => tool.name === 'bash');
   const allCustomTools = [
     ...(wrappedBash ? [wrappedBash] : []),
+    ...nativeCustomTools,
     ...webSearchCustomTools,
     ...mcpCustomTools,
     ...extensionCustomTools,
@@ -391,6 +404,9 @@ export async function preparePiSessionRun({
   logCtx(`[AgentRunner] Session reuse check: cached=${!!cachedSession}`);
   logCtx(`[AgentRunner] Model=${piModel.id}, thinkingLevel=${thinkingLevel}`);
   log('[AgentRunner] Built-in tools: read, bash, edit, write');
+  log(
+    '[AgentRunner] Native tools: glob, grep, web_fetch, todo_write, ask_user_question (+ aliases)'
+  );
   log(
     `[AgentRunner] Custom tools (${allCustomTools.length}): ${allCustomTools.map((tool) => tool.name).join(', ')}`
   );
