@@ -21,13 +21,28 @@ export function buildCoworkAppendPrompt(
   ctx: AgentRunnerRunContext,
   workingDir: string | undefined,
   sandboxPath: string | null,
-  useSandboxIsolation: boolean
+  useSandboxIsolation: boolean,
+  sandboxLanNetworkEnabled: boolean
 ): string[] {
   const workspaceInfoPrompt = buildWorkspaceInfoPrompt(
     workingDir,
     sandboxPath,
     useSandboxIsolation
   );
+
+  const sandboxNetworkPrompt =
+    useSandboxIsolation && sandboxLanNetworkEnabled
+      ? `<sandbox_network>
+WSL sandbox file commands run in an isolated Linux environment. For HTTP/API calls to local network services (192.168.x.x, 10.x, host LAN APIs):
+- Prefer http_request (or web_fetch with headers) — these use the host network stack and support Authorization/custom headers.
+- bash curl/wget to LAN IPs also works: a host HTTP proxy is injected automatically (LAN-only, internet stays direct).
+Do not disable sandbox for network access.
+</sandbox_network>`
+      : useSandboxIsolation
+        ? `<sandbox_network>
+LAN network access from the sandbox is disabled in Settings. Enable "Sandbox LAN network access" to reach local services from bash, or use http_request (host network) for authenticated APIs.
+</sandbox_network>`
+        : '';
 
   return [
     'You are an Lygodactylus assistant. Be concise, accurate, and tool-capable.',
@@ -45,7 +60,9 @@ If your answer uses linkable content from MCP tools, include a "Sources:" sectio
 Tool routing:
 - If user explicitly asks to use Chrome/browser/web navigation, prioritize Chrome MCP tools (mcp__Chrome__*) over generic WebSearch/WebFetch.
 - Use WebSearch/WebFetch only when Chrome MCP is unavailable or the user explicitly asks for generic web search.
+- For local network or authenticated HTTP APIs, prefer http_request over bash curl.
 </tool_behavior>`,
+    sandboxNetworkPrompt,
     ctx.skillsPaths.getBundledPathHints(),
   ].filter((section): section is string => Boolean(section && section.trim()));
 }

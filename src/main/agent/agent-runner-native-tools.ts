@@ -5,9 +5,32 @@ import {
   type ToolDefinition,
 } from '@earendil-works/pi-coding-agent';
 import type { QuestionItem } from '../../renderer/types';
+import {
+  executeHttpRequest,
+  formatHttpRequestResult,
+  parseHttpRequestOptions,
+} from './http-request';
 
 const webFetchParameters = Type.Object({
   url: Type.String({ description: 'HTTP or HTTPS URL to fetch' }),
+  headers: Type.Optional(
+    Type.Record(Type.String(), Type.String(), {
+      description: 'Optional HTTP request headers (e.g. Authorization, X-Api-Key)',
+    })
+  ),
+});
+
+const httpRequestParameters = Type.Object({
+  url: Type.String({ description: 'HTTP or HTTPS URL' }),
+  method: Type.Optional(
+    Type.String({ description: 'HTTP method (GET, POST, PUT, PATCH, DELETE, HEAD). Default GET.' })
+  ),
+  headers: Type.Optional(
+    Type.Record(Type.String(), Type.String(), {
+      description: 'Optional HTTP request headers',
+    })
+  ),
+  body: Type.Optional(Type.String({ description: 'Optional request body (JSON string for APIs)' })),
 });
 
 const todoItemSchema = Type.Object({
@@ -59,56 +82,40 @@ function cloneToolWithName(tool: ToolDefinition, name: string, label: string): T
   };
 }
 
-async function fetchUrlText(url: string, signal?: AbortSignal): Promise<string> {
-  const trimmed = url.trim();
-  if (!trimmed) {
-    throw new Error('url is required');
-  }
-
-  let parsed: URL;
-  try {
-    parsed = new URL(trimmed);
-  } catch {
-    throw new Error('Invalid URL');
-  }
-
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw new Error('Only http/https URLs are supported');
-  }
-
-  const response = await fetch(parsed.toString(), {
-    headers: { 'User-Agent': 'lygodactylus' },
-    signal: signal ?? AbortSignal.timeout(15000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
-  }
-
-  const contentType = response.headers.get('content-type') || 'unknown';
-  const body = await response.text();
-  const limit = 20000;
-  const truncated =
-    body.length > limit
-      ? `${body.slice(0, limit)}\n\n[Truncated ${body.length - limit} chars]`
-      : body;
-
-  return `URL: ${parsed.toString()}\nStatus: ${response.status}\nContent-Type: ${contentType}\n\n${truncated}`;
-}
-
 function createWebFetchTool(name: string, label: string): ToolDefinition<TSchema, unknown> {
   return {
     name,
     label,
-    description: 'Fetch a public web page and return its text content.',
+    description:
+      'Fetch a web page or API response. Supports optional headers. Uses the host network stack (works for LAN/private IPs when sandbox is enabled).',
     parameters: webFetchParameters,
     async execute(_toolCallId, params, signal) {
       const record =
         typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {};
-      const url = typeof record.url === 'string' ? record.url : '';
-      const text = await fetchUrlText(url, signal);
+      const options = parseHttpRequestOptions(record);
+      const result = await executeHttpRequest({ ...options, signal, timeoutMs: 15_000 });
       return {
-        content: [{ type: 'text' as const, text }],
+        content: [{ type: 'text' as const, text: formatHttpRequestResult(result) }],
+        details: undefined,
+      };
+    },
+  };
+}
+
+function createHttpRequestTool(name: string, label: string): ToolDefinition<TSchema, unknown> {
+  return {
+    name,
+    label,
+    description:
+      'Perform an HTTP request with method, headers, and body. Preferred for local network services and authenticated APIs when sandbox is enabled.',
+    parameters: httpRequestParameters,
+    async execute(_toolCallId, params, signal) {
+      const record =
+        typeof params === 'object' && params !== null ? (params as Record<string, unknown>) : {};
+      const options = parseHttpRequestOptions(record);
+      const result = await executeHttpRequest({ ...options, signal });
+      return {
+        content: [{ type: 'text' as const, text: formatHttpRequestResult(result) }],
         details: undefined,
       };
     },
@@ -307,6 +314,8 @@ export function buildNativeCustomTools(ctx: NativeToolsContext): ToolDefinition[
     grepTool,
     createWebFetchTool('web_fetch', 'Web Fetch'),
     createWebFetchTool('WebFetch', 'Web Fetch'),
+    createHttpRequestTool('http_request', 'HTTP Request'),
+    createHttpRequestTool('HttpRequest', 'HTTP Request'),
     createTodoWriteTool('todo_write', 'Todo Write'),
     createTodoWriteTool('TodoWrite', 'Todo Write'),
     createAskUserQuestionTool(ctx, 'ask_user_question', 'Ask User Question'),

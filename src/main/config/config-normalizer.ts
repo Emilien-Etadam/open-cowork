@@ -452,6 +452,10 @@ export function normalizeConfig(rawConfig: Partial<AppConfig> | undefined): AppC
         ? raw.uiLanguage
         : defaultConfig.uiLanguage,
     sandboxEnabled: toBoolean(raw.sandboxEnabled, defaultConfig.sandboxEnabled),
+    sandboxLanNetworkEnabled: toBoolean(
+      raw.sandboxLanNetworkEnabled,
+      defaultConfig.sandboxLanNetworkEnabled
+    ),
     memoryEnabled: toBoolean(raw.memoryEnabled, defaultConfig.memoryEnabled),
     memoryRuntime: normalizeMemoryRuntimeConfig(raw.memoryRuntime),
     webSearch: normalizeWebSearchConfig(raw.webSearch),
