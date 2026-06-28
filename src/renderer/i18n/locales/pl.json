@@ -785,7 +785,11 @@
     "compactionMeta": "Podsumowano {{tokensBefore}} tokenów",
     "compactionInstructions": "Fokus: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "Pytania udzielone",
+    "pleaseAnswerToContinue": "Odpowiedz, aby kontynuować",
+    "questionClosed": "Pytanie zamknięte",
+    "submitAnswers": "Wyślij odpowiedzi"
   },
   "schedule": {
     "createTitle": "Utwórz harmonogram",

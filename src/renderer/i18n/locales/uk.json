@@ -785,7 +785,11 @@
     "compactionMeta": "Підсумовано {{tokensBefore}} токенів",
     "compactionInstructions": "Фокус: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "На питання відповіли",
+    "pleaseAnswerToContinue": "Відповідайте, щоб продовжити",
+    "questionClosed": "Питання закрито",
+    "submitAnswers": "Надіслати відповіді"
   },
   "schedule": {
     "createTitle": "Створити розклад",

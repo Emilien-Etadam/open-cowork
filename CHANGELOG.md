@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.7.0] - 2026-06-28
+
+### Added
+
+- **Tool Completeness** : outils natifs `glob`/`find`, `grep`, `web_fetch`, `web_search`, `todo_write`, `ask_user_question` avec alias PascalCase pour compatibilité historique
+- Schémas TypeBox plats optimisés pour **LiteLLM → vLLM → Qwen 3.6 27B** (tool calling OpenAI-compatible)
+- **AskUserQuestion** interactif : IPC `question.request` / `question.response`, UI inline avec soumission des réponses
+
+### Changed
+
+- `buildNativeCustomTools` branché dans `agent-runner-pi-setup` aux côtés de la recherche web et des outils MCP
+
 ## [5.6.0] - 2026-06-28
 
 ### Added

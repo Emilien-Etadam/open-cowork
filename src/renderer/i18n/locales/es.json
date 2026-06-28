@@ -785,7 +785,11 @@
     "compactionMeta": "{{tokensBefore}} tokens resumidos",
     "compactionInstructions": "Enfoque: {{instructions}}",
     "forkFromMessage": "Fork from this message",
-    "editPrompt": "Edit prompt"
+    "editPrompt": "Edit prompt",
+    "questionsAnswered": "Preguntas respondidas",
+    "pleaseAnswerToContinue": "Responda para continuar",
+    "questionClosed": "Pregunta cerrada",
+    "submitAnswers": "Enviar respuestas"
   },
   "schedule": {
     "createTitle": "Crear programación",

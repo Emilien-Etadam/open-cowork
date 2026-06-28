@@ -832,7 +832,11 @@
     "compactionTitle": "Context compacted",
     "compactionHandoffTitle": "Continued from \"{{sourceTitle}}\"",
     "compactionMeta": "{{tokensBefore}} tokens summarized",
-    "compactionInstructions": "Focus: {{instructions}}"
+    "compactionInstructions": "Focus: {{instructions}}",
+    "questionsAnswered": "Questions answered",
+    "pleaseAnswerToContinue": "Please answer to continue",
+    "questionClosed": "Question closed",
+    "submitAnswers": "Submit answers"
   },
   "schedule": {
     "createTitle": "Create Schedule",

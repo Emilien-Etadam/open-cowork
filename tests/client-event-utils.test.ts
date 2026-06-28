@@ -20,6 +20,10 @@ function makeEvent(type: ClientEvent['type']): ClientEvent {
       return { type, payload: {} };
     case 'permission.response':
       return { type, payload: { toolUseId: 'tool-1', result: 'allow' } };
+    case 'question.response':
+      return { type, payload: { questionId: 'question-1', answer: '{}' } };
+    case 'sudo.password.response':
+      return { type, payload: { toolUseId: 'tool-1', password: null } };
     case 'workdir.set':
       return { type, payload: { path: '/tmp/demo' } };
     case 'workdir.select':
@@ -42,6 +46,7 @@ describe('eventRequiresSessionManager', () => {
       'session.getMessages',
       'session.getTraceSteps',
       'permission.response',
+      'question.response',
     ];
 
     for (const type of requiredTypes) {
