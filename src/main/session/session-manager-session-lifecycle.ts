@@ -66,6 +66,31 @@ export function createSession(
   };
 }
 
+export function updateSessionMemoryEnabled(
+  deps: SessionManagerFacadeSupportDeps,
+  sessionId: string,
+  memoryEnabled: boolean
+): Session {
+  const session = deps.store.loadSession(sessionId);
+  if (!session) {
+    throw new Error('Session not found');
+  }
+  const updated: Session = {
+    ...session,
+    memoryEnabled,
+    updatedAt: Date.now(),
+  };
+  deps.db.sessions.update(sessionId, {
+    memory_enabled: memoryEnabled ? 1 : 0,
+    updated_at: updated.updatedAt,
+  });
+  deps.sendToRenderer({
+    type: 'session.update',
+    payload: { sessionId, updates: { memoryEnabled, updatedAt: updated.updatedAt } },
+  });
+  return updated;
+}
+
 export function stopSession(
   deps: SessionManagerFacadeSupportDeps,
   sessionId: string,

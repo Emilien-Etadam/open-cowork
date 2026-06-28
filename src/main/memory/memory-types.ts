@@ -81,6 +81,7 @@ export interface ProgressiveSummaryItem {
   sourceWorkspace?: string | null;
   sourceSessionTitle?: string;
   summary: string;
+  score?: number;
 }
 
 export interface FocusedChunkItem {
@@ -250,6 +251,22 @@ export interface ExperienceSessionExtract {
     keywords: string[];
     sourceTurns: number[];
   }>;
+}
+
+export interface MemoryInjectedItem {
+  kind: 'core' | 'chunk' | 'session';
+  id: string;
+  title: string;
+  summary: string;
+  score?: number;
+  sourceWorkspace?: string | null;
+  sourceSessionId?: string;
+  sourceSessionTitle?: string;
+}
+
+export interface MemoryContextBuildResult {
+  prefix: string;
+  items: MemoryInjectedItem[];
 }
 
 export interface MemoryToolDefinition extends ToolDefinition<TSchema, unknown> {}

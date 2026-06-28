@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.6.0] - 2026-06-28
+
+### Added
+
+- **Memory UX** : panneau « Mémoire utilisée » dans le chat, toggle mémoire par session, scores de pertinence dans Paramètres
+- **Memory hardening** : sanitization à l'ingestion, politique d'injection configurable (`escape` / `strip-suspicious` / `block`), ranker unifié (lexical + embedding + workspace + recency)
+- **Linux releases** : build CI AppImage x64, script `npm run build:linux`, publication sur GitHub Releases
+
+### Changed
+
+- `MemoryRetriever` utilise le même ranker que la récupération runtime ; `sourceExcerpt` peuplé à la lecture
+- Config mémoire : `chunkTopK`, `sessionTopK`, `injectionPolicy`, `showInjectedMemoryInChat`
+
 ## [5.5.0] - 2026-06-28
 
 ### Changed
@@ -32,7 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Skills core** : seuls `pdf`, `xlsx`, `skill-creator` embarqués via `resources/skills-core/`
 - Migration automatique depuis les anciens bundles `extraResources/skills` complets (docx/pptx inclus)
 - Preflight : avertissement si skills lourds pas encore téléchargés
-
 
 ## [5.3.0] - 2026-06-28
 

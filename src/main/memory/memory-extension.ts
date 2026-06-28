@@ -3,6 +3,7 @@ import type {
   BeforeSessionRunResult,
 } from '../extensions/agent-runtime-extension';
 import { computeMemoryPrefixBudget } from '../agent/context-budget';
+import { sendToRenderer } from '../main-renderer-bridge';
 import type { MemoryService } from './memory-service';
 
 export class MemoryExtension implements AgentRuntimeExtension {
@@ -18,6 +19,10 @@ export class MemoryExtension implements AgentRuntimeExtension {
     NonNullable<AgentRuntimeExtension['beforeSessionRun']>
   >[0]): Promise<BeforeSessionRunResult | void> {
     if (!this.memoryService.isEnabled() || !session.memoryEnabled) {
+      sendToRenderer({
+        type: 'session.memoryContext',
+        payload: { sessionId: session.id, items: [] },
+      });
       return;
     }
 
@@ -29,10 +34,19 @@ export class MemoryExtension implements AgentRuntimeExtension {
         )
       : undefined;
 
+    const context = await this.memoryService.buildPromptContext(session, prompt, {
+      maxPrefixTokens,
+    });
+
+    if (this.memoryService.shouldShowInjectedMemoryInChat()) {
+      sendToRenderer({
+        type: 'session.memoryContext',
+        payload: { sessionId: session.id, items: context.items },
+      });
+    }
+
     return {
-      promptPrefix: await this.memoryService.buildPromptPrefix(session, prompt, {
-        maxPrefixTokens,
-      }),
+      promptPrefix: context.prefix,
     };
   }
 

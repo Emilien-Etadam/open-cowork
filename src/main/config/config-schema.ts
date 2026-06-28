@@ -85,12 +85,18 @@ export interface MemoryModelRuntimeConfig {
   timeoutMs: number;
 }
 
+export type MemoryInjectionPolicy = 'escape' | 'strip-suspicious' | 'block';
+
 export interface MemoryRuntimeConfig {
   llm: MemoryModelRuntimeConfig;
   embedding: MemoryModelRuntimeConfig;
   useEmbedding: boolean;
   maxNavSteps: number;
   ingestionConcurrency: number;
+  chunkTopK: number;
+  sessionTopK: number;
+  injectionPolicy: MemoryInjectionPolicy;
+  showInjectedMemoryInChat: boolean;
   storageRoot?: string;
   evalEnabled?: boolean;
   evalWorkspaces?: string[];
@@ -214,6 +220,10 @@ export const defaultConfig: AppConfig = {
     useEmbedding: false,
     maxNavSteps: 2,
     ingestionConcurrency: 4,
+    chunkTopK: 10,
+    sessionTopK: 5,
+    injectionPolicy: 'escape',
+    showInjectedMemoryInChat: true,
     storageRoot: '',
     evalEnabled: false,
     evalWorkspaces: [],
@@ -285,6 +295,22 @@ export function normalizeMemoryRuntimeConfig(raw: unknown): MemoryRuntimeConfig 
       typeof value.ingestionConcurrency === 'number' && Number.isFinite(value.ingestionConcurrency)
         ? Math.max(1, Math.min(16, Math.round(value.ingestionConcurrency)))
         : defaultConfig.memoryRuntime.ingestionConcurrency,
+    chunkTopK:
+      typeof value.chunkTopK === 'number' && Number.isFinite(value.chunkTopK)
+        ? Math.max(1, Math.min(30, Math.round(value.chunkTopK)))
+        : defaultConfig.memoryRuntime.chunkTopK,
+    sessionTopK:
+      typeof value.sessionTopK === 'number' && Number.isFinite(value.sessionTopK)
+        ? Math.max(1, Math.min(20, Math.round(value.sessionTopK)))
+        : defaultConfig.memoryRuntime.sessionTopK,
+    injectionPolicy:
+      value.injectionPolicy === 'strip-suspicious' || value.injectionPolicy === 'block'
+        ? value.injectionPolicy
+        : defaultConfig.memoryRuntime.injectionPolicy,
+    showInjectedMemoryInChat: toBoolean(
+      value.showInjectedMemoryInChat,
+      defaultConfig.memoryRuntime.showInjectedMemoryInChat
+    ),
     storageRoot:
       typeof value.storageRoot === 'string'
         ? value.storageRoot
