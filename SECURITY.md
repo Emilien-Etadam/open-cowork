@@ -4,7 +4,7 @@
 
 | Version                              | Supported          |
 | ------------------------------------ | ------------------ |
-| `5.x` (current series, latest `5.8.0`) | Yes                |
+| `5.x` (current series, latest `5.8.1`) | Yes                |
 | `3.3.1-EE4.x` and older `EE*` builds | Best effort only   |
 | Upstream `3.3.x` without `EE` suffix | Not maintained     |
 
@@ -20,7 +20,7 @@ Include:
 
 - A clear description of the vulnerability
 - Steps to reproduce or a proof-of-concept
-- Affected version(s) (e.g. `5.8.0`)
+- Affected version(s) (e.g. `5.8.1`)
 - Potential impact assessment
 
 ### What to expect
