@@ -8,8 +8,6 @@
 import * as dns from 'dns';
 import * as net from 'net';
 import * as tls from 'tls';
-import OpenAI from 'openai';
-import { Anthropic } from '@anthropic-ai/sdk';
 import { PROVIDER_PRESETS, configStore } from './config-store';
 import { DEFAULT_OLLAMA_BASE_URL } from '../../shared/ollama-base-url';
 import { isLoopbackBaseUrl } from '../../shared/network/loopback';
@@ -192,11 +190,12 @@ function getModelDiagnosticFix(
  * never falls back to reading process.env, avoiding race conditions in
  * concurrent diagnostic runs.
  */
-function makeAnthropicClient(opts: {
+async function makeAnthropicClient(opts: {
   effectiveKey: string;
   useAuthToken: boolean;
   baseUrl: string | undefined;
-}): Anthropic {
+}) {
+  const { Anthropic } = await import('@anthropic-ai/sdk');
   const base = { baseURL: opts.baseUrl, timeout: 15000 };
   return opts.useAuthToken
     ? new Anthropic({ ...base, authToken: opts.effectiveKey })
@@ -361,6 +360,7 @@ async function stepAuth(input: DiagnosticInput, step: DiagnosticStep): Promise<v
         return;
       }
 
+      const { default: OpenAI } = await import('openai');
       const client = new OpenAI({
         apiKey: resolved.apiKey,
         baseURL: resolved.baseUrl || clientBaseUrl,
@@ -391,7 +391,11 @@ async function stepAuth(input: DiagnosticInput, step: DiagnosticStep): Promise<v
       });
 
       // Credentials are passed explicitly so the SDK never reads process.env
-      const client = makeAnthropicClient({ effectiveKey, useAuthToken, baseUrl: clientBaseUrl });
+      const client = await makeAnthropicClient({
+        effectiveKey,
+        useAuthToken,
+        baseUrl: clientBaseUrl,
+      });
       await client.models.list();
     }
 

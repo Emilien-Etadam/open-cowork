@@ -1,6 +1,4 @@
 import * as fs from 'node:fs';
-import * as path from 'node:path';
-import { app } from 'electron';
 import type { CatalogEntry, MarketplaceInstallResult } from '../../shared/catalog-types';
 import { mcpConfigStore } from '../mcp/mcp-config-store';
 import type { MCPServerConfig } from '../mcp/mcp-types';
@@ -9,6 +7,8 @@ import type { PluginRuntimeService } from '../skills/plugin-runtime-service';
 import { downloadGithubSubdir } from './github-downloader';
 import { McpRegistryResolver } from './mcp-registry-resolver';
 import { marketplaceInstalledStore } from './marketplace-installed-store';
+import { ensureHeavySkill } from '../runtime/skills-bundle-runtime';
+import { isBuiltinHeavySkill, resolveBuiltinSkillPath } from '../skills/builtin-skills-paths';
 
 export class InstallResolver {
   constructor(
@@ -107,9 +107,12 @@ export class InstallResolver {
       throw new Error('Invalid builtin resolve spec');
     }
 
-    const builtinRoot = this.getBuiltinSkillsRoot();
-    const sourcePath = path.join(builtinRoot, entry.resolve.path);
-    if (!fs.existsSync(sourcePath)) {
+    if (isBuiltinHeavySkill(entry.resolve.path)) {
+      await ensureHeavySkill(entry.resolve.path);
+    }
+
+    const sourcePath = resolveBuiltinSkillPath(entry.resolve.path);
+    if (!sourcePath || !fs.existsSync(sourcePath)) {
       throw new Error(`Built-in skill path not found: ${entry.resolve.path}`);
     }
 
@@ -278,21 +281,6 @@ export class InstallResolver {
       installedRef: result.plugin.pluginId,
       warnings: [...warnings, ...(result.warnings || [])],
     };
-  }
-
-  private getBuiltinSkillsRoot(): string {
-    const appPath = app.getAppPath();
-    const candidates = [
-      path.join(__dirname, '..', '..', '..', '.claude', 'skills'),
-      path.join(process.resourcesPath || '', 'skills'),
-      path.join(appPath, '.claude', 'skills'),
-    ];
-    for (const candidate of candidates) {
-      if (fs.existsSync(candidate)) {
-        return candidate;
-      }
-    }
-    throw new Error('Built-in skills directory not found');
   }
 
   private async findBuiltinSkill(folderName: string) {

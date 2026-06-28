@@ -9,6 +9,7 @@ import { log, logWarn } from './utils/logger';
 import { isNodeRuntimeReady } from './runtime/node-runtime';
 import { isPythonRuntimeReady } from './runtime/python-runtime';
 import { isCliclickRuntimeReady } from './runtime/gui-tools-runtime';
+import { getHeavySkillsStatus } from './runtime/skills-bundle-runtime';
 
 export interface PreflightIssue {
   resource: string;
@@ -65,7 +66,16 @@ export function runPreflight(): PreflightIssue[] {
     check('wsl-agent/index.js', 'WSL Sandbox Agent', 'warning');
   }
 
-  check('skills', 'Built-in Skills', 'warning');
+  check('skills', 'Built-in Skills (core)', 'warning');
+
+  const heavySkills = getHeavySkillsStatus();
+  if (!heavySkills.ready) {
+    issues.push({
+      resource: 'Heavy Skills (docx/pptx)',
+      severity: 'warning',
+      message: `Will be downloaded on first use: ${heavySkills.pending.join(', ')}`,
+    });
+  }
 
   for (const issue of issues) {
     if (issue.severity === 'critical') {

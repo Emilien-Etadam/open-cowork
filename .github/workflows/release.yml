@@ -75,6 +75,9 @@ jobs:
       - name: Generate app icons
         run: npm run generate:icons
 
+      - name: Prepare lightweight skills bundle
+        run: npm run prepare:skills-core
+
       - name: Pre-build check
         run: node scripts/pre-build-check.js
 
@@ -198,6 +201,9 @@ jobs:
       - name: Generate app icons
         run: npm run generate:icons
 
+      - name: Prepare lightweight skills bundle
+        run: npm run prepare:skills-core
+
       - name: Pre-build check
         run: node scripts/pre-build-check.js
 
@@ -304,9 +310,30 @@ jobs:
           draft: true
           tag_name: ${{ github.ref_name }}
 
+  skill-bundles:
+    name: Skill Bundles (docx/pptx)
+    needs: [lint-and-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: '22.19'
+
+      - name: Create heavy skill bundles
+        run: node scripts/prepare-skill-bundles.mjs
+
+      - name: Upload skill bundles to GitHub Release
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # v2
+        with:
+          files: release/skill-bundles/*.tar.gz
+          draft: true
+          tag_name: ${{ github.ref_name }}
+
   publish-release:
     name: Publish GitHub Release
-    needs: [build-macos, build-windows]
+    needs: [build-macos, build-windows, skill-bundles]
     runs-on: ubuntu-latest
     steps:
       - name: Publish release (remove draft)

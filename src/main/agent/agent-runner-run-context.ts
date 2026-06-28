@@ -6,6 +6,8 @@ import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-e
 import type { MCPManager } from '../mcp/mcp-manager';
 import type { PathResolver } from '../sandbox/path-resolver';
 import { log, logWarn } from '../utils/logger';
+import { ensureHeavySkills } from '../runtime/skills-bundle-runtime';
+import { listBuiltinSkillRoots } from '../skills/builtin-skills-paths';
 import type { CachedPiSession } from './agent-runner-pi-session';
 import { AgentRunnerRenderer } from './agent-runner-renderer-events';
 import { AgentRunnerSkillsPaths } from './agent-runner-skills-paths';
@@ -44,7 +46,7 @@ export interface AgentRunnerRunContext {
   setSkillsSetupDone(value: boolean): void;
 }
 
-export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
+export async function ensureSkillsSetup(ctx: AgentRunnerRunContext): Promise<void> {
   if (ctx.isSkillsSetupDone()) {
     return;
   }
@@ -61,12 +63,40 @@ export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
     fs.mkdirSync(appSkillsDir, { recursive: true });
   }
 
-  const builtinSkillsPath = ctx.skillsPaths.getBuiltinSkillsPath();
-  if (builtinSkillsPath && fs.existsSync(builtinSkillsPath)) {
+  try {
+    await ensureHeavySkills();
+  } catch (error) {
+    logWarn('[AgentRunner] Heavy skills download deferred:', error);
+  }
+
+  const linkedSkills = new Set<string>();
+
+  for (const builtinSkillsPath of listBuiltinSkillRoots()) {
+    if (!builtinSkillsPath || !fs.existsSync(builtinSkillsPath)) {
+      continue;
+    }
+
     const sourceInsideAsar = /\.asar[/\\]/.test(builtinSkillsPath);
     for (const skillName of fs.readdirSync(builtinSkillsPath)) {
+      if (linkedSkills.has(skillName)) {
+        continue;
+      }
+
       const builtinSkillPath = path.join(builtinSkillsPath, skillName);
       const userSkillPath = path.join(appSkillsDir, skillName);
+
+      let stat: fs.Stats;
+      try {
+        stat = fs.statSync(builtinSkillPath);
+      } catch {
+        continue;
+      }
+      if (!stat.isDirectory()) {
+        continue;
+      }
+      if (!fs.existsSync(path.join(builtinSkillPath, 'SKILL.md'))) {
+        continue;
+      }
 
       try {
         const lstat = fs.lstatSync(userSkillPath);
@@ -81,7 +111,7 @@ export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
         // Path doesn't exist — fine, we'll create it below.
       }
 
-      if (fs.statSync(builtinSkillPath).isDirectory() && !fs.existsSync(userSkillPath)) {
+      if (!fs.existsSync(userSkillPath)) {
         if (sourceInsideAsar) {
           ctx.skillsPaths.copyDirectorySync(builtinSkillPath, userSkillPath);
           log(`[AgentRunner] Copied built-in skill from asar: ${skillName}`);
@@ -95,6 +125,8 @@ export function ensureSkillsSetup(ctx: AgentRunnerRunContext): void {
           }
         }
       }
+
+      linkedSkills.add(skillName);
     }
   }
 
