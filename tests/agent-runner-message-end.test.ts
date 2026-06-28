@@ -66,6 +66,12 @@ describe('resolveMessageEndPayload', () => {
 });
 
 describe('toUserFacingErrorText', () => {
+  it('maps preparePiSessionRun timeout to session setup hint', () => {
+    const result = toUserFacingErrorText('preparePiSessionRun timed out after 180000ms');
+    expect(result).toContain('会话准备超时');
+    expect(result).toContain('记忆');
+  });
+
   it('maps 400 / bad request to configuration hint', () => {
     const result = toUserFacingErrorText('HTTP 400: bad request - ROLE_UNSPECIFIED');
     expect(result).toContain('请求被上游拒绝（400）');

@@ -62,6 +62,13 @@ export function toUserFacingErrorText(errorText: string): string {
   if (lower.includes('first_response_timeout')) {
     return mt('errModelTimeout');
   }
+  if (
+    lower.includes('preparepisessionrun timed out') ||
+    lower.includes('resourceloader.reload() timed out') ||
+    lower.includes('createagentsession timed out')
+  ) {
+    return mt('errSessionSetupTimeout');
+  }
   if (lower.includes('empty_success_result')) {
     return mt('errEmptySuccess');
   }

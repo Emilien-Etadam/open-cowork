@@ -12,6 +12,7 @@
 
 export type BackendMessageKey =
   | 'errModelTimeout'
+  | 'errSessionSetupTimeout'
   | 'errEmptySuccess'
   | 'errContextOverflow'
   | 'errBadRequest'
@@ -56,6 +57,8 @@ export const DEFAULT_BACKEND_LANGUAGE = 'zh';
 export const backendCatalog: Record<string, BackendMessages> = {
   zh: {
     errModelTimeout: '模型响应超时：长时间未收到上游返回，请稍后重试或检查当前模型/网关负载。',
+    errSessionSetupTimeout:
+      '会话准备超时（超过 3 分钟）。常见原因：首次下载 Node/Python 运行时、插件/技能加载过慢、或记忆检索耗时过长。请稍后重试；若持续出现，可暂时关闭记忆或减少已启用插件。',
     errEmptySuccess:
       '模型返回了一个空的成功结果，当前模型或网关兼容性可能有问题，请重试或切换协议后再试。',
     errContextOverflow:
@@ -87,6 +90,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   en: {
     errModelTimeout:
       'Model response timed out: no reply from the upstream service for a while. Please retry later or check the current model/gateway load.',
+    errSessionSetupTimeout:
+      'Session setup timed out (over 3 minutes). Common causes: first-time Node/Python runtime download, slow plugin/skill loading, or slow memory retrieval. Retry shortly; if it persists, temporarily disable memory or reduce enabled plugins.',
     errEmptySuccess:
       'The model returned an empty successful result. The current model or gateway may have a compatibility issue — please retry or switch protocol and try again.',
     errContextOverflow:
@@ -121,6 +126,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   es: {
     errModelTimeout:
       'Se agotó el tiempo de espera de la respuesta del modelo: el servicio remoto no respondió durante un rato. Vuelve a intentarlo más tarde o revisa la carga actual del modelo o la pasarela.',
+    errSessionSetupTimeout:
+      'La preparación de la sesión expiró (más de 3 minutos). Causas habituales: descarga inicial de runtimes Node/Python, carga lenta de plugins/skills o recuperación de memoria lenta. Reintenta en un momento; si persiste, desactiva temporalmente la memoria o reduce los plugins activos.',
     errEmptySuccess:
       'El modelo devolvió un resultado correcto pero vacío. Es posible que el modelo o la pasarela actual tengan un problema de compatibilidad; vuelve a intentarlo o cambia de protocolo e inténtalo de nuevo.',
     errContextOverflow:
@@ -155,6 +162,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   fr: {
     errModelTimeout:
       "Le délai d'attente de la réponse du modèle a expiré : aucune réponse du service en amont depuis un certain temps. Veuillez réessayer plus tard ou vérifier la charge actuelle du modèle ou de la passerelle.",
+    errSessionSetupTimeout:
+      "La préparation de la session a expiré (plus de 3 minutes). Causes fréquentes : téléchargement initial des runtimes Node/Python, chargement lent des plugins/skills, ou recherche mémoire trop longue. Réessayez dans un instant ; si le problème persiste, désactivez temporairement la mémoire ou réduisez les plugins actifs.",
     errEmptySuccess:
       'Le modèle a renvoyé un résultat vide alors que la requête a abouti. Le modèle ou la passerelle actuels présentent peut-être un problème de compatibilité — veuillez réessayer ou changer de protocole, puis recommencer.',
     errContextOverflow:
@@ -189,6 +198,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   de: {
     errModelTimeout:
       'Zeitüberschreitung bei der Modellantwort: Der vorgelagerte Dienst hat längere Zeit nicht reagiert. Bitte versuchen Sie es später erneut oder prüfen Sie die aktuelle Auslastung von Modell/Gateway.',
+    errSessionSetupTimeout:
+      'Die Sitzungsvorbereitung ist abgelaufen (über 3 Minuten). Häufige Ursachen: erstmaliger Download der Node/Python-Runtimes, langsames Laden von Plugins/Skills oder langsame Speicherabfrage. Bitte kurz warten und erneut versuchen; falls es anhält, Speicher vorübergehend deaktivieren oder weniger Plugins aktivieren.',
     errEmptySuccess:
       'Das Modell hat ein leeres, aber erfolgreiches Ergebnis zurückgegeben. Möglicherweise besteht ein Kompatibilitätsproblem mit dem aktuellen Modell oder Gateway – bitte versuchen Sie es erneut oder wechseln Sie das Protokoll.',
     errContextOverflow:
@@ -223,6 +234,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   it: {
     errModelTimeout:
       "Risposta del modello scaduta: nessuna risposta dal servizio upstream da un po'. Riprova più tardi o controlla il carico attuale del modello/gateway.",
+    errSessionSetupTimeout:
+      'Preparazione della sessione scaduta (oltre 3 minuti). Cause comuni: download iniziale dei runtime Node/Python, caricamento lento di plugin/skill o recupero memoria lento. Riprova tra poco; se persiste, disattiva temporaneamente la memoria o riduci i plugin attivi.',
     errEmptySuccess:
       'Il modello ha restituito un risultato vuoto pur con esito positivo. Il modello o il gateway attuale potrebbe avere un problema di compatibilità: riprova oppure cambia protocollo e riprova.',
     errContextOverflow:
@@ -258,6 +271,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   uk: {
     errModelTimeout:
       'Час очікування відповіді моделі вичерпано: вихідний сервіс деякий час не надсилав відповіді. Повторіть спробу пізніше або перевірте поточне навантаження на модель чи шлюз.',
+    errSessionSetupTimeout:
+      'Час підготовки сесії вичерпано (понад 3 хвилини). Типові причини: перше завантаження Node/Python runtime, повільне завантаження плагінів/навичок або повільний пошук у пам’яті. Спробуйте ще раз; якщо повторюється, тимчасово вимкніть пам’ять або зменште кількість плагінів.',
     errEmptySuccess:
       'Модель повернула порожній успішний результат. Можливо, поточна модель або шлюз має проблему сумісності — повторіть спробу або змініть протокол і спробуйте знову.',
     errContextOverflow:
@@ -292,6 +307,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   pl: {
     errModelTimeout:
       'Przekroczono limit czasu odpowiedzi modelu: usługa nadrzędna od pewnego czasu nie odpowiada. Spróbuj ponownie później lub sprawdź bieżące obciążenie modelu/bramy.',
+    errSessionSetupTimeout:
+      'Przygotowanie sesji przekroczyło limit czasu (ponad 3 minuty). Typowe przyczyny: pierwsze pobieranie runtime Node/Python, wolne ładowanie pluginów/umiejętności lub wolne wyszukiwanie pamięci. Spróbuj ponownie; jeśli problem wraca, tymczasowo wyłącz pamięć lub ogranicz aktywne pluginy.',
     errEmptySuccess:
       'Model zwrócił pusty wynik mimo powodzenia. Bieżący model lub brama mogą mieć problem ze zgodnością — spróbuj ponownie albo zmień protokół i spróbuj jeszcze raz.',
     errContextOverflow:
@@ -326,6 +343,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   sv: {
     errModelTimeout:
       'Modellsvaret tog för lång tid: inget svar från uppströmstjänsten på ett tag. Försök igen senare eller kontrollera den aktuella belastningen på modellen/gatewayen.',
+    errSessionSetupTimeout:
+      'Sessionförberedelsen tog för lång tid (över 3 minuter). Vanliga orsaker: första nedladdningen av Node/Python-runtimes, långsam laddning av plugins/skills eller långsam minnesåterhämtning. Försök igen om en stund; om det kvarstår, inaktivera minnet tillfälligt eller minska aktiva plugins.',
     errEmptySuccess:
       'Modellen returnerade ett tomt lyckat resultat. Den aktuella modellen eller gatewayen kan ha ett kompatibilitetsproblem – försök igen eller byt protokoll och försök på nytt.',
     errContextOverflow:
@@ -360,6 +379,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   no: {
     errModelTimeout:
       'Tidsavbrudd for modellsvaret: ingen respons fra den underliggende tjenesten på en stund. Prøv igjen senere, eller sjekk gjeldende belastning på modellen/gatewayen.',
+    errSessionSetupTimeout:
+      'Klargjøring av økten tok for lang tid (over 3 minutter). Vanlige årsaker: første nedlasting av Node/Python-runtimes, treg lasting av plugins/skills eller treg minnehenting. Prøv igjen om litt; hvis det vedvarer, deaktiver minnet midlertidig eller reduser aktive plugins.',
     errEmptySuccess:
       'Modellen returnerte et tomt, vellykket resultat. Gjeldende modell eller gateway kan ha et kompatibilitetsproblem – prøv igjen, eller bytt protokoll og prøv på nytt.',
     errContextOverflow:
@@ -394,6 +415,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   nl: {
     errModelTimeout:
       'Time-out bij modelantwoord: het upstream-service reageerde een tijd lang niet. Probeer het later opnieuw of controleer de huidige belasting van het model/de gateway.',
+    errSessionSetupTimeout:
+      'Het voorbereiden van de sessie is verlopen (meer dan 3 minuten). Veelvoorkomende oorzaken: eerste download van Node/Python-runtimes, traag laden van plugins/skills of trage geheugenopvraging. Probeer het zo opnieuw; blijft het probleem, schakel geheugen tijdelijk uit of verminder actieve plugins.',
     errEmptySuccess:
       'Het model gaf een leeg succesvol resultaat terug. Mogelijk is er een compatibiliteitsprobleem met het huidige model of de gateway — probeer het opnieuw of schakel over op een ander protocol en probeer het nogmaals.',
     errContextOverflow:
@@ -428,6 +451,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   ro: {
     errModelTimeout:
       'Răspunsul modelului a expirat: niciun răspuns de la serviciul din amonte pentru o vreme. Reîncearcă mai târziu sau verifică gradul de încărcare al modelului/gateway-ului.',
+    errSessionSetupTimeout:
+      'Pregătirea sesiunii a expirat (peste 3 minute). Cauze frecvente: descărcarea inițială a runtime-urilor Node/Python, încărcarea lentă a plugin-urilor/skill-urilor sau recuperarea lentă a memoriei. Reîncearcă în curând; dacă persistă, dezactivează temporar memoria sau reduce plugin-urile active.',
     errEmptySuccess:
       'Modelul a returnat un rezultat reușit, dar gol. Este posibil ca modelul sau gateway-ul curent să aibă o problemă de compatibilitate — reîncearcă sau schimbă protocolul și încearcă din nou.',
     errContextOverflow:

@@ -4,6 +4,7 @@ import { execFileSync } from 'child_process';
 import { app } from 'electron';
 import { getDefaultShell } from '../utils/shell-resolver';
 import { log, logWarn } from '../utils/logger';
+import { withAsyncTimeoutOrNull } from '../utils/async-timeout';
 import { getBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime';
 import { ensurePythonRuntime, getBundledPythonPaths } from '../runtime/python-runtime';
 import { ensureCliclickRuntime, getBundledCliclickPath } from '../runtime/gui-tools-runtime';
@@ -46,6 +47,25 @@ export function resolveBundledToolsBinDir(): string | null {
  */
 let pathEnriched = false;
 
+const RUNTIME_ENSURE_TIMEOUT_MS = 30_000;
+
+async function ensureRuntimeWithTimeout<T>(
+  label: string,
+  isReady: () => boolean,
+  ensure: () => Promise<T>
+): Promise<void> {
+  if (isReady()) {
+    return;
+  }
+
+  const result = await withAsyncTimeoutOrNull(label, RUNTIME_ENSURE_TIMEOUT_MS, ensure);
+  if (result === null) {
+    logWarn(
+      `[AgentRunner] ${label} not ready within ${RUNTIME_ENSURE_TIMEOUT_MS}ms; continuing without bundled runtime in PATH`
+    );
+  }
+}
+
 export async function enrichProcessPathForBuild(): Promise<void> {
   if (pathEnriched) return;
   pathEnriched = true;
@@ -57,17 +77,24 @@ export async function enrichProcessPathForBuild(): Promise<void> {
 
   const platform = process.platform;
 
-  await ensureNodeRuntime();
+  await ensureRuntimeWithTimeout(
+    'ensureNodeRuntime',
+    () => getBundledNodePaths() !== null,
+    () => ensureNodeRuntime()
+  );
   if (platform === 'darwin' || platform === 'linux') {
-    try {
-      await ensurePythonRuntime();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      logWarn(`[AgentRunner] Python runtime not ready yet: ${message}`);
-    }
+    await ensureRuntimeWithTimeout(
+      'ensurePythonRuntime',
+      () => getBundledPythonPaths() !== null,
+      () => ensurePythonRuntime()
+    );
   }
   if (platform === 'darwin') {
-    await ensureCliclickRuntime();
+    await ensureRuntimeWithTimeout(
+      'ensureCliclickRuntime',
+      () => getBundledCliclickPath() !== null,
+      () => ensureCliclickRuntime()
+    );
   }
 
   const delimiter = platform === 'win32' ? ';' : ':';

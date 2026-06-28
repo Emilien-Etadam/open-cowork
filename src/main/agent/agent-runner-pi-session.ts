@@ -16,6 +16,7 @@ import { decidePermission, rememberAlwaysAllow } from '../config/permission-rule
 import type { MCPManager } from '../mcp/mcp-manager';
 import { logCtx } from '../utils/logger';
 import { log, logError, logWarn } from '../utils/logger';
+import { withAsyncTimeout } from '../utils/async-timeout';
 import { buildCompactionSettings, estimateTokensFromText } from './context-budget';
 import type { AgentRunnerRunContext } from './agent-runner-run-context';
 import { ModelRegistry } from './shared-auth';
@@ -357,12 +358,13 @@ export async function reuseCachedPiSession({
   return { piSession, cachedSession, compactionEnabled: cachedSession.compactionEnabled ?? true };
 }
 
-const RESOURCE_LOADER_RELOAD_TIMEOUT_MS = 90_000;
+const RESOURCE_LOADER_RELOAD_TIMEOUT_MS = 45_000;
+const CREATE_AGENT_SESSION_TIMEOUT_MS = 60_000;
 
 async function reloadResourceLoaderWithTimeout(
   resourceLoader: { reload: () => Promise<void> },
   promptTemplatePaths: string[]
-): Promise<void> {
+): Promise<boolean> {
   let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
   try {
     await Promise.race([
@@ -377,9 +379,10 @@ async function reloadResourceLoaderWithTimeout(
         }, RESOURCE_LOADER_RELOAD_TIMEOUT_MS);
       }),
     ]);
+    return true;
   } catch (error) {
     logWarn('[AgentRunner] Resource loader reload failed:', error);
-    throw error;
+    return false;
   } finally {
     if (timeoutHandle) {
       clearTimeout(timeoutHandle);
@@ -431,7 +434,12 @@ export async function createPiSession({
     additionalPromptTemplatePaths: promptTemplatePaths,
     appendSystemPrompt: coworkAppendPrompt,
   });
-  await reloadResourceLoaderWithTimeout(resourceLoader, promptTemplatePaths);
+  const reloadSucceeded = await reloadResourceLoaderWithTimeout(resourceLoader, promptTemplatePaths);
+  if (!reloadSucceeded) {
+    logWarn(
+      '[AgentRunner] Proceeding with agent session creation despite resource loader reload failure'
+    );
+  }
 
   const compactionSettings = buildCompactionSettings(
     provider,
@@ -445,20 +453,25 @@ export async function createPiSession({
     log('[AgentRunner] Compaction settings:', JSON.stringify(compactionSettings));
   }
 
-  const { session: piSession } = await createAgentSession({
-    model: piModel,
-    thinkingLevel,
-    authStorage,
-    modelRegistry: ModelRegistry.create(authStorage),
-    customTools,
-    sessionManager: PiSessionManager.inMemory(),
-    settingsManager: PiSettingsManager.inMemory({
-      compaction: compactionSettings,
-      retry: { enabled: true, maxRetries: 2 },
-    }),
-    resourceLoader,
-    cwd: effectiveCwd,
-  });
+  const { session: piSession } = await withAsyncTimeout(
+    'createAgentSession',
+    CREATE_AGENT_SESSION_TIMEOUT_MS,
+    () =>
+      createAgentSession({
+        model: piModel,
+        thinkingLevel,
+        authStorage,
+        modelRegistry: ModelRegistry.create(authStorage),
+        customTools,
+        sessionManager: PiSessionManager.inMemory(),
+        settingsManager: PiSettingsManager.inMemory({
+          compaction: compactionSettings,
+          retry: { enabled: true, maxRetries: 2 },
+        }),
+        resourceLoader,
+        cwd: effectiveCwd,
+      })
+  );
 
   installPermissionHook(piSession, sessionId, ctx.requestPermission, (toolName) =>
     ctx.getToolDisplayName(toolName)

@@ -7,6 +7,9 @@ import type {
   SessionDeletedContext,
 } from './agent-runtime-extension';
 import { logError, logWarn } from '../utils/logger';
+import { withAsyncTimeout } from '../utils/async-timeout';
+
+const BEFORE_SESSION_RUN_EXTENSION_TIMEOUT_MS = 45_000;
 
 function mergeCustomTools(tools: AgentRuntimeCustomTool[]): AgentRuntimeCustomTool[] {
   const merged = new Map<string, AgentRuntimeCustomTool>();
@@ -42,7 +45,11 @@ export class AgentRuntimeExtensionManager {
         continue;
       }
       try {
-        const result = await extension.beforeSessionRun(context);
+        const result = await withAsyncTimeout(
+          `${extension.name}.beforeSessionRun`,
+          BEFORE_SESSION_RUN_EXTENSION_TIMEOUT_MS,
+          () => extension.beforeSessionRun!(context)
+        );
         if (!result) {
           continue;
         }
@@ -53,6 +60,14 @@ export class AgentRuntimeExtensionManager {
           customTools.push(...result.customTools);
         }
       } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (message.includes('timed out after')) {
+          logWarn(
+            `[AgentRuntimeExtensionManager] beforeSessionRun timed out for ${extension.name}; continuing without its contribution:`,
+            message
+          );
+          continue;
+        }
         logError(
           `[AgentRuntimeExtensionManager] beforeSessionRun failed for ${extension.name}:`,
           error
