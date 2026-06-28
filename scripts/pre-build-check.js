@@ -112,12 +112,6 @@ function buildCheckList(platform, arch) {
   if (platform === 'darwin') {
     checks.push(
       {
-        label: `Node.js binary for macOS ${arch}`,
-        relPath: `resources/node/darwin-${arch}/bin/node`,
-        type: 'file',
-        severity: 'fatal',
-      },
-      {
         label: 'Lima sandbox agent bundle (dist-lima-agent/index.js)',
         relPath: 'dist-lima-agent/index.js',
         type: 'file',
@@ -139,12 +133,6 @@ function buildCheckList(platform, arch) {
   } else if (platform === 'win32') {
     checks.push(
       {
-        label: 'Node.js binary for Windows x64',
-        relPath: 'resources/node/win32-x64/node.exe',
-        type: 'file',
-        severity: 'fatal',
-      },
-      {
         label: 'WSL sandbox agent bundle (dist-wsl-agent/index.js)',
         relPath: 'dist-wsl-agent/index.js',
         type: 'file',
@@ -152,12 +140,7 @@ function buildCheckList(platform, arch) {
       }
     );
   } else if (platform === 'linux') {
-    checks.push({
-      label: 'Node.js directory for Linux x64',
-      relPath: 'resources/node/linux-x64',
-      type: 'dir',
-      severity: 'fatal',
-    });
+    // Node.js is downloaded on first use in packaged apps; dev uses resources/node via postinstall.
   }
 
   return checks;

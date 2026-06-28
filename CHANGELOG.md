@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Note
+### Changed
 
-- **Validation v5.1.0** : Chat LAN, migration config API, régression chat/slash/mises à jour — validés manuellement (2026-06-27).
+- **Node.js on-demand** : le runtime Node n'est plus embarqué dans l'installateur ; téléchargement automatique dans `userData` au premier usage MCP (~25–35 MB économisés sur Windows)
+- Migration automatique depuis l'ancien bundle `extraResources/node` si présent
 
 ## [5.1.0] - 2026-06-27
 

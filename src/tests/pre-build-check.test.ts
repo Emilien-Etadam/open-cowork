@@ -95,8 +95,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    // 12 common + 2 darwin FATAL checks should pass
-    expect(result.passed).toBeGreaterThanOrEqual(14);
+    // 12 common + 1 darwin FATAL check should pass (Node.js is on-demand)
+    expect(result.passed).toBeGreaterThanOrEqual(13);
   });
 
   it('passes all FATAL checks on win32 when required artifacts exist', () => {
@@ -106,8 +106,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    // 12 common + 2 win32 FATAL checks should pass
-    expect(result.passed).toBeGreaterThanOrEqual(14);
+    // 12 common + 1 win32 FATAL check should pass (Node.js is on-demand)
+    expect(result.passed).toBeGreaterThanOrEqual(13);
   });
 
   it('reports warnings for optional darwin resources that are missing', () => {
@@ -159,24 +159,30 @@ describe('pre-build-check: runChecks', () => {
     expect(result.hasFatal).toBe(true);
   });
 
-  it('reports hasFatal when darwin node binary is missing', () => {
+  it('does not require darwin node binary at build time', () => {
     populateDarwinArtifacts(tmpDir, 'arm64');
     fs.rmSync(path.join(tmpDir, 'resources/node/darwin-arm64/bin/node'));
 
     const result = runChecks(tmpDir, 'darwin', 'arm64');
 
-    expect(result.failed).toBeGreaterThan(0);
-    expect(result.hasFatal).toBe(true);
+    const nodeCheck = result.results.find(
+      (r: { relPath: string }) => r.relPath.includes('resources/node')
+    );
+    expect(nodeCheck).toBeUndefined();
+    expect(result.hasFatal).toBe(false);
   });
 
-  it('reports hasFatal when win32 node.exe is missing', () => {
+  it('does not require win32 node.exe at build time', () => {
     populateWin32Artifacts(tmpDir);
     fs.rmSync(path.join(tmpDir, 'resources/node/win32-x64/node.exe'));
 
     const result = runChecks(tmpDir, 'win32', 'x64');
 
-    expect(result.failed).toBeGreaterThan(0);
-    expect(result.hasFatal).toBe(true);
+    const nodeCheck = result.results.find(
+      (r: { relPath: string }) => r.relPath.includes('resources/node')
+    );
+    expect(nodeCheck).toBeUndefined();
+    expect(result.hasFatal).toBe(false);
   });
 
   it('reports hasFatal when wsl-agent index.js is missing', () => {
@@ -238,13 +244,12 @@ describe('pre-build-check: runChecks', () => {
   // Linux platform
   // -------------------------------------------------------------------------
 
-  it('includes linux-specific check on linux platform', () => {
+  it('does not include linux node directory as a fatal build check', () => {
     const result = runChecks(tmpDir, 'linux', 'x64');
 
-    const linuxCheck = result.results.find(
-      (r: { relPath: string; severity: string }) => r.relPath === 'resources/node/linux-x64'
+    const linuxNodeCheck = result.results.find(
+      (r: { relPath: string }) => r.relPath === 'resources/node/linux-x64'
     );
-    expect(linuxCheck).toBeDefined();
-    expect(linuxCheck?.severity).toBe('fatal');
+    expect(linuxNodeCheck).toBeUndefined();
   });
 });
