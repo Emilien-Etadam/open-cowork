@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.8.1] - 2026-06-28
+
+### Fixed
+
+- **Chat** : timeout `preparePiSessionRun` (120–180 s) — timeouts par phase, dégradation gracieuse (`resourceLoader.reload`, runtimes Node/Python, extensions)
+- **vLLM** : ne plus appeler l’API Ollama `/api/show` sur un endpoint vLLM local
+- **Mémoire + vLLM distant** : plafond 30 s sur la préparation mémoire au démarrage ; skip des embeddings hérités d’un endpoint d’inférence non-OpenAI (recherche lexicale à la place)
+- Message utilisateur explicite `errSessionSetupTimeout` (i18n)
+
+### Changed
+
+- **UI** : largeur des sidebars réduite de 10 %
+
 ## [5.8.0] - 2026-06-28
 
 ### Added
@@ -443,7 +456,8 @@ First stable release of the 3.3.x series. Graduated from 9 beta releases with 30
 
 - Initial release of Lygodactylus — open-source AI agent desktop app with one-click install for Windows and macOS
 
-[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.8.0...HEAD
+[Unreleased]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.8.1...HEAD
+[5.8.1]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.8.0...v5.8.1
 [5.8.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.7.0...v5.8.0
 [5.7.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.3.0...v5.7.0
 [5.5.0]: https://github.com/Emilien-Etadam/lygodactylus/compare/v5.4.0...v5.5.0

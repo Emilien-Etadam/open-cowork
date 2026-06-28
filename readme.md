@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-blue" alt="Platform" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
   <img src="https://img.shields.io/badge/Node.js-22+-brightgreen" alt="Node.js" />
-  <img src="https://img.shields.io/badge/version-5.8.0-orange" alt="Version" />
+  <img src="https://img.shields.io/badge/version-5.8.1-orange" alt="Version" />
   <img src="https://img.shields.io/badge/status-alpha-yellow" alt="Status" />
 </p>
 

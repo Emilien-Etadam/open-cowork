@@ -68,7 +68,8 @@
 
 | Tag             | Date       | Highlights                                                                    |
 | --------------- | ---------- | ----------------------------------------------------------------------------- |
-| `v5.8.0`        | 2026-06-28 | **Latest** — Sandbox LAN network (http_request, proxy opt-in), repo app-only cleanup |
+| `v5.8.1`        | 2026-06-28 | **Latest** — fix timeout chat (vLLM distant + mémoire), sidebars plus étroites |
+| `v5.8.0`        | 2026-06-28 | Sandbox LAN network (http_request, proxy opt-in), repo app-only cleanup |
 | `v5.7.0`        | 2026-06-28 | Tool Completeness (glob/grep/web/todo/ask), LiteLLM/Qwen schemas |
 | `v5.6.0`        | 2026-06-28 | memory UX + injection controls, Linux AppImage CI releases                    |
 | `v5.5.0`        | 2026-06-28 | naming standardization (paths agent, sandbox, Lima)                           |
@@ -138,4 +139,4 @@ Current stable fork baseline: **`5.6.0`** — [CHANGELOG](CHANGELOG.md)
 
 ---
 
-_Last updated: 2026-06-28 (v5.8.0 release)_
+_Last updated: 2026-06-28 (v5.8.1 release)_
