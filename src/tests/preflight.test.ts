@@ -15,6 +15,8 @@ import * as os from 'os';
 vi.mock('electron', () => ({
   app: {
     isPackaged: true,
+    getAppPath: () => '/tmp/lygodactylus-app',
+    getPath: (name: string) => `/tmp/lygodactylus-${name}`,
   },
 }));
 
@@ -65,13 +67,12 @@ describe('runPreflight', () => {
     });
 
     touch(path.join(tmpDir, 'mcp/gui-operate-server.js'));
-    touch(path.join(tmpDir, 'node/bin/node'));
     touch(path.join(tmpDir, 'lima-agent/index.js'));
     makeSkillsDir(tmpDir);
 
     const { runPreflight } = await import('../main/preflight');
     const issues = runPreflight();
-    expect(issues).toHaveLength(0);
+    expect(issues.filter((i) => i.severity === 'critical')).toHaveLength(0);
 
     if (originalPlatform) {
       Object.defineProperty(process, 'platform', originalPlatform);
@@ -103,7 +104,7 @@ describe('runPreflight', () => {
     }
   });
 
-  it('returns critical issue when bundled Node.js is missing (darwin)', async () => {
+  it('returns warning when Node.js runtime is not cached yet (darwin)', async () => {
     const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
     Object.defineProperty(process, 'platform', {
       value: 'darwin',
@@ -118,17 +119,15 @@ describe('runPreflight', () => {
 
     const { runPreflight } = await import('../main/preflight');
     const issues = runPreflight();
-    const critical = issues.filter((i) => i.severity === 'critical');
-    expect(critical).toHaveLength(1);
-    expect(critical[0].resource).toBe('Bundled Node.js');
-    expect(critical[0].message).toContain('node/bin/node');
+    const warnings = issues.filter((i) => i.severity === 'warning');
+    expect(warnings.some((w) => w.resource === 'Node.js runtime')).toBe(true);
 
     if (originalPlatform) {
       Object.defineProperty(process, 'platform', originalPlatform);
     }
   });
 
-  it('returns critical issue when bundled Node.js is missing (win32)', async () => {
+  it('returns warning when Node.js runtime is not cached yet (win32)', async () => {
     const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
     Object.defineProperty(process, 'platform', {
       value: 'win32',
@@ -143,10 +142,8 @@ describe('runPreflight', () => {
 
     const { runPreflight } = await import('../main/preflight');
     const issues = runPreflight();
-    const critical = issues.filter((i) => i.severity === 'critical');
-    expect(critical).toHaveLength(1);
-    expect(critical[0].resource).toBe('Bundled Node.js');
-    expect(critical[0].message).toContain('node/node.exe');
+    const warnings = issues.filter((i) => i.severity === 'warning');
+    expect(warnings.some((w) => w.resource === 'Node.js runtime')).toBe(true);
 
     if (originalPlatform) {
       Object.defineProperty(process, 'platform', originalPlatform);

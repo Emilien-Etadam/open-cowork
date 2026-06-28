@@ -5,30 +5,9 @@ import { execFileSync } from 'child_process';
 import { app } from 'electron';
 import { getDefaultShell } from '../utils/shell-resolver';
 import { log, logWarn } from '../utils/logger';
+import { getBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime';
 
-// Bundled node/npx paths never change at runtime — resolve once.
-let cachedBundledNodePaths: { node: string; npx: string } | null | undefined = undefined;
-
-export function getBundledNodePaths(): { node: string; npx: string } | null {
-  if (cachedBundledNodePaths !== undefined) {
-    return cachedBundledNodePaths;
-  }
-  const platform = process.platform;
-  const arch = process.arch;
-  let resourcesPath: string;
-  if (!app.isPackaged) {
-    const projectRoot = path.join(__dirname, '..', '..');
-    resourcesPath = path.join(projectRoot, 'resources', 'node', `${platform}-${arch}`);
-  } else {
-    resourcesPath = path.join(process.resourcesPath, 'node');
-  }
-  const binDir = platform === 'win32' ? resourcesPath : path.join(resourcesPath, 'bin');
-  const nodePath = path.join(binDir, platform === 'win32' ? 'node.exe' : 'node');
-  const npxPath = path.join(binDir, platform === 'win32' ? 'npx.cmd' : 'npx');
-  cachedBundledNodePaths =
-    fs.existsSync(nodePath) && fs.existsSync(npxPath) ? { node: nodePath, npx: npxPath } : null;
-  return cachedBundledNodePaths;
-}
+export { getBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime';
 
 /**
  * Resolve bundled Python bin directory path (if available).
@@ -106,6 +85,7 @@ export async function enrichProcessPathForBuild(): Promise<void> {
     return;
   }
 
+  await ensureNodeRuntime();
   const platform = process.platform;
   const delimiter = platform === 'win32' ? ';' : ':';
   const currentPaths = (process.env.PATH || '').split(delimiter).filter((p: string) => p.trim());

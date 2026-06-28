@@ -108,7 +108,7 @@ Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emili
 ### Near-term (v5.2+)
 
 - **Sandbox Hardening**: VM sandbox reliability, startup performance, cross-platform consistency (Lima, WSL2); incremental sync follow-ups
-- **App Slimming**: Reduce installer from ~156 MB to ~80 MB — on-demand Python/Node.js download, lazy-load SDKs, strip unused files (Feishu SDK retiré #40)
+- **App Slimming**: Node.js on-demand (userData download on first MCP use) — **done v5.2**; target ~80 MB with Python/skills split next
 - **Naming Standardization**: Clean up legacy references (`claude-sdk`, `claude-sandbox`, `claude-plugin`, `pi-coding-agent`) to consistent Lygodactylus naming
 - **Tool Completeness**: Native TodoWrite, AskUserQuestion, Glob, Grep, WebFetch, WebSearch tool schemas + handlers for API key users
 - **Memory System Enhancements**: Prompt injection controls, cross-session retrieval UX, memory source inspection, reranking quality
@@ -131,5 +131,5 @@ Current stable fork baseline: **`5.1.0`** — [release](https://github.com/Emili
 
 ---
 
-_Last updated: 2026-06-27 (v5.1.0 validée — baseline stable)_  
+_Last updated: 2026-06-28 (v5.2 — Node.js on-demand)_  
 _Want to contribute? Check [CONTRIBUTING.md](CONTRIBUTING.md)._

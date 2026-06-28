@@ -63,9 +63,6 @@ jobs:
       - name: Install cliclick for GUI tools
         run: brew install cliclick
 
-      - name: Download Node binaries
-        run: node scripts/download-node.js
-
       - name: Prepare Python runtime
         run: node scripts/prepare-python.js
 
@@ -112,7 +109,6 @@ jobs:
           for check in \
             "mcp/gui-operate-server.js" \
             "mcp/software-dev-server-example.js" \
-            "node/bin/node" \
             "lima-agent/index.js" \
             "skills" \
             "icon.icns" \
@@ -195,9 +191,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Download Node binaries
-        run: node scripts/download-node.js
-
       - name: Build WSL agent
         run: npm run build:wsl-agent
 
@@ -237,7 +230,6 @@ jobs:
           $checks = @(
             "mcp\gui-operate-server.js",
             "mcp\software-dev-server-example.js",
-            "node\node.exe",
             "wsl-agent\index.js",
             "skills",
             "icon.ico",

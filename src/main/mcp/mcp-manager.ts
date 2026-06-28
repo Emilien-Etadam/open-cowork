@@ -9,6 +9,7 @@ import { app, shell } from 'electron';
 
 import path from 'path';
 import { ensureChromeReady } from './mcp-chrome-debug.js';
+import { getBundledNodePaths as resolveBundledNodePaths, ensureNodeRuntime } from '../runtime/node-runtime.js';
 import { connectServerInternal as connectServerInternalImpl } from './mcp-connection.js';
 import {
   getEnhancedEnv,
@@ -111,48 +112,11 @@ export class MCPManager {
   }
 
   private getBundledNodePath(): { node: string; npx: string } | null {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const path = require('path');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const fs = require('fs');
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const os = require('os');
+    return resolveBundledNodePaths();
+  }
 
-    const platform = os.platform();
-    const arch = os.arch();
-
-    let resourcesPath: string;
-    if (!app.isPackaged) {
-      log('[MCPManager] Development mode, using downloaded node in resources/node');
-      const projectRoot = path.join(__dirname, '..', '..');
-      resourcesPath = path.join(projectRoot, 'resources', 'node', `${platform}-${arch}`);
-    } else {
-      log('[MCPManager] Production mode, using bundled node in extraResources');
-      resourcesPath = path.join(process.resourcesPath, 'node');
-    }
-
-    log(`[MCPManager] Looking for bundled Node.js at: ${resourcesPath}`);
-    if (!fs.existsSync(resourcesPath)) {
-      logWarn(`[MCPManager] Bundled Node.js not found at: ${resourcesPath}`);
-      return null;
-    }
-
-    const binDir = platform === 'win32' ? resourcesPath : path.join(resourcesPath, 'bin');
-    const nodeExe = platform === 'win32' ? 'node.exe' : 'node';
-    const npxExe = platform === 'win32' ? 'npx.cmd' : 'npx';
-    const nodePath = path.join(binDir, nodeExe);
-    const npxPath = path.join(binDir, npxExe);
-
-    if (fs.existsSync(nodePath) && fs.existsSync(npxPath)) {
-      log(`[MCPManager] Found bundled Node.js: ${nodePath}`);
-      log(`[MCPManager] Found bundled npx: ${npxPath}`);
-      return { node: nodePath, npx: npxPath };
-    }
-
-    logWarn(
-      `[MCPManager] Bundled binaries incomplete - node: ${fs.existsSync(nodePath)}, npx: ${fs.existsSync(npxPath)}`
-    );
-    return null;
+  async ensureNodeRuntimeReady(): Promise<void> {
+    await ensureNodeRuntime();
   }
 
   private async resolvePreferredNpxPath(pathEnv: string | undefined): Promise<string> {

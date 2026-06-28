@@ -150,6 +150,7 @@ export class SessionManager {
 
   private async initializeMCP(): Promise<void> {
     try {
+      await this.mcpManager.ensureNodeRuntimeReady();
       const servers = mcpConfigStore.getEnabledServers();
       await this.mcpManager.initializeServers(servers);
       log(`[SessionManager] Initialized ${servers.length} MCP servers`);
