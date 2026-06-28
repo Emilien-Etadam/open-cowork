@@ -145,7 +145,7 @@ export class SandboxNetworkProxy {
       void this.handleHttpRequest(req, res, authToken);
     });
     server.on('connect', (req, clientSocket, head) => {
-      this.handleConnect(req, clientSocket, head, authToken);
+      this.handleConnect(req, clientSocket as net.Socket, head, authToken);
     });
     server.on('error', (error) => {
       logError('[SandboxNetworkProxy] Server error:', error);
