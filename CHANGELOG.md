@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.9.0] - 2026-07-01
+
+### Added
+
+- **Marketplace** : installation de skills `SKILL.md` téléchargés à la demande depuis un dépôt GitHub (résolveur `via: "github"` + `type: "skill"`), sans vendoring ni re-hébergement
+- **Skills** : `requesting-code-review` (Nous Research, MIT) et `skill-creator` (Anthropic, Apache-2.0) disponibles à l'installation via le marketplace
+
+### Removed
+
+- **Skills** : retrait des skills documents propriétaires d'Anthropic (`docx`, `pdf`, `pptx`, `xlsx`) — licence « All rights reserved » incompatible avec la redistribution ; suppression du dépôt, du packaging, des bundles de release et du téléchargement runtime
+
 ## [5.8.1] - 2026-06-28
 
 ### Fixed
