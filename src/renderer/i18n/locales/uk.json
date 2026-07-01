@@ -793,7 +793,9 @@
     "questionsAnswered": "На питання відповіли",
     "pleaseAnswerToContinue": "Відповідайте, щоб продовжити",
     "questionClosed": "Питання закрито",
-    "submitAnswers": "Надіслати відповіді"
+    "submitAnswers": "Надіслати відповіді",
+    "copyBlock": "Копіювати блок",
+    "copyThinking": "Копіювати мислення"
   },
   "schedule": {
     "createTitle": "Створити розклад",

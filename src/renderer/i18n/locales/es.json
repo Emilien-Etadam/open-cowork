@@ -793,7 +793,9 @@
     "questionsAnswered": "Preguntas respondidas",
     "pleaseAnswerToContinue": "Responda para continuar",
     "questionClosed": "Pregunta cerrada",
-    "submitAnswers": "Enviar respuestas"
+    "submitAnswers": "Enviar respuestas",
+    "copyBlock": "Copiar bloque",
+    "copyThinking": "Copiar reflexión"
   },
   "schedule": {
     "createTitle": "Crear programación",

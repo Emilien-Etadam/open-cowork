@@ -1,8 +1,9 @@
 // Collapsible "thinking" block — Claude extended thinking display
-import { Suspense, lazy, useState, memo } from 'react';
+import { Suspense, lazy, useState, memo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown, ChevronRight, Brain } from 'lucide-react';
 import { PanelErrorBoundary } from '../PanelErrorBoundary';
+import { CopyButton } from './CopyButton';
 
 const MessageMarkdown = lazy(() =>
   import('../MessageMarkdown').then((module) => ({ default: module.MessageMarkdown }))
@@ -35,12 +36,23 @@ function renderThinkingPreview(raw: string): React.ReactNode[] {
 
 interface ThinkingBlockProps {
   block: { type: 'thinking'; thinking: string };
+  isStreaming?: boolean;
 }
 
-export const ThinkingBlock = memo(function ThinkingBlock({ block }: ThinkingBlockProps) {
+export const ThinkingBlock = memo(function ThinkingBlock({
+  block,
+  isStreaming,
+}: ThinkingBlockProps) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(Boolean(isStreaming));
   const text = block.thinking || '';
+
+  useEffect(() => {
+    if (isStreaming) {
+      setExpanded(true);
+    }
+  }, [isStreaming]);
+
   if (!text) return null;
 
   // Preview: first ~80 chars, clean up broken ** markers from truncation
@@ -53,26 +65,34 @@ export const ThinkingBlock = memo(function ThinkingBlock({ block }: ThinkingBloc
   const previewNodes = renderThinkingPreview(preview);
 
   return (
-    <div className="rounded-2xl border border-border-subtle bg-background/40 overflow-hidden">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover/50 transition-colors"
-      >
-        <Brain className="w-3.5 h-3.5 text-text-muted flex-shrink-0" />
-        <span className="text-xs font-medium text-text-muted flex-shrink-0">
-          {t('messageCard.thinking')}
-        </span>
-        {!expanded && (
-          <span className="text-[11px] text-text-muted/60 truncate flex-1 min-w-0 italic">
-            {previewNodes}
+    <div className="rounded-2xl border border-border-subtle bg-background/40 overflow-hidden group">
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-2 text-left hover:bg-surface-hover/50 transition-colors"
+        >
+          <Brain
+            className={`w-3.5 h-3.5 text-text-muted flex-shrink-0 ${isStreaming ? 'animate-pulse' : ''}`}
+          />
+          <span className="text-xs font-medium text-text-muted flex-shrink-0">
+            {t('messageCard.thinking')}
           </span>
-        )}
-        {expanded ? (
-          <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0 ml-auto" />
-        ) : (
-          <ChevronRight className="w-3.5 h-3.5 text-text-muted flex-shrink-0 ml-auto" />
-        )}
-      </button>
+          {!expanded && (
+            <span className="text-[11px] text-text-muted/60 truncate flex-1 min-w-0 italic">
+              {previewNodes}
+            </span>
+          )}
+          {expanded ? (
+            <ChevronDown className="w-3.5 h-3.5 text-text-muted flex-shrink-0 ml-auto" />
+          ) : (
+            <ChevronRight className="w-3.5 h-3.5 text-text-muted flex-shrink-0 ml-auto" />
+          )}
+        </button>
+        <div className="pr-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+          <CopyButton text={text} title={t('messageCard.copyThinking')} />
+        </div>
+      </div>
 
       {expanded && (
         <div className="border-t border-border/50 px-4 py-3 animate-fade-in">
@@ -82,7 +102,7 @@ export const ThinkingBlock = memo(function ThinkingBlock({ block }: ThinkingBloc
               fallback={<div className="whitespace-pre-wrap">{text}</div>}
             >
               <Suspense fallback={<div className="whitespace-pre-wrap">{text}</div>}>
-                <MessageMarkdown normalizedText={text} />
+                <MessageMarkdown normalizedText={text} isStreaming={isStreaming} />
               </Suspense>
             </PanelErrorBoundary>
           </div>

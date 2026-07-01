@@ -793,7 +793,9 @@
     "questionsAnswered": "Vragen beantwoord",
     "pleaseAnswerToContinue": "Beantwoord om door te gaan",
     "questionClosed": "Vraag gesloten",
-    "submitAnswers": "Antwoorden verzenden"
+    "submitAnswers": "Antwoorden verzenden",
+    "copyBlock": "Blok kopiëren",
+    "copyThinking": "Denkproces kopiëren"
   },
   "schedule": {
     "createTitle": "Planning maken",

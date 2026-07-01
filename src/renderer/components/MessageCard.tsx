@@ -1,10 +1,11 @@
 // MessageCard — top-level chat message renderer.
 // Delegates block rendering to ContentBlockView and its sub-components.
-import { useState, memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Copy, Check, Clock, XCircle, GitBranch, Pencil } from 'lucide-react';
+import { Clock, XCircle, GitBranch, Pencil } from 'lucide-react';
 import type { Message, ContentBlock, ToolUseContent, ToolResultContent } from '../types';
 import { ContentBlockView } from './message/ContentBlockView';
+import { CopyButton } from './message/CopyButton';
 
 interface MessageCardProps {
   message: Message;
@@ -28,8 +29,6 @@ export const MessageCard = memo(function MessageCard({
   const contentBlocks = Array.isArray(rawContent)
     ? (rawContent as ContentBlock[])
     : [{ type: 'text', text: String(rawContent ?? '') } as ContentBlock];
-  const [copied, setCopied] = useState(false);
-
   // Build a set of tool_result IDs that have a matching tool_use (for merging)
   const mergedResultIds = useMemo(() => {
     const ids = new Set<string>();
@@ -52,18 +51,7 @@ export const MessageCard = memo(function MessageCard({
       .map((block) => (block as { type: 'text'; text: string }).text)
       .join('\n');
 
-  const handleCopy = async () => {
-    const text = getTextContent();
-    if (text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch {
-        // Clipboard unavailable
-      }
-    }
-  };
+  const hasCopyableText = getTextContent().length > 0;
 
   return (
     <div className="animate-fade-in">
@@ -103,17 +91,9 @@ export const MessageCard = memo(function MessageCard({
             )}
           </div>
           <div className="mt-1 flex flex-col gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all">
-            <button
-              onClick={handleCopy}
-              className="w-6 h-6 flex items-center justify-center rounded-md bg-surface-muted hover:bg-surface-active transition-colors"
-              title={t('messageCard.copyMessage')}
-            >
-              {copied ? (
-                <Check className="w-3 h-3 text-success" />
-              ) : (
-                <Copy className="w-3 h-3 text-text-muted" />
-              )}
-            </button>
+            {hasCopyableText && (
+              <CopyButton text={getTextContent()} title={t('messageCard.copyMessage')} />
+            )}
             {onFork && (
               <button
                 type="button"
@@ -151,7 +131,12 @@ export const MessageCard = memo(function MessageCard({
         </div>
       ) : (
         // Assistant message — no bubble, direct content (Claude style)
-        <div className="space-y-1.5">
+        <div className="group/assistant space-y-1.5">
+          {hasCopyableText && !isStreaming && (
+            <div className="flex justify-end opacity-0 group-hover/assistant:opacity-100 transition-opacity -mb-1">
+              <CopyButton text={getTextContent()} title={t('messageCard.copyMessage')} />
+            </div>
+          )}
           {contentBlocks.map((block, index) => {
             // Skip tool_result blocks that are merged into their tool_use card
             if (

@@ -793,7 +793,9 @@
     "questionsAnswered": "Pytania udzielone",
     "pleaseAnswerToContinue": "Odpowiedz, aby kontynuować",
     "questionClosed": "Pytanie zamknięte",
-    "submitAnswers": "Wyślij odpowiedzi"
+    "submitAnswers": "Wyślij odpowiedzi",
+    "copyBlock": "Kopiuj blok",
+    "copyThinking": "Kopiuj myślenie"
   },
   "schedule": {
     "createTitle": "Utwórz harmonogram",

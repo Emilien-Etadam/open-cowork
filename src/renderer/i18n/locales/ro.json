@@ -793,7 +793,9 @@
     "questionsAnswered": "Întrebări răspunse",
     "pleaseAnswerToContinue": "Răspundeți pentru a continua",
     "questionClosed": "Întrebare închisă",
-    "submitAnswers": "Trimite răspunsurile"
+    "submitAnswers": "Trimite răspunsurile",
+    "copyBlock": "Copiază blocul",
+    "copyThinking": "Copiază gândirea"
   },
   "schedule": {
     "createTitle": "Creează programare",
