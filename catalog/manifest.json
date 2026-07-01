@@ -203,6 +203,19 @@
         "subdir": "external_plugins/gitlab",
         "ref": "main"
       }
+    },
+    {
+      "id": "ocr-and-documents-skill",
+      "type": "skill",
+      "name": "OCR & Documents",
+      "description": "Extract text/markdown from PDF, DOCX, PPTX, XLSX, images (marker-based).",
+      "verified": true,
+      "resolve": {
+        "via": "github",
+        "repo": "NousResearch/hermes-agent",
+        "subdir": "skills/productivity/ocr-and-documents",
+        "ref": "main"
+      }
     }
   ]
 }

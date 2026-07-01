@@ -31,7 +31,9 @@ export class InstallResolver {
       case 'mcp-registry':
         return this.installRegistryMcp(entry, envValues, warnings);
       case 'github':
-        return this.installGithubPlugin(entry, warnings);
+        return entry.type === 'skill'
+          ? this.installGithubSkill(entry, warnings)
+          : this.installGithubPlugin(entry, warnings);
       default:
         throw new Error(`Unsupported resolve strategy: ${(entry.resolve as { via: string }).via}`);
     }
@@ -249,6 +251,36 @@ export class InstallResolver {
       type: entry.type,
       name: config.name,
       installedRef: config.id,
+      warnings,
+    };
+  }
+
+  private async installGithubSkill(
+    entry: CatalogEntry,
+    warnings: string[]
+  ): Promise<MarketplaceInstallResult> {
+    if (entry.resolve.via !== 'github') {
+      throw new Error('Invalid GitHub resolve spec');
+    }
+
+    const dir = await downloadGithubSubdir(
+      entry.resolve.repo,
+      entry.resolve.subdir,
+      entry.resolve.ref
+    );
+    const installed = await this.skillsManager.installSkill(dir);
+    marketplaceInstalledStore.save({
+      catalogId: entry.id,
+      type: entry.type,
+      installedRef: installed.id,
+      installedAt: Date.now(),
+    });
+
+    return {
+      catalogId: entry.id,
+      type: entry.type,
+      name: installed.name,
+      installedRef: installed.id,
       warnings,
     };
   }
