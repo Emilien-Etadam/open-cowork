@@ -60,12 +60,6 @@ function buildCheckList(platform, arch) {
       severity: 'fatal',
     },
     {
-      label: 'Lightweight built-in skills (resources/skills-core/)',
-      relPath: 'resources/skills-core',
-      type: 'dir',
-      severity: 'fatal',
-    },
-    {
       label: 'App logo (resources/logo.png)',
       relPath: 'resources/logo.png',
       type: 'file',

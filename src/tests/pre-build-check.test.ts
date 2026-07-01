@@ -47,7 +47,6 @@ function populateDarwinArtifacts(root: string, arch: string = 'arm64'): void {
   makeFile(path.join(root, '.bundle-resources/mcp/software-dev-server-example.js'));
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
-  makeDir(path.join(root, 'resources/skills-core'));
   populateBrandingArtifacts(root);
 
   // macOS FATAL resources
@@ -63,7 +62,6 @@ function populateWin32Artifacts(root: string): void {
   makeFile(path.join(root, '.bundle-resources/mcp/software-dev-server-example.js'));
   makeDir(path.join(root, 'dist-electron'));
   makeDir(path.join(root, 'dist'));
-  makeDir(path.join(root, 'resources/skills-core'));
   populateBrandingArtifacts(root);
   makeFile(path.join(root, 'resources/node/win32-x64/node.exe'));
   makeFile(path.join(root, 'dist-wsl-agent/index.js'));
@@ -95,8 +93,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    // 12 common + 1 darwin FATAL check should pass (Node.js is on-demand)
-    expect(result.passed).toBeGreaterThanOrEqual(13);
+    // 11 common + 1 darwin FATAL check should pass (Node.js is on-demand)
+    expect(result.passed).toBeGreaterThanOrEqual(12);
   });
 
   it('passes all FATAL checks on win32 when required artifacts exist', () => {
@@ -106,8 +104,8 @@ describe('pre-build-check: runChecks', () => {
 
     expect(result.failed).toBe(0);
     expect(result.hasFatal).toBe(false);
-    // 12 common + 1 win32 FATAL check should pass (Node.js is on-demand)
-    expect(result.passed).toBeGreaterThanOrEqual(13);
+    // 11 common + 1 win32 FATAL check should pass (Node.js is on-demand)
+    expect(result.passed).toBeGreaterThanOrEqual(12);
   });
 
   it('reports warnings for optional darwin resources that are missing', () => {

@@ -26,6 +26,5 @@ run('npm', ['run', 'build:mcp']);
 run('npx', ['tsc']);
 run('npx', ['vite', 'build']);
 run('npm', ['run', 'generate:icons']);
-run('npm', ['run', 'prepare:skills-core']);
 run('node', ['scripts/pre-build-check.js']);
 run('npx', ['electron-builder', '--linux', 'AppImage', '--publish', 'never']);

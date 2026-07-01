@@ -8,7 +8,9 @@ import * as path from 'node:path';
 import { app } from 'electron';
 import { log, logWarn } from '../utils/logger';
 
-export const HEAVY_SKILLS = ['docx', 'pptx'] as const;
+// No proprietary heavy skills are bundled or downloaded. Kept as an empty list
+// so the on-demand skill machinery stays type-safe but inert.
+export const HEAVY_SKILLS = [] as const;
 
 export type HeavySkillName = (typeof HEAVY_SKILLS)[number];
 
