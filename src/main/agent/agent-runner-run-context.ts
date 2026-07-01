@@ -6,6 +6,7 @@ import type { AgentRuntimeExtensionManager } from '../extensions/agent-runtime-e
 import type { MCPManager } from '../mcp/mcp-manager';
 import type { PathResolver } from '../sandbox/path-resolver';
 import { log, logWarn } from '../utils/logger';
+import { mt } from '../i18n';
 import { listBuiltinSkillRoots } from '../skills/builtin-skills-paths';
 import type { CachedPiSession } from './agent-runner-pi-session';
 import { AgentRunnerRenderer } from './agent-runner-renderer-events';
@@ -136,7 +137,7 @@ export function sendTimeoutMessage(
     id: uuidv4(),
     sessionId,
     role: 'assistant',
-    content: [{ type: 'text', text: '**请求超时**：长时间未收到响应，操作已中止。' }],
+    content: [{ type: 'text', text: mt('errRequestTimeout') }],
     timestamp: Date.now(),
   };
   ctx.renderer.sendMessage(sessionId, errorMsg);

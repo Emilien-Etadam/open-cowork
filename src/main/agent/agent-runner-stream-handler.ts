@@ -39,6 +39,16 @@ export interface StreamHandlingResult {
   contextOverflowHandled: boolean;
 }
 
+/** After the first stream event, abort if the model/tools stall for this long. */
+export const PROMPT_ACTIVITY_TIMEOUT_MS = 5 * 60 * 1000;
+
+/** Before the first stream event, allow extra time for large prompts / cold models. */
+export const PROMPT_FIRST_RESPONSE_TIMEOUT_MS = 10 * 60 * 1000;
+
+export function resolvePromptInactivityTimeoutMs(receivedFirstStreamEvent: boolean): number {
+  return receivedFirstStreamEvent ? PROMPT_ACTIVITY_TIMEOUT_MS : PROMPT_FIRST_RESPONSE_TIMEOUT_MS;
+}
+
 interface RunPromptWithStreamHandlingOptions {
   ctx: AgentRunnerRunContext;
   session: Session;
@@ -92,13 +102,16 @@ export async function runPromptWithStreamHandling({
     if (activityTimeoutId) {
       clearTimeout(activityTimeoutId);
     }
+    const timeoutMs = resolvePromptInactivityTimeoutMs(state.receivedFirstStreamEvent);
     activityTimeoutId = setTimeout(
       () => {
-        logWarn('[AgentRunner] Prompt timed out (no activity for 5 min), aborting');
+        logWarn(
+          `[AgentRunner] Prompt timed out (no activity for ${Math.round(timeoutMs / 1000)}s), aborting`
+        );
         abortedByTimeout = true;
         controller.abort();
       },
-      5 * 60 * 1000
+      timeoutMs
     );
   };
 
@@ -177,7 +190,6 @@ export async function runPromptWithStreamHandling({
       if (controller.signal.aborted) {
         return;
       }
-      resetActivityTimeout();
       logStreamEvent(event, eventDeps);
 
       switch (event.type) {
@@ -203,6 +215,7 @@ export async function runPromptWithStreamHandling({
           handleCompactionEndEvent(event, state, eventDeps);
           break;
       }
+      resetActivityTimeout();
     } catch (subscribeError) {
       handleStreamSubscriptionError(subscribeError, state, eventDeps);
     }

@@ -12,6 +12,7 @@
 
 export type BackendMessageKey =
   | 'errModelTimeout'
+  | 'errRequestTimeout'
   | 'errSessionSetupTimeout'
   | 'errEmptySuccess'
   | 'errContextOverflow'
@@ -57,6 +58,7 @@ export const DEFAULT_BACKEND_LANGUAGE = 'zh';
 export const backendCatalog: Record<string, BackendMessages> = {
   zh: {
     errModelTimeout: '模型响应超时：长时间未收到上游返回，请稍后重试或检查当前模型/网关负载。',
+    errRequestTimeout: '**请求超时**：长时间未收到响应，操作已中止。',
     errSessionSetupTimeout:
       '会话准备超时（超过 3 分钟）。常见原因：首次下载 Node/Python 运行时、插件/技能加载过慢、或记忆检索耗时过长。请稍后重试；若持续出现，可暂时关闭记忆或减少已启用插件。',
     errEmptySuccess:
@@ -90,6 +92,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   en: {
     errModelTimeout:
       'Model response timed out: no reply from the upstream service for a while. Please retry later or check the current model/gateway load.',
+    errRequestTimeout:
+      '**Request timed out**: No response received for a long time. The operation was aborted.',
     errSessionSetupTimeout:
       'Session setup timed out (over 3 minutes). Common causes: first-time Node/Python runtime download, slow plugin/skill loading, or slow memory retrieval. Retry shortly; if it persists, temporarily disable memory or reduce enabled plugins.',
     errEmptySuccess:
@@ -126,6 +130,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   es: {
     errModelTimeout:
       'Se agotó el tiempo de espera de la respuesta del modelo: el servicio remoto no respondió durante un rato. Vuelve a intentarlo más tarde o revisa la carga actual del modelo o la pasarela.',
+    errRequestTimeout:
+      '**Tiempo de espera agotado**: No se recibió respuesta durante mucho tiempo. La operación se canceló.',
     errSessionSetupTimeout:
       'La preparación de la sesión expiró (más de 3 minutos). Causas habituales: descarga inicial de runtimes Node/Python, carga lenta de plugins/skills o recuperación de memoria lenta. Reintenta en un momento; si persiste, desactiva temporalmente la memoria o reduce los plugins activos.',
     errEmptySuccess:
@@ -162,6 +168,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   fr: {
     errModelTimeout:
       "Le délai d'attente de la réponse du modèle a expiré : aucune réponse du service en amont depuis un certain temps. Veuillez réessayer plus tard ou vérifier la charge actuelle du modèle ou de la passerelle.",
+    errRequestTimeout:
+      '**Délai dépassé** : aucune réponse reçue depuis longtemps, l’opération a été interrompue.',
     errSessionSetupTimeout:
       "La préparation de la session a expiré (plus de 3 minutes). Causes fréquentes : téléchargement initial des runtimes Node/Python, chargement lent des plugins/skills, ou recherche mémoire trop longue. Réessayez dans un instant ; si le problème persiste, désactivez temporairement la mémoire ou réduisez les plugins actifs.",
     errEmptySuccess:
@@ -198,6 +206,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   de: {
     errModelTimeout:
       'Zeitüberschreitung bei der Modellantwort: Der vorgelagerte Dienst hat längere Zeit nicht reagiert. Bitte versuchen Sie es später erneut oder prüfen Sie die aktuelle Auslastung von Modell/Gateway.',
+    errRequestTimeout:
+      '**Zeitüberschreitung**: Längere Zeit keine Antwort erhalten. Der Vorgang wurde abgebrochen.',
     errSessionSetupTimeout:
       'Die Sitzungsvorbereitung ist abgelaufen (über 3 Minuten). Häufige Ursachen: erstmaliger Download der Node/Python-Runtimes, langsames Laden von Plugins/Skills oder langsame Speicherabfrage. Bitte kurz warten und erneut versuchen; falls es anhält, Speicher vorübergehend deaktivieren oder weniger Plugins aktivieren.',
     errEmptySuccess:
@@ -234,6 +244,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   it: {
     errModelTimeout:
       "Risposta del modello scaduta: nessuna risposta dal servizio upstream da un po'. Riprova più tardi o controlla il carico attuale del modello/gateway.",
+    errRequestTimeout:
+      '**Timeout della richiesta**: Nessuna risposta ricevuta da molto tempo. Operazione interrotta.',
     errSessionSetupTimeout:
       'Preparazione della sessione scaduta (oltre 3 minuti). Cause comuni: download iniziale dei runtime Node/Python, caricamento lento di plugin/skill o recupero memoria lento. Riprova tra poco; se persiste, disattiva temporaneamente la memoria o riduci i plugin attivi.',
     errEmptySuccess:
@@ -271,6 +283,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   uk: {
     errModelTimeout:
       'Час очікування відповіді моделі вичерпано: вихідний сервіс деякий час не надсилав відповіді. Повторіть спробу пізніше або перевірте поточне навантаження на модель чи шлюз.',
+    errRequestTimeout:
+      '**Час очікування вичерпано**: довго не надходила відповідь, операцію перервано.',
     errSessionSetupTimeout:
       'Час підготовки сесії вичерпано (понад 3 хвилини). Типові причини: перше завантаження Node/Python runtime, повільне завантаження плагінів/навичок або повільний пошук у пам’яті. Спробуйте ще раз; якщо повторюється, тимчасово вимкніть пам’ять або зменште кількість плагінів.',
     errEmptySuccess:
@@ -307,6 +321,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   pl: {
     errModelTimeout:
       'Przekroczono limit czasu odpowiedzi modelu: usługa nadrzędna od pewnego czasu nie odpowiada. Spróbuj ponownie później lub sprawdź bieżące obciążenie modelu/bramy.',
+    errRequestTimeout:
+      '**Przekroczono limit czasu**: długo nie otrzymano odpowiedzi, operacja została przerwana.',
     errSessionSetupTimeout:
       'Przygotowanie sesji przekroczyło limit czasu (ponad 3 minuty). Typowe przyczyny: pierwsze pobieranie runtime Node/Python, wolne ładowanie pluginów/umiejętności lub wolne wyszukiwanie pamięci. Spróbuj ponownie; jeśli problem wraca, tymczasowo wyłącz pamięć lub ogranicz aktywne pluginy.',
     errEmptySuccess:
@@ -343,6 +359,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   sv: {
     errModelTimeout:
       'Modellsvaret tog för lång tid: inget svar från uppströmstjänsten på ett tag. Försök igen senare eller kontrollera den aktuella belastningen på modellen/gatewayen.',
+    errRequestTimeout:
+      '**Tidsgräns överskriden**: Inget svar mottogs på länge. Åtgärden avbröts.',
     errSessionSetupTimeout:
       'Sessionförberedelsen tog för lång tid (över 3 minuter). Vanliga orsaker: första nedladdningen av Node/Python-runtimes, långsam laddning av plugins/skills eller långsam minnesåterhämtning. Försök igen om en stund; om det kvarstår, inaktivera minnet tillfälligt eller minska aktiva plugins.',
     errEmptySuccess:
@@ -379,6 +397,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   no: {
     errModelTimeout:
       'Tidsavbrudd for modellsvaret: ingen respons fra den underliggende tjenesten på en stund. Prøv igjen senere, eller sjekk gjeldende belastning på modellen/gatewayen.',
+    errRequestTimeout:
+      '**Tidsavbrudd**: Ingen respons mottatt på lenge. Operasjonen ble avbrutt.',
     errSessionSetupTimeout:
       'Klargjøring av økten tok for lang tid (over 3 minutter). Vanlige årsaker: første nedlasting av Node/Python-runtimes, treg lasting av plugins/skills eller treg minnehenting. Prøv igjen om litt; hvis det vedvarer, deaktiver minnet midlertidig eller reduser aktive plugins.',
     errEmptySuccess:
@@ -415,6 +435,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   nl: {
     errModelTimeout:
       'Time-out bij modelantwoord: het upstream-service reageerde een tijd lang niet. Probeer het later opnieuw of controleer de huidige belasting van het model/de gateway.',
+    errRequestTimeout:
+      '**Time-out**: Lange tijd geen reactie ontvangen. De bewerking is afgebroken.',
     errSessionSetupTimeout:
       'Het voorbereiden van de sessie is verlopen (meer dan 3 minuten). Veelvoorkomende oorzaken: eerste download van Node/Python-runtimes, traag laden van plugins/skills of trage geheugenopvraging. Probeer het zo opnieuw; blijft het probleem, schakel geheugen tijdelijk uit of verminder actieve plugins.',
     errEmptySuccess:
@@ -451,6 +473,8 @@ export const backendCatalog: Record<string, BackendMessages> = {
   ro: {
     errModelTimeout:
       'Răspunsul modelului a expirat: niciun răspuns de la serviciul din amonte pentru o vreme. Reîncearcă mai târziu sau verifică gradul de încărcare al modelului/gateway-ului.',
+    errRequestTimeout:
+      '**Timp de așteptare depășit**: Nu s-a primit răspuns de mult timp. Operațiunea a fost întreruptă.',
     errSessionSetupTimeout:
       'Pregătirea sesiunii a expirat (peste 3 minute). Cauze frecvente: descărcarea inițială a runtime-urilor Node/Python, încărcarea lentă a plugin-urilor/skill-urilor sau recuperarea lentă a memoriei. Reîncearcă în curând; dacă persistă, dezactivează temporar memoria sau reduce plugin-urile active.',
     errEmptySuccess:
