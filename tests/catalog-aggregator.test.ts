@@ -22,7 +22,7 @@ describe('CatalogAggregator', () => {
     const entries = await aggregator.listVerifiedEntries(true);
     expect(entries.length).toBeGreaterThan(0);
     expect(entries.every((entry) => entry.verified)).toBe(true);
-    expect(entries.some((entry) => entry.id === 'docx-skill')).toBe(true);
+    expect(entries.some((entry) => entry.id === 'gui-operate-mcp')).toBe(true);
     expect(entries.some((entry) => entry.id === 'notion-mcp')).toBe(true);
   });
 
