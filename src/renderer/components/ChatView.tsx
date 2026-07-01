@@ -12,8 +12,10 @@ import {
 } from '../store/selectors';
 import { useAppStore } from '../store';
 import { useIPC } from '../hooks/useIPC';
+import { useChatAttachments } from '../hooks/useChatAttachments';
 import { MessageCard } from './MessageCard';
 import type { Message, ContentBlock } from '../types';
+import { formatAttachmentSize } from '../../shared/long-paste';
 import type { PluginSlashCommandInfo } from '../../shared/plugin-slash-commands';
 import {
   parseSlashCommand,
@@ -24,16 +26,8 @@ import {
   type SlashCommandDefinition,
 } from '../../shared/slash-commands';
 import { SlashCommandMenu } from './SlashCommandMenu';
-import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown } from 'lucide-react';
+import { Send, Square, Plus, Loader2, Plug, X, Clock, ChevronDown, StickyNote, FileText } from 'lucide-react';
 import { MemoryContextBar } from './MemoryContextBar';
-
-type AttachedFile = {
-  name: string;
-  path: string;
-  size: number;
-  type: string;
-  inlineDataBase64?: string;
-};
 
 export function ChatView() {
   const { t } = useTranslation();
@@ -72,11 +66,32 @@ export function ChatView() {
   const headerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const connectorMeasureRef = useRef<HTMLDivElement>(null);
-  const [pastedImages, setPastedImages] = useState<
-    Array<{ url: string; base64: string; mediaType: string }>
-  >([]);
-  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
+  const isComposingRef = useRef(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const handleAttachmentNotice = useCallback(
+    (notice: { id: string; type: 'info' | 'warning' | 'error'; message: string; messageKey?: string }) => {
+      setGlobalNotice(notice);
+    },
+    [setGlobalNotice]
+  );
+  const {
+    pastedImages,
+    attachedFiles,
+    setAttachedFiles,
+    isDragging,
+    handlePaste,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    removeImage,
+    removeFile,
+    clearAttachments,
+    buildContentBlocks,
+  } = useChatAttachments({
+    isComposingRef,
+    onNotice: handleAttachmentNotice,
+    t,
+  });
   const [showScrollToBottom, setShowScrollToBottom] = useState(false);
   const [slashMenuDismissed, setSlashMenuDismissed] = useState(false);
   const [slashHighlightIndex, setSlashHighlightIndex] = useState(0);
@@ -85,8 +100,6 @@ export function ChatView() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const isUserAtBottomRef = useRef(true);
-  const isComposingRef = useRef(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const prevMessageCountRef = useRef(0);
   const prevPartialLengthRef = useRef(0);
   const scrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -345,155 +358,6 @@ export function ChatView() {
     textareaRef.current?.focus();
   }, [activeSessionId]);
 
-  // Handle paste event for images
-  const handlePaste = async (e: React.ClipboardEvent) => {
-    const items = e.clipboardData?.items;
-    if (!items) return;
-
-    const imageItems = Array.from(items).filter((item) => item.type.startsWith('image/'));
-    if (imageItems.length === 0) return;
-
-    e.preventDefault();
-
-    const newImages: Array<{ url: string; base64: string; mediaType: string }> = [];
-
-    for (const item of imageItems) {
-      const blob = item.getAsFile();
-      if (!blob) continue;
-
-      try {
-        // Resize if needed to stay under API limit
-        const resizedBlob = await resizeImageIfNeeded(blob);
-        const base64 = await blobToBase64(resizedBlob);
-        const url = URL.createObjectURL(resizedBlob);
-        newImages.push({
-          url,
-          base64,
-          mediaType: resizedBlob.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-        });
-      } catch (err) {
-        // Notify the user instead of silently dropping the error
-        setGlobalNotice({
-          id: `image-paste-failed-${Date.now()}`,
-          type: 'warning',
-          message: t('chat.imageProcessFailed'),
-        });
-      }
-    }
-
-    setPastedImages((prev) => [...prev, ...newImages]);
-  };
-
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result;
-        if (typeof result !== 'string') {
-          reject(new Error('FileReader result is not a string'));
-          return;
-        }
-        // Remove data URL prefix (e.g., "data:image/png;base64,")
-        const parts = result.split(',');
-        resolve(parts[1] || '');
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  // Resize and compress image if needed to stay under 5MB base64 limit
-  const resizeImageIfNeeded = async (blob: Blob): Promise<Blob> => {
-    // Claude API limit is 5MB for base64 encoded images
-    // Base64 encoding increases size by ~33%, so we target 3.75MB for the blob
-    const MAX_BLOB_SIZE = 3.75 * 1024 * 1024; // 3.75MB
-
-    if (blob.size <= MAX_BLOB_SIZE) {
-      return blob; // No need to resize
-    }
-
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      const url = URL.createObjectURL(blob);
-
-      img.onload = () => {
-        URL.revokeObjectURL(url);
-
-        // Calculate scaling factor to reduce file size
-        // We use a more aggressive approach: scale down until size is acceptable
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Failed to get canvas context'));
-          return;
-        }
-
-        // Start with a scale factor based on size ratio
-        const scale = Math.sqrt(MAX_BLOB_SIZE / blob.size);
-        const quality = 0.9;
-
-        const attemptCompress = (currentScale: number, currentQuality: number): Promise<Blob> => {
-          canvas.width = Math.floor(img.width * currentScale);
-          canvas.height = Math.floor(img.height * currentScale);
-
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-          return new Promise((resolveBlob) => {
-            canvas.toBlob(
-              (compressedBlob) => {
-                if (!compressedBlob) {
-                  reject(new Error('Failed to compress image'));
-                  return;
-                }
-
-                // If still too large, try again with lower quality or scale
-                if (
-                  compressedBlob.size > MAX_BLOB_SIZE &&
-                  (currentQuality > 0.5 || currentScale > 0.3)
-                ) {
-                  const newQuality = Math.max(0.5, currentQuality - 0.1);
-                  const newScale = currentQuality <= 0.5 ? currentScale * 0.9 : currentScale;
-                  attemptCompress(newScale, newQuality).then(resolveBlob);
-                } else {
-                  resolveBlob(compressedBlob);
-                }
-              },
-              blob.type || 'image/jpeg',
-              currentQuality
-            );
-          });
-        };
-
-        attemptCompress(scale, quality).then(resolve).catch(reject);
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error('Failed to load image'));
-      };
-
-      img.src = url;
-    });
-  };
-
-  const removeImage = (index: number) => {
-    setPastedImages((prev) => {
-      const updated = [...prev];
-      URL.revokeObjectURL(updated[index].url);
-      updated.splice(index, 1);
-      return updated;
-    });
-  };
-
-  const removeFile = (index: number) => {
-    setAttachedFiles((prev) => {
-      const updated = [...prev];
-      updated.splice(index, 1);
-      return updated;
-    });
-  };
-
   const handleFileSelect = async () => {
     if (!isElectron || !window.electronAPI) {
       console.log('[ChatView] Not in Electron, file selection not available');
@@ -518,77 +382,6 @@ export function ChatView() {
       setAttachedFiles((prev) => [...prev, ...newFiles]);
     } catch (error) {
       console.error('[ChatView] Error selecting files:', error);
-    }
-  };
-
-  // Handle drag and drop for images
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = async (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    const files = Array.from(e.dataTransfer.files);
-    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
-    const otherFiles = files.filter((file) => !file.type.startsWith('image/'));
-
-    // Process images
-    if (imageFiles.length > 0) {
-      const newImages: Array<{ url: string; base64: string; mediaType: string }> = [];
-
-      for (const file of imageFiles) {
-        try {
-          // Resize if needed to stay under API limit
-          const resizedBlob = await resizeImageIfNeeded(file);
-          const base64 = await blobToBase64(resizedBlob);
-          const url = URL.createObjectURL(resizedBlob);
-          newImages.push({
-            url,
-            base64,
-            mediaType: resizedBlob.type,
-          });
-        } catch (err) {
-          // Notify the user instead of silently dropping the error
-          setGlobalNotice({
-            id: `image-drop-failed-${Date.now()}`,
-            type: 'warning',
-            message: t('chat.imageProcessFailed'),
-          });
-        }
-      }
-
-      setPastedImages((prev) => [...prev, ...newImages]);
-    }
-
-    // Process other files
-    if (otherFiles.length > 0) {
-      const newFiles = await Promise.all(
-        otherFiles.map(async (file) => {
-          const droppedPath = 'path' in file && typeof file.path === 'string' ? file.path : '';
-          const inlineDataBase64 = droppedPath ? undefined : await blobToBase64(file);
-
-          return {
-            name: file.name,
-            path: droppedPath,
-            size: file.size,
-            type: file.type || 'application/octet-stream',
-            inlineDataBase64,
-          };
-        })
-      );
-
-      setAttachedFiles((prev) => [...prev, ...newFiles]);
     }
   };
 
@@ -697,40 +490,7 @@ export function ChatView() {
       const promptText = textOnly
         ? normalizePluginSlashPromptForExpansion(textOnly, pluginSlashCommands)
         : currentPrompt.trim();
-      // Build content blocks
-      const contentBlocks: ContentBlock[] = [];
-
-      // Add images first
-      pastedImages.forEach((img) => {
-        contentBlocks.push({
-          type: 'image',
-          source: {
-            type: 'base64',
-            media_type: img.mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-            data: img.base64,
-          },
-        });
-      });
-
-      // Add file attachments
-      attachedFiles.forEach((file) => {
-        contentBlocks.push({
-          type: 'file_attachment',
-          filename: file.name,
-          relativePath: file.path, // Will be processed by backend to copy to .tmp
-          size: file.size,
-          mimeType: file.type,
-          inlineDataBase64: file.inlineDataBase64,
-        });
-      });
-
-      // Add text if present
-      if (promptText) {
-        contentBlocks.push({
-          type: 'text',
-          text: promptText,
-        });
-      }
+      const contentBlocks = buildContentBlocks(promptText);
 
       // Send message with content blocks
       await continueSession(activeSessionId, contentBlocks);
@@ -740,9 +500,7 @@ export function ChatView() {
       if (textareaRef.current) {
         textareaRef.current.value = '';
       }
-      pastedImages.forEach((img) => URL.revokeObjectURL(img.url));
-      setPastedImages([]);
-      setAttachedFiles([]);
+      clearAttachments();
     } finally {
       setIsSubmitting(false);
     }
@@ -778,9 +536,7 @@ export function ChatView() {
       const end = nextPrompt.length;
       textareaRef.current.setSelectionRange(end, end);
     }
-    pastedImages.forEach((img) => URL.revokeObjectURL(img.url));
-    setPastedImages([]);
-    setAttachedFiles([]);
+    clearAttachments();
   };
 
   if (!activeSession) {
@@ -968,8 +724,17 @@ export function ChatView() {
                     key={file.path || `attached-file-${index}`}
                     className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-muted border border-border group"
                   >
+                    {file.isTextNote ? (
+                      <StickyNote className="w-4 h-4 text-accent flex-shrink-0" />
+                    ) : (
+                      <FileText className="w-4 h-4 text-accent flex-shrink-0" />
+                    )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-text-primary truncate">{file.name}</p>
+                      <p className="text-sm text-text-primary truncate">
+                        {file.isTextNote
+                          ? t('chat.textNoteLabel', { size: formatAttachmentSize(file.size) })
+                          : file.name}
+                      </p>
                     </div>
                     <button
                       type="button"

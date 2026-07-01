@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "滚动到底部",
+    "longPasteConverted": "长粘贴已转换为附加文本笔记",
+    "longPasteTooLarge": "粘贴的文本过大（最大 2 MB）。请尝试附加文件。",
+    "textNoteLabel": "粘贴笔记（{{size}}）",
+    "imageProcessFailed": "图片处理失败",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

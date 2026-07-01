@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Rull til bunnen",
+    "longPasteConverted": "Lang innliming konvertert til vedlagt tekstnotat",
+    "longPasteTooLarge": "Innlimt tekst er for stor (maks 2 MB). Prøv å legge ved en fil i stedet.",
+    "textNoteLabel": "Innlimt notat ({{size}})",
+    "imageProcessFailed": "Kunne ikke behandle bildet",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

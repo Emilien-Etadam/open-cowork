@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Derulează la final",
+    "longPasteConverted": "Lipirea lungă a fost convertită într-o notă text atașată",
+    "longPasteTooLarge": "Textul lipit este prea mare (max. 2 MB). Încearcă să atașezi un fișier.",
+    "textNoteLabel": "Notă lipită ({{size}})",
+    "imageProcessFailed": "Procesarea imaginii a eșuat",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

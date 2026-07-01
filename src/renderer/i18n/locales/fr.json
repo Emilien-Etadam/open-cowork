@@ -782,7 +782,11 @@
         "description": "Créer une nouvelle session avec un résumé de reprise"
       }
     },
-    "scrollToBottom": "Descendre en bas"
+    "scrollToBottom": "Descendre en bas",
+    "longPasteConverted": "Collage long converti en note de texte attachée",
+    "longPasteTooLarge": "Le texte collé est trop volumineux (max. 2 Mo). Essayez de joindre un fichier.",
+    "textNoteLabel": "Note collée ({{size}})",
+    "imageProcessFailed": "Échec du traitement de l'image"
   },
   "context": {
     "progress": "Progression",

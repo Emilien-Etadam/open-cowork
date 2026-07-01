@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Прокрутити вниз",
+    "longPasteConverted": "Довге вставлення перетворено на прикріплену текстову нотатку",
+    "longPasteTooLarge": "Вставлений текст занадто великий (макс. 2 МБ). Спробуйте прикріпити файл.",
+    "textNoteLabel": "Вставлена нотатка ({{size}})",
+    "imageProcessFailed": "Не вдалося обробити зображення",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

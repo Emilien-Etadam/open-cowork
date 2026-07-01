@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Nach unten scrollen",
+    "longPasteConverted": "Langer Einfügetext wurde in eine angehängte Textnotiz umgewandelt",
+    "longPasteTooLarge": "Eingefügter Text ist zu groß (max. 2 MB). Versuchen Sie stattdessen, eine Datei anzuhängen.",
+    "textNoteLabel": "Eingefügte Notiz ({{size}})",
+    "imageProcessFailed": "Bildverarbeitung fehlgeschlagen",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

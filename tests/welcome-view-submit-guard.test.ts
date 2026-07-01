@@ -18,8 +18,7 @@ describe('WelcomeView submit guards', () => {
     expect(source).toContain('const session = await startSession(sessionTitle, contentBlocks, workingDir || undefined);');
     expect(source).toContain('if (session) {');
     expect(source).toContain('setPrompt(\'\');');
-    expect(source).toContain('setPastedImages([]);');
-    expect(source).toContain('setAttachedFiles([]);');
+    expect(source).toContain('clearAttachments();');
   });
 
   it('surfaces working-directory picker failures to the global notice toast', () => {

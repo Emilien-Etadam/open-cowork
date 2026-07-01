@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Przewiń na dół",
+    "longPasteConverted": "Długie wklejenie przekształcono w załączoną notatkę tekstową",
+    "longPasteTooLarge": "Wklejony tekst jest za duży (maks. 2 MB). Spróbuj dołączyć plik.",
+    "textNoteLabel": "Wklejona notatka ({{size}})",
+    "imageProcessFailed": "Nie udało się przetworzyć obrazu",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

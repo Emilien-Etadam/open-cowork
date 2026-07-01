@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Scrolla till botten",
+    "longPasteConverted": "Lång inklistring konverterad till bifogad textanteckning",
+    "longPasteTooLarge": "Inklistrad text är för stor (max 2 MB). Försök bifoga en fil i stället.",
+    "textNoteLabel": "Inklistrad anteckning ({{size}})",
+    "imageProcessFailed": "Det gick inte att bearbeta bilden",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

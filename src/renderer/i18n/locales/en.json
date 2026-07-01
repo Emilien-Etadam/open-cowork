@@ -782,7 +782,11 @@
         "description": "Start a new session with a continuation summary"
       }
     },
-    "scrollToBottom": "Scroll to bottom"
+    "scrollToBottom": "Scroll to bottom",
+    "longPasteConverted": "Long paste converted to attached text note",
+    "longPasteTooLarge": "Pasted text is too large (max 2 MB). Try attaching a file instead.",
+    "textNoteLabel": "Pasted note ({{size}})",
+    "imageProcessFailed": "Failed to process image"
   },
   "context": {
     "progress": "Progress",

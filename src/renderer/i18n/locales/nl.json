@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Naar beneden scrollen",
+    "longPasteConverted": "Lange plakactie omgezet naar bijgevoegde tekstnotitie",
+    "longPasteTooLarge": "Geplakte tekst is te groot (max. 2 MB). Probeer in plaats daarvan een bestand bij te voegen.",
+    "textNoteLabel": "Geplakte notitie ({{size}})",
+    "imageProcessFailed": "Afbeelding verwerken mislukt",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",

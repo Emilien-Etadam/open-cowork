@@ -719,6 +719,10 @@
       }
     },
     "scrollToBottom": "Scorri in basso",
+    "longPasteConverted": "Incolla lungo convertito in nota di testo allegata",
+    "longPasteTooLarge": "Il testo incollato è troppo grande (max 2 MB). Prova ad allegare un file.",
+    "textNoteLabel": "Nota incollata ({{size}})",
+    "imageProcessFailed": "Impossibile elaborare l'immagine",
     "forkSuccess": "New session created from this message.",
     "forkErrors": {
       "errForkSessionNotFound": "Session not found.",
