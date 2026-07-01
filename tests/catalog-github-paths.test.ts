@@ -42,7 +42,7 @@ describe('catalog github resolve paths', () => {
     } => entry.resolve.via === 'github'
   );
 
-  it('has at least one github plugin entry to validate', () => {
+  it('has at least one github entry to validate', () => {
     expect(githubEntries.length).toBeGreaterThan(0);
   });
 
