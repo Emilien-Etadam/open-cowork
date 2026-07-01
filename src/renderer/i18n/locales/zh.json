@@ -797,7 +797,9 @@
     "questionsAnswered": "问题已回答",
     "pleaseAnswerToContinue": "请回答以继续",
     "questionClosed": "问题已关闭",
-    "submitAnswers": "提交回答"
+    "submitAnswers": "提交回答",
+    "copyBlock": "复制块",
+    "copyThinking": "复制思考"
   },
   "schedule": {
     "createTitle": "新建定时任务",

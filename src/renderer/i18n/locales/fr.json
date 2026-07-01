@@ -844,7 +844,9 @@
     "questionsAnswered": "Questions répondues",
     "pleaseAnswerToContinue": "Veuillez répondre pour continuer",
     "questionClosed": "Question fermée",
-    "submitAnswers": "Envoyer les réponses"
+    "submitAnswers": "Envoyer les réponses",
+    "copyBlock": "Copier le bloc",
+    "copyThinking": "Copier la réflexion"
   },
   "schedule": {
     "createTitle": "Créer une planification",

@@ -797,7 +797,9 @@
     "questionsAnswered": "Frågor besvarade",
     "pleaseAnswerToContinue": "Svara för att fortsätta",
     "questionClosed": "Fråga stängd",
-    "submitAnswers": "Skicka svar"
+    "submitAnswers": "Skicka svar",
+    "copyBlock": "Kopiera block",
+    "copyThinking": "Kopiera tänkande"
   },
   "schedule": {
     "createTitle": "Skapa schema",

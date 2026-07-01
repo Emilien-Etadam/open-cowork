@@ -797,7 +797,9 @@
     "questionsAnswered": "Fragen beantwortet",
     "pleaseAnswerToContinue": "Bitte antworten, um fortzufahren",
     "questionClosed": "Frage geschlossen",
-    "submitAnswers": "Antworten senden"
+    "submitAnswers": "Antworten senden",
+    "copyBlock": "Block kopieren",
+    "copyThinking": "Denkprozess kopieren"
   },
   "schedule": {
     "createTitle": "Zeitplan erstellen",

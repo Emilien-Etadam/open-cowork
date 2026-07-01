@@ -844,7 +844,9 @@
     "questionsAnswered": "Questions answered",
     "pleaseAnswerToContinue": "Please answer to continue",
     "questionClosed": "Question closed",
-    "submitAnswers": "Submit answers"
+    "submitAnswers": "Submit answers",
+    "copyBlock": "Copy block",
+    "copyThinking": "Copy thinking"
   },
   "schedule": {
     "createTitle": "Create Schedule",

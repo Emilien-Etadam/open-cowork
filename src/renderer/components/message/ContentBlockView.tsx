@@ -18,6 +18,7 @@ import type { ToolUseContent, ToolResultContent, FileAttachmentContent } from '.
 import { isTextNoteFilename, formatAttachmentSize } from '../../../shared/long-paste';
 import { FileText, StickyNote } from 'lucide-react';
 import { CodeBlock } from './CodeBlock';
+import { CopyButton } from './CopyButton';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ToolUseBlock } from './ToolUseBlock';
 import { ToolResultBlock } from './ToolResultBlock';
@@ -276,28 +277,33 @@ export const ContentBlockView = memo(function ContentBlockView({
       }
 
       return (
-        <PanelErrorBoundary
-          name="MessageMarkdown"
-          fallback={
-            <div className="prose-chat max-w-none text-text-primary whitespace-pre-wrap break-words">
-              {normalizedText}
-            </div>
-          }
-        >
-          <Suspense
+        <div className="relative group">
+          <PanelErrorBoundary
+            name="MessageMarkdown"
             fallback={
               <div className="prose-chat max-w-none text-text-primary whitespace-pre-wrap break-words">
                 {normalizedText}
               </div>
             }
           >
-            <MessageMarkdown
-              normalizedText={normalizedText}
-              isStreaming={isStreaming}
-              components={markdownComponents}
-            />
-          </Suspense>
-        </PanelErrorBoundary>
+            <Suspense
+              fallback={
+                <div className="prose-chat max-w-none text-text-primary whitespace-pre-wrap break-words">
+                  {normalizedText}
+                </div>
+              }
+            >
+              <MessageMarkdown
+                normalizedText={normalizedText}
+                isStreaming={isStreaming}
+                components={markdownComponents}
+              />
+            </Suspense>
+          </PanelErrorBoundary>
+          <div className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-opacity">
+            <CopyButton text={text} title={t('messageCard.copyBlock')} />
+          </div>
+        </div>
       );
     }
 
@@ -365,7 +371,12 @@ export const ContentBlockView = memo(function ContentBlockView({
       );
 
     case 'thinking':
-      return <ThinkingBlock block={block as { type: 'thinking'; thinking: string }} />;
+      return (
+        <ThinkingBlock
+          block={block as { type: 'thinking'; thinking: string }}
+          isStreaming={isStreaming}
+        />
+      );
 
     case 'compaction_summary':
       return <CompactionSummaryBlock block={block} />;
